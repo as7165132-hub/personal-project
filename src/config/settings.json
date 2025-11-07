@@ -21,10 +21,10 @@
       "scale": 1
     },
     "iso": {
-      "rx": 55,
+      "rx": 60,
       "rz": 45,
-      "tyVh": -5,
-      "scale": 0.96
+      "tyVh": 0,
+      "scale": 0.8
     }
   },
   "motion": {

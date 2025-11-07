@@ -198,6 +198,11 @@ export class Dom2DLayer {
       grid.setAttribute('data-state', 'SURFACE_ISO');
       // 저채도, 저광 처리는 CSS로
     }
+
+    // 카드의 개별 변형 초기화 (SWITCHING에서 적용된 skew/rotate 제거)
+    this.cards.forEach((card) => {
+      card.style.transform = 'none';
+    });
   }
 
   /**
