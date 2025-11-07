@@ -55,7 +55,7 @@ body {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  perspective: 1200px;
+  /* perspective removed for true isometric view */
   overflow: visible;
 }
 
