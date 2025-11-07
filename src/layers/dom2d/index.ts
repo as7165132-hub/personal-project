@@ -8,6 +8,7 @@ import { i18n } from '@systems/i18n';
 export class Dom2DLayer {
   private container: HTMLElement;
   private cards: HTMLElement[] = [];
+  private scrollOffset: number = 0; // 누적 스크롤 오프셋
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -24,29 +25,33 @@ export class Dom2DLayer {
   private init(): void {
     this.container.className = 'surface-container';
     this.buildLayout();
-    this.attachScrollListener();
+    this.attachWheelListener();
   }
 
   /**
-   * 스크롤 리스너 연결
+   * Wheel 리스너 연결
    */
-  private attachScrollListener(): void {
-    window.addEventListener('scroll', () => {
-      this.handleScroll();
-    });
+  private attachWheelListener(): void {
+    window.addEventListener('wheel', (e) => {
+      e.preventDefault(); // 기본 스크롤 동작 막기
+      this.handleWheel(e);
+    }, { passive: false });
   }
 
   /**
-   * 스크롤 핸들러 - 컨베이어 벨트 효과
+   * Wheel 핸들러 - 컨베이어 벨트 효과
    */
-  private handleScroll(): void {
-    const scrollY = window.scrollY;
+  private handleWheel(e: WheelEvent): void {
+    // deltaY 값을 누적
+    this.scrollOffset += e.deltaY * 0.5; // 스크롤 속도 조절
+
+    // 최소값 제한 (위로 너무 많이 못가게)
+    this.scrollOffset = Math.max(0, this.scrollOffset);
+
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
-
     if (grid) {
       // ISO view 유지하면서 Y축으로만 이동 (컨베이어 효과)
-      const offset = scrollY * 0.3; // 스크롤 속도 조절
-      grid.style.transform = `rotateX(60deg) rotateZ(45deg) translateY(-${offset}px)`;
+      grid.style.transform = `rotateX(60deg) rotateZ(45deg) translateY(-${this.scrollOffset}px)`;
     }
   }
 
