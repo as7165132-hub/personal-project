@@ -51,9 +51,8 @@ export class Dom2DLayer {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
     if (grid) {
       // ISO view 유지하면서 Y축으로만 이동 (컨베이어 효과)
-      // CSS 초기값과 동일한 transform 유지: rotateX(60deg) rotateZ(45deg) scale(1.2) translateY(10vh)
-      const baseOffsetVh = 10; // 초기 CSS의 translateY 값
-      grid.style.transform = `rotateX(60deg) rotateZ(45deg) scale(1.2) translateY(calc(${baseOffsetVh}vh - ${this.scrollOffset}px))`;
+      // CSS 초기값과 동일한 transform 유지: rotateX(45deg) rotateZ(30deg) scale(0.7)
+      grid.style.transform = `rotateX(45deg) rotateZ(30deg) scale(0.7) translateY(-${this.scrollOffset}px)`;
     }
   }
 

@@ -69,11 +69,13 @@ body {
   grid-template-columns: repeat(4, 1fr);
   gap: var(--surface-gap);
   padding: 4rem 2rem;
-  width: 100%;
+  width: 80%; /* 너비 줄임 */
+  max-width: 1400px;
+  margin: 0 auto; /* 중앙 정렬 */
   min-height: 100vh;
   align-content: start;
-  /* ISO view transform - perspective 없이 순수 rotation */
-  transform: rotateX(60deg) rotateZ(45deg) scale(1.2) translateY(10vh);
+  /* ISO view transform - 더 작은 각도와 scale */
+  transform: rotateX(45deg) rotateZ(30deg) scale(0.7);
   transform-origin: center center;
   transition: transform 0.1s linear;
 }
