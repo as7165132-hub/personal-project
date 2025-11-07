@@ -24,6 +24,30 @@ export class Dom2DLayer {
   private init(): void {
     this.container.className = 'surface-container';
     this.buildLayout();
+    this.attachScrollListener();
+  }
+
+  /**
+   * 스크롤 리스너 연결
+   */
+  private attachScrollListener(): void {
+    window.addEventListener('scroll', () => {
+      this.handleScroll();
+    });
+  }
+
+  /**
+   * 스크롤 핸들러 - 컨베이어 벨트 효과
+   */
+  private handleScroll(): void {
+    const scrollY = window.scrollY;
+    const grid = this.container.querySelector('.surface-grid') as HTMLElement;
+
+    if (grid) {
+      // ISO view 유지하면서 Y축으로만 이동 (컨베이어 효과)
+      const offset = scrollY * 0.3; // 스크롤 속도 조절
+      grid.style.transform = `rotateX(60deg) rotateZ(45deg) translateY(-${offset}px)`;
+    }
   }
 
   /**

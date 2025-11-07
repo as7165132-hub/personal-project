@@ -55,10 +55,10 @@ body {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  /* perspective removed for true isometric view */
   overflow: visible;
+  /* ISO view를 위한 transform origin */
+  transform-style: preserve-3d;
 }
-
 
 /* ==================== Grid ==================== */
 .surface-grid {
@@ -69,6 +69,10 @@ body {
   width: 100%;
   min-height: 100vh;
   align-content: start;
+  /* ISO view transform */
+  transform: rotateX(60deg) rotateZ(45deg);
+  transform-origin: center center;
+  transition: transform 0.1s linear;
 }
 
 /* ==================== Cards ==================== */
