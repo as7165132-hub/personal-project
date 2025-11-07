@@ -116,7 +116,6 @@ body {
   cursor: pointer;
   transition: transform 300ms var(--surface-easing),
     box-shadow 300ms var(--surface-easing);
-  transform-style: preserve-3d;
   outline: none;
   display: flex;
   align-items: center;
