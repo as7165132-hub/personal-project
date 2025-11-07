@@ -13,6 +13,7 @@ export class Dom2DLayer {
   private container: HTMLElement;
   private cards: HTMLElement[] = [];
   private statusLabel: HTMLElement | null = null;
+  private currentState: AppState = 'DEFAULT_2D';
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -130,12 +131,36 @@ export class Dom2DLayer {
     eventBus.on('state:reset', () => {
       this.reset();
     });
+
+    // 스크롤 이벤트 (3D 모드에서 그리드 이동)
+    this.container.addEventListener('scroll', () => {
+      this.handleScroll();
+    });
+  }
+
+  /**
+   * 스크롤 핸들러
+   */
+  private handleScroll(): void {
+    if (this.currentState !== 'SURFACE_ISO') return;
+
+    const scrollY = this.container.scrollTop;
+    const grid = this.container.querySelector('.surface-grid') as HTMLElement;
+
+    if (grid) {
+      // 기존 3D transform에 translateY 추가 (컨베이어 효과)
+      const baseTransform = 'rotateX(55deg) rotateZ(45deg) translateY(-5vh) translateX(-40vw) scale(0.96)';
+      const scrollOffset = -scrollY * 0.5; // 스크롤 민감도 조정
+      grid.style.transform = `${baseTransform} translateY(${scrollOffset}px)`;
+    }
   }
 
   /**
    * SWITCHING 상태 진입
    */
   private enterSwitchingState(): void {
+    this.currentState = 'SWITCHING';
+
     if (!this.statusLabel) return;
 
     // 라벨 업데이트
@@ -162,6 +187,8 @@ export class Dom2DLayer {
    * SURFACE_ISO 상태 진입
    */
   private enterSurfaceIsoState(): void {
+    this.currentState = 'SURFACE_ISO';
+
     if (!this.statusLabel) return;
 
     // 라벨 업데이트
@@ -178,6 +205,8 @@ export class Dom2DLayer {
    * 리셋
    */
   private reset(): void {
+    this.currentState = 'DEFAULT_2D';
+
     if (!this.statusLabel) return;
 
     this.statusLabel.textContent = i18n.t('MODE_ON');
@@ -185,6 +214,8 @@ export class Dom2DLayer {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
     if (grid) {
       grid.setAttribute('data-state', 'DEFAULT_2D');
+      // transform 초기화
+      grid.style.transform = '';
     }
 
     // 카드 변형 초기화

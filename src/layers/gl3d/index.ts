@@ -184,6 +184,12 @@ export class GL3DLayer {
     // 캔버스 표시
     this.canvas.style.opacity = '1';
 
+    // 씬 위치 초기화 (스크롤 위치에 맞춤)
+    if (this.scrollContainer) {
+      const scrollY = this.scrollContainer.scrollTop;
+      this.scene.position.y = -scrollY * 0.01;
+    }
+
     // 이전에 생성된 풍선/카드 메시 제거
     if (this.activeBubble) {
       this.scene.remove(this.activeBubble);
@@ -226,6 +232,9 @@ export class GL3DLayer {
     // 캔버스 숨김
     this.canvas.style.opacity = '0';
 
+    // 씬 위치 초기화
+    this.scene.position.y = 0;
+
     // 섬과 버블 숨김
     if (this.islandMesh) {
       this.islandMesh.visible = false;
@@ -250,17 +259,12 @@ export class GL3DLayer {
     if (!this.scrollContainer || !this.isActive) return;
 
     const scrollY = this.scrollContainer.scrollTop;
-    const scrollHeight = this.scrollContainer.scrollHeight - this.scrollContainer.clientHeight;
 
-    // 스크롤 진행률 (0 ~ 1)
-    const scrollProgress = scrollHeight > 0 ? scrollY / scrollHeight : 0;
+    // 스크롤 양에 비례하여 씬을 위로 이동 (컨베이어 효과)
+    // 스크롤 다운 = 씬이 위로 올라감
+    const sceneYOffset = scrollY * 0.01; // 스크롤 민감도 조정
 
-    // 카메라 Y 위치 조정 (스크롤에 따라 아래로 이동)
-    // 전체 콘텐츠 높이에 맞춰 카메라 이동 범위 계산
-    const cameraYOffset = -scrollProgress * 50; // 스크롤 시 카메라가 아래로 이동
-
-    this.camera.position.y = this.baseCameraY + cameraYOffset;
-    this.camera.lookAt(0, cameraYOffset, 0);
+    this.scene.position.y = -sceneYOffset;
   };
 
   /**
