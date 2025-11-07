@@ -45,6 +45,11 @@ body {
   line-height: 1.6;
   color: var(--surface-fg);
   background: var(--surface-bg);
+  background-image: url('/bg-gradient.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -68,8 +73,8 @@ body {
   width: 100%;
   min-height: 100vh;
   align-content: start;
-  /* ISO view transform */
-  transform: rotateX(60deg) rotateZ(45deg);
+  /* ISO view transform - 초기 위치를 아래로 */
+  transform: rotateX(60deg) rotateZ(45deg) translateY(15vh);
   transform-origin: center center;
   transition: transform 0.1s linear;
 }
