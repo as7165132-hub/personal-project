@@ -181,13 +181,13 @@ export class GL3DLayer {
     // 캔버스 표시
     this.canvas.style.opacity = '1';
 
-    // 섬과 버블 표시
+    // 섬과 버블은 숨김 상태 유지 (카드 클릭 시 풍선만 표시)
     if (this.islandMesh) {
-      this.islandMesh.visible = true;
+      this.islandMesh.visible = false;
     }
 
     this.bubbles.forEach((bubble) => {
-      bubble.visible = true;
+      bubble.visible = false;
     });
 
     this.startRenderLoop();
