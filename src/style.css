@@ -74,8 +74,8 @@ body {
   width: 100%;
   min-height: 100vh;
   align-content: start;
-  /* ISO view transform */
-  transform: rotateX(60deg) rotateZ(45deg) scale(0.6) translateY(-20vh);
+  /* ISO view transform - 일단 비활성화해서 카드가 생성되었는지 확인 */
+  /* transform: rotateX(60deg) rotateZ(45deg) scale(0.6) translateY(-20vh); */
   transform-origin: center center;
   transition: transform 0.1s linear;
 }
