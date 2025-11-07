@@ -7,7 +7,6 @@ import type { AppState } from '@core/types';
 import { eventBus } from '@core/event-bus';
 import { i18n } from '@systems/i18n';
 import { anchorMap } from '@systems/anchor-map';
-import { motionTokens } from '@systems/motion-tokens';
 
 export class Dom2DLayer {
   private container: HTMLElement;
@@ -143,15 +142,7 @@ export class Dom2DLayer {
    */
   private handleScroll(): void {
     if (this.currentState !== 'SURFACE_ISO') return;
-
-    const scrollY = this.container.scrollTop;
-    const grid = this.container.querySelector('.surface-grid') as HTMLElement;
-
-    if (grid) {
-      // isometric view 유지하며 컨베이어 효과
-      const scrollOffset = scrollY * 0.5; // 스크롤 민감도 조정
-      grid.style.transform = `rotateX(60deg) rotateZ(45deg) scale(0.8) translateY(-${scrollOffset}px)`;
-    }
+    // 3D transform 제거됨 - 순수 2D 스크롤만 사용
   }
 
   /**
@@ -170,16 +161,7 @@ export class Dom2DLayer {
       grid.setAttribute('data-state', 'SWITCHING');
     }
 
-    // 카드 변형
-    const duration = motionTokens.getSwitchDuration();
-    const easing = motionTokens.getEasing();
-
-    this.cards.forEach((card, index) => {
-      const transform = motionTokens.generateCardTransform(index, this.cards.length);
-
-      card.style.transition = `transform ${duration}ms ${easing}`;
-      card.style.transform = transform;
-    });
+    // 3D 카드 변형 제거됨 - 순수 2D만 사용
   }
 
   /**
