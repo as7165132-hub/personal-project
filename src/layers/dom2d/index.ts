@@ -36,6 +36,9 @@ export class Dom2DLayer {
    * 레이아웃 구성
    */
   private buildLayout(): void {
+    // 기존 로딩 메시지 제거
+    this.container.innerHTML = '';
+
     // 상태 라벨
     this.statusLabel = document.createElement('div');
     this.statusLabel.className = 'surface-status-label';
