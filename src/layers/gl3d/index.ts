@@ -19,6 +19,8 @@ export class GL3DLayer {
   // 3D 요소들
   private islandMesh: THREE.Mesh | null = null;
   private bubbles: THREE.Mesh[] = [];
+  private activeBubble: THREE.Mesh | null = null;
+  private bubbleAnimation: { scale: number; targetScale: number; time: number } | null = null;
 
   constructor(canvasId: string = 'gl-canvas') {
     let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -154,6 +156,13 @@ export class GL3DLayer {
     eventBus.on('state:reset', () => {
       this.deactivate();
     });
+
+    // 카드 클릭 이벤트 (3D 풍선 생성)
+    eventBus.on<{ cardId: string; position: THREE.Vector3 }>('card:clicked', (data) => {
+      if (data) {
+        this.createBalloon(data.position);
+      }
+    });
   }
 
   /**
@@ -213,6 +222,44 @@ export class GL3DLayer {
   }
 
   /**
+   * 3D 풍선 생성
+   */
+  private createBalloon(position: THREE.Vector3): void {
+    // 기존 활성 풍선 제거
+    if (this.activeBubble) {
+      this.scene.remove(this.activeBubble);
+      this.activeBubble.geometry.dispose();
+      (this.activeBubble.material as THREE.Material).dispose();
+      this.activeBubble = null;
+    }
+
+    // 새 풍선 생성 (구체)
+    const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.85,
+      roughness: 0.1,
+      metalness: 0.3,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.1,
+    });
+
+    this.activeBubble = new THREE.Mesh(geometry, material);
+    this.activeBubble.position.copy(position);
+    this.activeBubble.position.z += 0.5; // 카드 위로 조금 올림
+    this.activeBubble.scale.set(0.1, 0.1, 0.1);
+    this.scene.add(this.activeBubble);
+
+    // 애니메이션 시작
+    this.bubbleAnimation = {
+      scale: 0.1,
+      targetScale: 2.5,
+      time: 0,
+    };
+  }
+
+  /**
    * 렌더
    */
   private render(): void {
@@ -222,6 +269,31 @@ export class GL3DLayer {
       const offset = index * 0.5;
       bubble.position.y += Math.sin(time + offset) * 0.001;
     });
+
+    // 활성 풍선 애니메이션
+    if (this.bubbleAnimation && this.activeBubble) {
+      this.bubbleAnimation.time += 0.016; // ~60fps
+      const duration = 0.8; // 800ms
+
+      if (this.bubbleAnimation.time < duration) {
+        // Ease out elastic
+        const t = this.bubbleAnimation.time / duration;
+        const easeOut = 1 - Math.pow(1 - t, 3);
+        const bounce = Math.sin(t * Math.PI * 2) * 0.1 * (1 - t);
+        const scale = this.bubbleAnimation.scale +
+                     (this.bubbleAnimation.targetScale - this.bubbleAnimation.scale) * easeOut + bounce;
+
+        this.activeBubble.scale.set(scale, scale, scale);
+
+        // 위로 떠오름
+        this.activeBubble.position.z += 0.02 * (1 - t);
+      } else {
+        // 애니메이션 완료
+        const finalScale = this.bubbleAnimation.targetScale;
+        this.activeBubble.scale.set(finalScale, finalScale, finalScale);
+        this.bubbleAnimation = null;
+      }
+    }
 
     this.renderer.render(this.scene, this.camera);
   }

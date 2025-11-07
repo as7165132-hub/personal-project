@@ -86,14 +86,21 @@ export class Dom2DLayer {
 
       card.appendChild(text);
 
-      // 카드 클릭 시 풍선처럼 부풀어 오르는 애니메이션
+      // 카드 클릭 시 3D 풍선 생성
       card.addEventListener('click', () => {
-        if (card.classList.contains('bubble-active')) {
-          card.classList.remove('bubble-active');
-        } else {
+        const cardId = data.id;
+        const anchor = anchorMap.get(cardId);
+
+        if (anchor) {
           // 다른 활성화된 카드 비활성화
           this.cards.forEach(c => c.classList.remove('bubble-active'));
           card.classList.add('bubble-active');
+
+          // 3D 풍선 생성 이벤트 발행
+          eventBus.emit('card:clicked', {
+            cardId,
+            position: anchor.position3D.clone(),
+          });
         }
       });
 
