@@ -51,7 +51,7 @@ export class Dom2DLayer {
     grid.setAttribute('data-state', 'DEFAULT_2D');
 
     // 카드 생성 (다수의 샘플 카드)
-    const totalCards = 36; // 6x6 그리드
+    const totalCards = 216; // 4열 x 54행 그리드
     const cardData = [];
 
     // 처음 5개는 의미있는 텍스트
@@ -65,7 +65,7 @@ export class Dom2DLayer {
 
     // 나머지는 번호로 채움
     for (let i = 6; i <= totalCards; i++) {
-      const num = String(i).padStart(2, '0');
+      const num = String(i).padStart(3, '0');
       cardData.push({
         id: `card-${num}`,
         text: `CARD ${num}`
