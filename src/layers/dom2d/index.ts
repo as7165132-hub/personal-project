@@ -109,19 +109,30 @@ export class Dom2DLayer {
 
     // Transform 확인
     setTimeout(() => {
-      const computedStyle = window.getComputedStyle(grid);
-      console.log('[DEBUG] Grid computed transform:', computedStyle.transform);
-      console.log('[DEBUG] Grid computed display:', computedStyle.display);
-      console.log('[DEBUG] Grid bounding box:', grid.getBoundingClientRect());
+      const gridRect = grid.getBoundingClientRect();
+      console.log('[DEBUG] Grid 위치 상세:', {
+        x: gridRect.x,
+        y: gridRect.y,
+        width: gridRect.width,
+        height: gridRect.height,
+        top: gridRect.top,
+        left: gridRect.left
+      });
 
       if (this.cards.length > 0) {
         const firstCard = this.cards[0];
         const cardRect = firstCard.getBoundingClientRect();
-        console.log('[DEBUG] 첫 번째 카드 위치:', cardRect);
-        console.log('[DEBUG] 첫 번째 카드 computed style:', {
-          background: window.getComputedStyle(firstCard).background,
-          display: window.getComputedStyle(firstCard).display,
-          visibility: window.getComputedStyle(firstCard).visibility
+        console.log('[DEBUG] 첫 번째 카드 위치 상세:', {
+          x: cardRect.x,
+          y: cardRect.y,
+          width: cardRect.width,
+          height: cardRect.height,
+          top: cardRect.top,
+          left: cardRect.left
+        });
+        console.log('[DEBUG] 화면 크기:', {
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight
         });
       }
     }, 100);

@@ -75,8 +75,8 @@ body {
   margin: 0 auto; /* 중앙 정렬 */
   min-height: 100vh;
   align-content: start;
-  /* ISO view transform - 더 작은 각도와 scale */
-  transform: rotateX(45deg) rotateZ(30deg) scale(0.7);
+  /* ISO view transform - 일단 비활성화하여 2D로 확인 */
+  /* transform: rotateX(45deg) rotateZ(30deg) scale(0.7); */
   transform-origin: center center;
   transition: transform 0.1s linear;
 }
