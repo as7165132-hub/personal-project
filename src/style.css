@@ -95,12 +95,12 @@ body {
 }
 
 .surface-grid[data-state='SWITCHING'] {
-  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) translateX(-35vw) scale(0.96);
+  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) translateX(-40vw) scale(0.96);
   opacity: 0.9;
 }
 
 .surface-grid[data-state='SURFACE_ISO'] {
-  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) translateX(-35vw) scale(0.96);
+  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) translateX(-40vw) scale(0.96);
   opacity: 0.3;
   filter: saturate(0.5) brightness(0.7);
   pointer-events: all;

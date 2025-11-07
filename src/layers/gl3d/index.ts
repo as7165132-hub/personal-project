@@ -225,6 +225,11 @@ export class GL3DLayer {
    * 3D 풍선 생성
    */
   private createBalloon(position: THREE.Vector3): void {
+    // 렌더링 루프가 실행 중이 아니면 시작
+    if (this.animationFrameId === null) {
+      this.startRenderLoop();
+    }
+
     // 기존 활성 풍선 제거
     if (this.activeBubble) {
       this.scene.remove(this.activeBubble);
@@ -238,16 +243,28 @@ export class GL3DLayer {
     const material = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.9,
       roughness: 0.1,
       metalness: 0.3,
       emissive: 0xffffff,
-      emissiveIntensity: 0.1,
+      emissiveIntensity: 0.2,
     });
 
     this.activeBubble = new THREE.Mesh(geometry, material);
-    this.activeBubble.position.copy(position);
-    this.activeBubble.position.z += 0.5; // 카드 위로 조금 올림
+
+    // 카메라 앞 보이는 위치에 생성 (position은 참고용)
+    // 카메라 정면에서 약간 오프셋된 위치
+    const cameraDirection = new THREE.Vector3();
+    this.camera.getWorldDirection(cameraDirection);
+
+    // 카메라 앞 5 유닛 위치에 배치
+    this.activeBubble.position.copy(this.camera.position);
+    this.activeBubble.position.add(cameraDirection.multiplyScalar(5));
+
+    // 약간 랜덤한 오프셋 추가 (카드 위치 기반)
+    this.activeBubble.position.x += (position.x * 0.1);
+    this.activeBubble.position.y += (position.y * 0.1);
+
     this.activeBubble.scale.set(0.1, 0.1, 0.1);
     this.scene.add(this.activeBubble);
 
