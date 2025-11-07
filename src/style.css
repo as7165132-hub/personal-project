@@ -166,12 +166,12 @@ body::before {
 
 /* ISO 모드: 배경과 container를 완전히 동일하게 변환 */
 body.iso-mode::before {
-  transform: rotateX(30deg) rotateZ(15deg) scale(1.2) translateY(calc(var(--scroll-offset) * -1));
+  transform: rotateX(20deg) rotateZ(10deg) scale(1.1) translateY(calc(var(--scroll-offset) * -1));
   transform-origin: center center;
 }
 
 body.iso-mode .surface-container {
-  transform: rotateX(30deg) rotateZ(15deg) scale(1);
+  transform: rotateX(20deg) rotateZ(10deg) scale(1);
   transform-origin: center center;
   transition: transform 0.5s var(--surface-easing);
 }

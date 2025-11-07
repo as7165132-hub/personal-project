@@ -10,7 +10,7 @@ export class Dom2DLayer {
   private cards: HTMLElement[] = [];
   private scrollOffset: number = 0; // 누적 스크롤 오프셋
   private isIsoMode: boolean = false; // ISO 뷰 모드
-  private gridHeight: number = 0; // 그리드 총 높이 (컨베이어 벨트용)
+  private cardHeight: number = 0; // 카드 하나의 높이 (컨베이어 벨트용)
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -78,32 +78,49 @@ export class Dom2DLayer {
   }
 
   /**
-   * Wheel 핸들러 - 컨베이어 벨트 스크롤
+   * Wheel 핸들러 - 컨베이어 벨트 스크롤 (DOM 재배치)
    */
   private handleWheel(e: WheelEvent): void {
     // deltaY 값을 누적
     this.scrollOffset += e.deltaY * 0.5; // 스크롤 속도 조절
 
-    // 그리드 높이 계산 (처음 한 번만)
-    if (this.gridHeight === 0) {
+    // 카드 높이 계산 (처음 한 번만)
+    if (this.cardHeight === 0 && this.cards.length > 0) {
+      const firstCard = this.cards[0];
+      const rect = firstCard.getBoundingClientRect();
       const grid = this.container.querySelector('.surface-grid') as HTMLElement;
       if (grid) {
-        this.gridHeight = grid.scrollHeight;
+        const style = window.getComputedStyle(grid);
+        const gap = parseFloat(style.gap || '0');
+        this.cardHeight = rect.height + gap;
+        console.log('[DEBUG] 카드 높이 (gap 포함):', this.cardHeight, 'px');
       }
     }
 
-    // 컨베이어 벨트: 무한 스크롤 (양방향)
-    if (this.gridHeight > 0) {
-      // 음수 방지 및 순환
+    // 컨베이어 벨트: DOM 재배치로 무한 스크롤
+    if (this.cardHeight > 0) {
+      const grid = this.container.querySelector('.surface-grid') as HTMLElement;
+      if (!grid) return;
+
+      // 아래로 스크롤: 첫 카드를 맨 뒤로
+      while (this.scrollOffset >= this.cardHeight) {
+        const firstCard = this.cards.shift(); // 배열에서 첫 요소 제거
+        if (firstCard) {
+          this.cards.push(firstCard); // 배열 끝에 추가
+          grid.appendChild(firstCard); // DOM 맨 뒤로 이동
+          this.scrollOffset -= this.cardHeight;
+        }
+      }
+
+      // 위로 스크롤: 마지막 카드를 맨 앞으로
       while (this.scrollOffset < 0) {
-        this.scrollOffset += this.gridHeight;
+        const lastCard = this.cards.pop(); // 배열에서 마지막 요소 제거
+        if (lastCard) {
+          this.cards.unshift(lastCard); // 배열 앞에 추가
+          grid.insertBefore(lastCard, grid.firstChild); // DOM 맨 앞으로 이동
+          this.scrollOffset += this.cardHeight;
+        }
       }
-      while (this.scrollOffset >= this.gridHeight) {
-        this.scrollOffset -= this.gridHeight;
-      }
-    } else {
-      // gridHeight 계산 전에는 최소값만 제한
-      this.scrollOffset = Math.max(0, this.scrollOffset);
     }
 
     // transform 업데이트 (2D or ISO 모드에 따라)
@@ -175,37 +192,23 @@ export class Dom2DLayer {
     this.container.appendChild(grid);
     console.log('[DEBUG] Grid가 container에 추가됨');
 
-    // Transform 확인 및 컨베이어 벨트 높이 계산
+    // Transform 확인 및 컨베이어 벨트 카드 높이 계산
     setTimeout(() => {
-      // 그리드 높이 계산 (컨베이어 벨트용)
-      this.gridHeight = grid.scrollHeight;
-      console.log('[DEBUG] 컨베이어 벨트 높이:', this.gridHeight, 'px');
-
-      const gridRect = grid.getBoundingClientRect();
-      console.log('[DEBUG] Grid 위치 상세:', {
-        x: gridRect.x,
-        y: gridRect.y,
-        width: gridRect.width,
-        height: gridRect.height,
-        top: gridRect.top,
-        left: gridRect.left
-      });
-
       if (this.cards.length > 0) {
         const firstCard = this.cards[0];
         const cardRect = firstCard.getBoundingClientRect();
-        console.log('[DEBUG] 첫 번째 카드 위치 상세:', {
+        const style = window.getComputedStyle(grid);
+        const gap = parseFloat(style.gap || '0');
+        this.cardHeight = cardRect.height + gap;
+
+        console.log('[DEBUG] 카드 높이 (gap 포함):', this.cardHeight, 'px');
+        console.log('[DEBUG] 첫 번째 카드 위치:', {
           x: cardRect.x,
           y: cardRect.y,
           width: cardRect.width,
-          height: cardRect.height,
-          top: cardRect.top,
-          left: cardRect.left
+          height: cardRect.height
         });
-        console.log('[DEBUG] 화면 크기:', {
-          windowWidth: window.innerWidth,
-          windowHeight: window.innerHeight
-        });
+        console.log('[DEBUG] 총 카드 수:', this.cards.length);
       }
     }, 100);
   }
