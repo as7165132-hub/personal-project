@@ -80,11 +80,13 @@ export class GL3DLayer {
    * 카메라 설정 (고정 - 2점 투시)
    */
   private setupIsometricCamera(): void {
-    // 카메라를 위에서 내려다보는 각도로 고정
+    // 카메라를 위에서 내려다보는 각도로 고정 (CSS rotateX(45deg)와 매치)
     // 2점 투시: 수직선은 평행, 수평 방향으로만 소실점
-    // CSS rotateX(60deg)와 매치되도록 설정
-    this.camera.position.set(0, 20, 25);
+    this.camera.position.set(0, 10, 20);
     this.camera.lookAt(0, 0, 0);
+
+    console.log('Camera position:', this.camera.position);
+    console.log('Camera looking at:', 0, 0, 0);
   }
 
   /**
@@ -92,12 +94,23 @@ export class GL3DLayer {
    */
   private buildScene(): void {
     // 조명
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     this.scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(5, 10, 7);
     this.scene.add(directionalLight);
+
+    // 디버깅용 테스트 큐브 (항상 보이도록)
+    const testCubeGeometry = new THREE.BoxGeometry(2, 2, 2);
+    const testCubeMaterial = new THREE.MeshStandardMaterial({
+      color: 0x00ff00,
+      wireframe: false,
+    });
+    const testCube = new THREE.Mesh(testCubeGeometry, testCubeMaterial);
+    testCube.position.set(0, 0, 0);
+    this.scene.add(testCube);
+    console.log('Test cube added at origin');
 
     // 아이소메트릭 섬 (간단한 평면)
     const islandGeometry = new THREE.PlaneGeometry(8, 8, 10, 10);
@@ -171,13 +184,14 @@ export class GL3DLayer {
 
     // 캔버스 표시
     this.canvas.style.opacity = '1';
+    console.log('GL3D Layer: Canvas opacity set to 1');
 
     // 씬 위치 초기화 (현재 스크롤 위치에 맞춤)
     if (this.scrollContainer) {
       const scrollY = this.scrollContainer.scrollTop;
-      const sceneOffset = scrollY * 0.015;
-      this.scene.position.y = sceneOffset;
-      this.scene.position.z = -sceneOffset * 0.5;
+      const sceneOffset = scrollY * 0.01;
+      this.scene.position.y = -sceneOffset;
+      console.log('Scene position updated:', this.scene.position);
     }
 
     // 이전에 생성된 풍선/카드 메시 제거
@@ -210,7 +224,7 @@ export class GL3DLayer {
     }
 
     this.startRenderLoop();
-    console.log('GL3D Layer activated, canvas opacity set to 1');
+    console.log('GL3D Layer activated, render loop started');
   }
 
   /**
@@ -250,13 +264,9 @@ export class GL3DLayer {
 
     const scrollY = this.scrollContainer.scrollTop;
 
-    // 스크롤 양에 비례하여 씬을 이동 (컨베이어 효과)
-    // 2점 투시 효과를 유지하면서 씬만 움직임
-    const sceneOffset = scrollY * 0.015; // 스크롤 민감도
-
-    // Y축과 Z축을 함께 이동하여 2점 투시 효과 유지
-    this.scene.position.y = sceneOffset;
-    this.scene.position.z = -sceneOffset * 0.5;
+    // 스크롤 양에 비례하여 씬을 Y축으로만 이동 (컨베이어 효과)
+    const sceneOffset = scrollY * 0.01; // 스크롤 민감도
+    this.scene.position.y = -sceneOffset;
   };
 
   /**

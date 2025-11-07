@@ -95,15 +95,17 @@ body {
 }
 
 .surface-grid[data-state='SWITCHING'] {
-  transform: rotateX(60deg) translateY(-10vh) translateX(-30vw) scale(0.9);
+  transform: rotateX(45deg) translateZ(-200px);
   opacity: 0.9;
+  transform-origin: center top;
 }
 
 .surface-grid[data-state='SURFACE_ISO'] {
-  transform: rotateX(60deg) translateY(-10vh) translateX(-30vw) scale(0.9);
+  transform: rotateX(45deg) translateZ(-200px);
   opacity: 0.3;
   filter: saturate(0.5) brightness(0.7);
   pointer-events: all;
+  transform-origin: center top;
 }
 
 /* ==================== Cards ==================== */
