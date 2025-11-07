@@ -60,8 +60,9 @@ body {
   width: 100%;
   min-height: 100vh;
   overflow: visible;
-  /* ISO view를 위한 transform origin */
-  transform-style: preserve-3d;
+  /* ISO view를 위한 perspective */
+  perspective: 2000px;
+  perspective-origin: 50% 30%;
 }
 
 /* ==================== Grid ==================== */
@@ -74,7 +75,7 @@ body {
   min-height: 100vh;
   align-content: start;
   /* ISO view transform */
-  transform: rotateX(60deg) rotateZ(45deg);
+  transform: rotateX(60deg) rotateZ(45deg) scale(0.6) translateY(-20vh);
   transform-origin: center center;
   transition: transform 0.1s linear;
 }

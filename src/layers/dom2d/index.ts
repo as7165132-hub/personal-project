@@ -51,7 +51,9 @@ export class Dom2DLayer {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
     if (grid) {
       // ISO view 유지하면서 Y축으로만 이동 (컨베이어 효과)
-      grid.style.transform = `rotateX(60deg) rotateZ(45deg) translateY(-${this.scrollOffset}px)`;
+      // scale과 초기 translateY 오프셋을 유지하면서 스크롤 적용
+      const baseOffset = 20; // -20vh를 vw 단위로 근사
+      grid.style.transform = `rotateX(60deg) rotateZ(45deg) scale(0.6) translateY(calc(-${baseOffset}vh - ${this.scrollOffset}px))`;
     }
   }
 
