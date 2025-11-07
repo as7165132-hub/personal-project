@@ -20,15 +20,8 @@ export class GL3DLayer {
   private islandMesh: THREE.Mesh | null = null;
   private bubbles: THREE.Mesh[] = [];
   private activeBubble: THREE.Mesh | null = null;
-  private activeCardMesh: THREE.Mesh | null = null; // 카드 inflating 메시
+  private activeCardMesh: THREE.Mesh | null = null; // 임시 정리용 (제거 시 사용)
   private bubbleAnimation: { scale: number; targetScale: number; time: number } | null = null;
-  private cardInflationAnimation: {
-    scaleXY: number;
-    scaleZ: number;
-    targetScaleXY: number;
-    targetScaleZ: number;
-    time: number
-  } | null = null;
 
   constructor(canvasId: string = 'gl-canvas') {
     let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -181,6 +174,21 @@ export class GL3DLayer {
     // 캔버스 표시
     this.canvas.style.opacity = '1';
 
+    // 이전에 생성된 풍선/카드 메시 제거
+    if (this.activeBubble) {
+      this.scene.remove(this.activeBubble);
+      this.activeBubble.geometry.dispose();
+      (this.activeBubble.material as THREE.Material).dispose();
+      this.activeBubble = null;
+    }
+
+    if (this.activeCardMesh) {
+      this.scene.remove(this.activeCardMesh);
+      this.activeCardMesh.geometry.dispose();
+      (this.activeCardMesh.material as THREE.Material).dispose();
+      this.activeCardMesh = null;
+    }
+
     // 섬과 버블은 숨김 상태 유지 (카드 클릭 시 풍선만 표시)
     if (this.islandMesh) {
       this.islandMesh.visible = false;
@@ -265,57 +273,29 @@ export class GL3DLayer {
       this.activeCardMesh = null;
     }
 
-    // 카드 형태의 3D 메시 생성 (둥근 박스) - 훨씬 크게
-    const cardGeometry = new THREE.BoxGeometry(3, 4, 0.2, 8, 8, 1);
-    const cardMaterial = new THREE.MeshStandardMaterial({
-      color: 0xff3333, // 빨간색
-      transparent: false, // 투명도 제거
-      opacity: 1.0,
-      roughness: 0.3,
-      metalness: 0.1,
-      emissive: 0xff0000,
-      emissiveIntensity: 0.5,
-    });
-
-    this.activeCardMesh = new THREE.Mesh(cardGeometry, cardMaterial);
-    this.activeCardMesh.position.copy(position);
-    this.activeCardMesh.position.z = 2; // 더 위로
-    this.activeCardMesh.scale.set(1, 1, 1); // 큰 크기로 시작
-    this.scene.add(this.activeCardMesh);
-    console.log('Card mesh created at:', this.activeCardMesh.position);
-
-    // 구형 풍선도 추가 (카드에서 튀어나오는 효과) - 훨씬 크게
-    const bubbleGeometry = new THREE.SphereGeometry(2, 32, 32);
+    // 풍선만 생성 (빨간색 구체)
+    const bubbleGeometry = new THREE.SphereGeometry(1.5, 32, 32);
     const bubbleMaterial = new THREE.MeshStandardMaterial({
       color: 0xff0000, // 순수 빨간색
-      transparent: false,
-      opacity: 1.0,
+      transparent: true,
+      opacity: 0.9,
       roughness: 0.2,
       metalness: 0.1,
       emissive: 0xff0000,
-      emissiveIntensity: 0.5,
+      emissiveIntensity: 0.4,
     });
 
     this.activeBubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
     this.activeBubble.position.copy(position);
-    this.activeBubble.position.z = 4; // 훨씬 위로
-    this.activeBubble.scale.set(1, 1, 1); // 큰 크기로 시작
+    this.activeBubble.position.z = 2; // 카드 위에서 시작
+    this.activeBubble.scale.set(0.1, 0.1, 0.1); // 작게 시작
     this.scene.add(this.activeBubble);
     console.log('Bubble created at:', this.activeBubble.position);
 
-    // 카드 inflation 애니메이션 시작
-    this.cardInflationAnimation = {
-      scaleXY: 1.0,
-      scaleZ: 1.0,
-      targetScaleXY: 1.5, // 카드는 약간만 커짐
-      targetScaleZ: 4.0, // Z 방향으로 크게 부풂
-      time: 0,
-    };
-
-    // 풍선 애니메이션 시작
+    // 풍선 애니메이션 시작 (작은 크기에서 크게 부풀어오름)
     this.bubbleAnimation = {
-      scale: 1.0,
-      targetScale: 3.0,
+      scale: 0.1,
+      targetScale: 2.5,
       time: 0,
     };
 
@@ -333,53 +313,23 @@ export class GL3DLayer {
       bubble.position.y += Math.sin(time + offset) * 0.001;
     });
 
-    // 카드 inflation 애니메이션
-    if (this.cardInflationAnimation && this.activeCardMesh) {
-      this.cardInflationAnimation.time += 0.016; // ~60fps
-      const duration = 0.9; // 900ms
-
-      if (this.cardInflationAnimation.time < duration) {
-        const t = this.cardInflationAnimation.time / duration;
-        const easeOut = 1 - Math.pow(1 - t, 3);
-
-        // XY는 약간만, Z는 크게 부풀어오름 (pimple 효과)
-        const scaleXY = this.cardInflationAnimation.scaleXY +
-                       (this.cardInflationAnimation.targetScaleXY - this.cardInflationAnimation.scaleXY) * easeOut;
-        const scaleZ = this.cardInflationAnimation.scaleZ +
-                      (this.cardInflationAnimation.targetScaleZ - this.cardInflationAnimation.scaleZ) * easeOut;
-
-        this.activeCardMesh.scale.set(scaleXY, scaleXY, scaleZ);
-
-        // 약간 위로 떠오름
-        this.activeCardMesh.position.z = 0.5 + (scaleZ * 0.15);
-      } else {
-        // 애니메이션 완료
-        this.activeCardMesh.scale.set(
-          this.cardInflationAnimation.targetScaleXY,
-          this.cardInflationAnimation.targetScaleXY,
-          this.cardInflationAnimation.targetScaleZ
-        );
-        this.cardInflationAnimation = null;
-      }
-    }
-
     // 활성 풍선 애니메이션
     if (this.bubbleAnimation && this.activeBubble) {
       this.bubbleAnimation.time += 0.016; // ~60fps
-      const duration = 0.8; // 800ms
+      const duration = 1.2; // 1200ms (더 천천히)
 
       if (this.bubbleAnimation.time < duration) {
-        // Ease out elastic
+        // Ease out elastic with bounce
         const t = this.bubbleAnimation.time / duration;
         const easeOut = 1 - Math.pow(1 - t, 3);
-        const bounce = Math.sin(t * Math.PI * 2) * 0.1 * (1 - t);
+        const bounce = Math.sin(t * Math.PI * 3) * 0.15 * (1 - t);
         const scale = this.bubbleAnimation.scale +
                      (this.bubbleAnimation.targetScale - this.bubbleAnimation.scale) * easeOut + bounce;
 
         this.activeBubble.scale.set(scale, scale, scale);
 
-        // 위로 떠오름
-        this.activeBubble.position.z += 0.02 * (1 - t);
+        // 위로 천천히 떠오름
+        this.activeBubble.position.z += 0.015 * (1 - t);
       } else {
         // 애니메이션 완료
         const finalScale = this.bubbleAnimation.targetScale;
