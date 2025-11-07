@@ -178,6 +178,9 @@ export class GL3DLayer {
    * 활성화
    */
   private activate(): void {
+    // 캔버스 표시
+    this.canvas.style.opacity = '1';
+
     // 섬과 버블 표시
     if (this.islandMesh) {
       this.islandMesh.visible = true;
@@ -188,12 +191,16 @@ export class GL3DLayer {
     });
 
     this.startRenderLoop();
+    console.log('GL3D Layer activated, canvas opacity set to 1');
   }
 
   /**
    * 비활성화
    */
   private deactivate(): void {
+    // 캔버스 숨김
+    this.canvas.style.opacity = '0';
+
     // 섬과 버블 숨김
     if (this.islandMesh) {
       this.islandMesh.visible = false;
