@@ -39,7 +39,7 @@ export class Dom2DLayer {
   }
 
   /**
-   * Wheel 핸들러 - 컨베이어 벨트 효과
+   * Wheel 핸들러 - 순수 2D 스크롤
    */
   private handleWheel(e: WheelEvent): void {
     // deltaY 값을 누적
@@ -50,9 +50,8 @@ export class Dom2DLayer {
 
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
     if (grid) {
-      // ISO view 유지하면서 Y축으로만 이동 (컨베이어 효과)
-      // CSS 초기값과 동일한 transform 유지: rotateX(45deg) rotateZ(30deg) scale(0.7)
-      grid.style.transform = `rotateX(45deg) rotateZ(30deg) scale(0.7) translateY(-${this.scrollOffset}px)`;
+      // 순수 2D translateY만 적용 (ISO transform 제거)
+      grid.style.transform = `translateY(-${this.scrollOffset}px)`;
     }
   }
 
