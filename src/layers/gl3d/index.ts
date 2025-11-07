@@ -82,7 +82,8 @@ export class GL3DLayer {
   private setupIsometricCamera(): void {
     // 카메라를 위에서 내려다보는 각도로 고정
     // 2점 투시: 수직선은 평행, 수평 방향으로만 소실점
-    this.camera.position.set(0, 15, 15);
+    // CSS rotateX(60deg)와 매치되도록 설정
+    this.camera.position.set(0, 20, 25);
     this.camera.lookAt(0, 0, 0);
   }
 
