@@ -7,7 +7,6 @@ import * as THREE from 'three';
 import type { AppState } from '@core/types';
 import { eventBus } from '@core/event-bus';
 import { anchorMap } from '@systems/anchor-map';
-import settings from '@config/settings.json';
 
 export class GL3DLayer {
   private canvas: HTMLCanvasElement;
@@ -20,15 +19,12 @@ export class GL3DLayer {
   private islandMesh: THREE.Mesh | null = null;
   private bubbles: THREE.Mesh[] = [];
   private activeBubble: THREE.Mesh | null = null;
-  private activeCardMesh: THREE.Mesh | null = null; // 카드 inflating 메시
+  private activeCardMesh: THREE.Mesh | null = null; // 임시 정리용 (제거 시 사용)
   private bubbleAnimation: { scale: number; targetScale: number; time: number } | null = null;
-  private cardInflationAnimation: {
-    scaleXY: number;
-    scaleZ: number;
-    targetScaleXY: number;
-    targetScaleZ: number;
-    time: number
-  } | null = null;
+
+  // 스크롤 관련
+  private isActive: boolean = false;
+  private scrollContainer: HTMLElement | null = null;
 
   constructor(canvasId: string = 'gl-canvas') {
     let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -41,6 +37,7 @@ export class GL3DLayer {
     }
 
     this.canvas = canvas;
+    this.scrollContainer = document.getElementById('app');
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(
       50,
@@ -80,22 +77,16 @@ export class GL3DLayer {
   }
 
   /**
-   * 아이소메트릭 카메라 설정
+   * 카메라 설정 (고정 - 2점 투시)
    */
   private setupIsometricCamera(): void {
-    const config = settings.camera.iso;
-
-    // 카메라 위치 (아이소메트릭 각도)
-    const distance = 20;
-    const rad = THREE.MathUtils.degToRad;
-
-    this.camera.position.set(
-      distance * Math.sin(rad(config.rz)),
-      distance * Math.sin(rad(config.rx)),
-      distance * Math.cos(rad(config.rz))
-    );
-
+    // 카메라를 위에서 내려다보는 각도로 고정 (CSS rotateX(45deg)와 매치)
+    // 2점 투시: 수직선은 평행, 수평 방향으로만 소실점
+    this.camera.position.set(0, 10, 20);
     this.camera.lookAt(0, 0, 0);
+
+    console.log('Camera position:', this.camera.position);
+    console.log('Camera looking at:', 0, 0, 0);
   }
 
   /**
@@ -103,12 +94,23 @@ export class GL3DLayer {
    */
   private buildScene(): void {
     // 조명
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     this.scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(5, 10, 7);
     this.scene.add(directionalLight);
+
+    // 디버깅용 테스트 큐브 (항상 보이도록)
+    const testCubeGeometry = new THREE.BoxGeometry(2, 2, 2);
+    const testCubeMaterial = new THREE.MeshStandardMaterial({
+      color: 0x00ff00,
+      wireframe: false,
+    });
+    const testCube = new THREE.Mesh(testCubeGeometry, testCubeMaterial);
+    testCube.position.set(0, 0, 0);
+    this.scene.add(testCube);
+    console.log('Test cube added at origin');
 
     // 아이소메트릭 섬 (간단한 평면)
     const islandGeometry = new THREE.PlaneGeometry(8, 8, 10, 10);
@@ -168,6 +170,7 @@ export class GL3DLayer {
     // 카드 클릭 이벤트 (3D 풍선 생성)
     eventBus.on<{ cardId: string; position: THREE.Vector3 }>('card:clicked', (data) => {
       if (data) {
+        console.log(`Card clicked: ${data.cardId}`);
         this.createBalloon(data.position);
       }
     });
@@ -177,22 +180,65 @@ export class GL3DLayer {
    * 활성화
    */
   private activate(): void {
-    // 섬과 버블 표시
+    this.isActive = true;
+
+    // 캔버스 표시
+    this.canvas.style.opacity = '1';
+    console.log('GL3D Layer: Canvas opacity set to 1');
+
+    // 씬 위치 초기화 (현재 스크롤 위치에 맞춤)
+    if (this.scrollContainer) {
+      const scrollY = this.scrollContainer.scrollTop;
+      const sceneOffset = scrollY * 0.01;
+      this.scene.position.y = -sceneOffset;
+      console.log('Scene position updated:', this.scene.position);
+    }
+
+    // 이전에 생성된 풍선/카드 메시 제거
+    if (this.activeBubble) {
+      this.scene.remove(this.activeBubble);
+      this.activeBubble.geometry.dispose();
+      (this.activeBubble.material as THREE.Material).dispose();
+      this.activeBubble = null;
+    }
+
+    if (this.activeCardMesh) {
+      this.scene.remove(this.activeCardMesh);
+      this.activeCardMesh.geometry.dispose();
+      (this.activeCardMesh.material as THREE.Material).dispose();
+      this.activeCardMesh = null;
+    }
+
+    // 섬과 버블은 숨김 상태 유지 (카드 클릭 시 풍선만 표시)
     if (this.islandMesh) {
-      this.islandMesh.visible = true;
+      this.islandMesh.visible = false;
     }
 
     this.bubbles.forEach((bubble) => {
-      bubble.visible = true;
+      bubble.visible = false;
     });
 
+    // 스크롤 이벤트 리스너 추가
+    if (this.scrollContainer) {
+      this.scrollContainer.addEventListener('scroll', this.handleScroll);
+    }
+
     this.startRenderLoop();
+    console.log('GL3D Layer activated, render loop started');
   }
 
   /**
    * 비활성화
    */
   private deactivate(): void {
+    this.isActive = false;
+
+    // 캔버스 숨김
+    this.canvas.style.opacity = '0';
+
+    // 씬 위치 완전히 초기화
+    this.scene.position.set(0, 0, 0);
+
     // 섬과 버블 숨김
     if (this.islandMesh) {
       this.islandMesh.visible = false;
@@ -202,8 +248,26 @@ export class GL3DLayer {
       bubble.visible = false;
     });
 
+    // 스크롤 이벤트 리스너 제거
+    if (this.scrollContainer) {
+      this.scrollContainer.removeEventListener('scroll', this.handleScroll);
+    }
+
     this.stopRenderLoop();
   }
+
+  /**
+   * 스크롤 핸들러 (화살표 함수로 this 바인딩)
+   */
+  private handleScroll = (): void => {
+    if (!this.scrollContainer || !this.isActive) return;
+
+    const scrollY = this.scrollContainer.scrollTop;
+
+    // 스크롤 양에 비례하여 씬을 Y축으로만 이동 (컨베이어 효과)
+    const sceneOffset = scrollY * 0.01; // 스크롤 민감도
+    this.scene.position.y = -sceneOffset;
+  };
 
   /**
    * 렌더 루프 시작
@@ -233,8 +297,11 @@ export class GL3DLayer {
    * 3D 풍선 생성 - 카드가 부풀어 오르는 효과
    */
   private createBalloon(position: THREE.Vector3): void {
+    console.log('createBalloon called with position:', position);
+
     // 렌더링 루프가 실행 중이 아니면 시작
     if (this.animationFrameId === null) {
+      console.log('Starting render loop');
       this.startRenderLoop();
     }
 
@@ -254,57 +321,33 @@ export class GL3DLayer {
       this.activeCardMesh = null;
     }
 
-    // 카드 형태의 3D 메시 생성 (둥근 박스)
-    const cardGeometry = new THREE.BoxGeometry(2, 2.5, 0.1, 8, 8, 1);
-    const cardMaterial = new THREE.MeshStandardMaterial({
-      color: 0xff3333, // 빨간색
+    // 풍선만 생성 (빨간색 구체)
+    const bubbleGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+    const bubbleMaterial = new THREE.MeshStandardMaterial({
+      color: 0xff0000, // 순수 빨간색
       transparent: true,
       opacity: 0.9,
-      roughness: 0.3,
+      roughness: 0.2,
       metalness: 0.1,
       emissive: 0xff0000,
       emissiveIntensity: 0.4,
     });
 
-    this.activeCardMesh = new THREE.Mesh(cardGeometry, cardMaterial);
-    this.activeCardMesh.position.copy(position);
-    this.activeCardMesh.position.z = 0.5; // 카드 위치에서 시작
-    this.activeCardMesh.scale.set(0.1, 0.1, 0.1);
-    this.scene.add(this.activeCardMesh);
-
-    // 구형 풍선도 추가 (카드에서 튀어나오는 효과)
-    const bubbleGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const bubbleMaterial = new THREE.MeshStandardMaterial({
-      color: 0xff3333, // 빨간색
-      transparent: true,
-      opacity: 0.85,
-      roughness: 0.2,
-      metalness: 0.1,
-      emissive: 0xff0000,
-      emissiveIntensity: 0.3,
-    });
-
     this.activeBubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
     this.activeBubble.position.copy(position);
-    this.activeBubble.position.z = 1;
-    this.activeBubble.scale.set(0.1, 0.1, 0.1);
+    this.activeBubble.position.z = 2; // 카드 위에서 시작
+    this.activeBubble.scale.set(0.1, 0.1, 0.1); // 작게 시작
     this.scene.add(this.activeBubble);
+    console.log('Bubble created at:', this.activeBubble.position);
 
-    // 카드 inflation 애니메이션 시작
-    this.cardInflationAnimation = {
-      scaleXY: 0.1,
-      scaleZ: 0.1,
-      targetScaleXY: 1.0, // 카드는 약간만 커짐
-      targetScaleZ: 3.0, // Z 방향으로 크게 부풂
-      time: 0,
-    };
-
-    // 풍선 애니메이션 시작
+    // 풍선 애니메이션 시작 (작은 크기에서 크게 부풀어오름)
     this.bubbleAnimation = {
       scale: 0.1,
-      targetScale: 1.8,
+      targetScale: 2.5,
       time: 0,
     };
+
+    console.log('Animation started');
   }
 
   /**
@@ -318,53 +361,23 @@ export class GL3DLayer {
       bubble.position.y += Math.sin(time + offset) * 0.001;
     });
 
-    // 카드 inflation 애니메이션
-    if (this.cardInflationAnimation && this.activeCardMesh) {
-      this.cardInflationAnimation.time += 0.016; // ~60fps
-      const duration = 0.9; // 900ms
-
-      if (this.cardInflationAnimation.time < duration) {
-        const t = this.cardInflationAnimation.time / duration;
-        const easeOut = 1 - Math.pow(1 - t, 3);
-
-        // XY는 약간만, Z는 크게 부풀어오름 (pimple 효과)
-        const scaleXY = this.cardInflationAnimation.scaleXY +
-                       (this.cardInflationAnimation.targetScaleXY - this.cardInflationAnimation.scaleXY) * easeOut;
-        const scaleZ = this.cardInflationAnimation.scaleZ +
-                      (this.cardInflationAnimation.targetScaleZ - this.cardInflationAnimation.scaleZ) * easeOut;
-
-        this.activeCardMesh.scale.set(scaleXY, scaleXY, scaleZ);
-
-        // 약간 위로 떠오름
-        this.activeCardMesh.position.z = 0.5 + (scaleZ * 0.15);
-      } else {
-        // 애니메이션 완료
-        this.activeCardMesh.scale.set(
-          this.cardInflationAnimation.targetScaleXY,
-          this.cardInflationAnimation.targetScaleXY,
-          this.cardInflationAnimation.targetScaleZ
-        );
-        this.cardInflationAnimation = null;
-      }
-    }
-
     // 활성 풍선 애니메이션
     if (this.bubbleAnimation && this.activeBubble) {
       this.bubbleAnimation.time += 0.016; // ~60fps
-      const duration = 0.8; // 800ms
+      const duration = 1.2; // 1200ms (더 천천히)
 
       if (this.bubbleAnimation.time < duration) {
-        // Ease out elastic
+        // Ease out elastic with bounce
         const t = this.bubbleAnimation.time / duration;
         const easeOut = 1 - Math.pow(1 - t, 3);
-        const bounce = Math.sin(t * Math.PI * 2) * 0.1 * (1 - t);
+        const bounce = Math.sin(t * Math.PI * 3) * 0.15 * (1 - t);
         const scale = this.bubbleAnimation.scale +
                      (this.bubbleAnimation.targetScale - this.bubbleAnimation.scale) * easeOut + bounce;
 
         this.activeBubble.scale.set(scale, scale, scale);
 
-        // 위로 떠오름
-        this.activeBubble.position.z += 0.02 * (1 - t);
+        // 위로 천천히 떠오름
+        this.activeBubble.position.z += 0.015 * (1 - t);
       } else {
         // 애니메이션 완료
         const finalScale = this.bubbleAnimation.targetScale;

@@ -13,6 +13,7 @@ export class Dom2DLayer {
   private container: HTMLElement;
   private cards: HTMLElement[] = [];
   private statusLabel: HTMLElement | null = null;
+  private currentState: AppState = 'DEFAULT_2D';
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -36,6 +37,9 @@ export class Dom2DLayer {
    * 레이아웃 구성
    */
   private buildLayout(): void {
+    // 기존 로딩 메시지 제거
+    this.container.innerHTML = '';
+
     // 상태 라벨
     this.statusLabel = document.createElement('div');
     this.statusLabel.className = 'surface-status-label';
@@ -47,14 +51,27 @@ export class Dom2DLayer {
     grid.className = 'surface-grid';
     grid.setAttribute('data-state', 'DEFAULT_2D');
 
-    // 카드 생성 (샘플)
-    const cardData = [
+    // 카드 생성 (다수의 샘플 카드)
+    const totalCards = 216; // 4열 x 54행 그리드
+    const cardData = [];
+
+    // 처음 5개는 의미있는 텍스트
+    cardData.push(
       { id: 'prologue', text: i18n.t('PROLOGUE') },
       { id: 'layers', text: i18n.t('LAYERS') },
       { id: 'threshold', text: i18n.t('THRESHOLD') },
       { id: 'debut', text: i18n.t('DEBUT') },
-      { id: 'epilogue', text: i18n.t('EPILOGUE') },
-    ];
+      { id: 'epilogue', text: i18n.t('EPILOGUE') }
+    );
+
+    // 나머지는 번호로 채움
+    for (let i = 6; i <= totalCards; i++) {
+      const num = String(i).padStart(3, '0');
+      cardData.push({
+        id: `card-${num}`,
+        text: `CARD ${num}`
+      });
+    }
 
     cardData.forEach((data) => {
       const card = document.createElement('div');
@@ -69,6 +86,25 @@ export class Dom2DLayer {
       text.textContent = data.text;
 
       card.appendChild(text);
+
+      // 카드 클릭 시 3D 풍선 생성
+      card.addEventListener('click', () => {
+        const cardId = data.id;
+        const anchor = anchorMap.get(cardId);
+
+        if (anchor) {
+          // 다른 활성화된 카드 비활성화
+          this.cards.forEach(c => c.classList.remove('bubble-active'));
+          card.classList.add('bubble-active');
+
+          // 3D 풍선 생성 이벤트 발행
+          eventBus.emit('card:clicked', {
+            cardId,
+            position: anchor.position3D.clone(),
+          });
+        }
+      });
+
       grid.appendChild(card);
       this.cards.push(card);
 
@@ -95,12 +131,35 @@ export class Dom2DLayer {
     eventBus.on('state:reset', () => {
       this.reset();
     });
+
+    // 스크롤 이벤트 (3D 모드에서 그리드 이동)
+    this.container.addEventListener('scroll', () => {
+      this.handleScroll();
+    });
+  }
+
+  /**
+   * 스크롤 핸들러
+   */
+  private handleScroll(): void {
+    if (this.currentState !== 'SURFACE_ISO') return;
+
+    const scrollY = this.container.scrollTop;
+    const grid = this.container.querySelector('.surface-grid') as HTMLElement;
+
+    if (grid) {
+      // Y축 회전 추가하여 입체감 부여 (컨베이어 효과)
+      const scrollOffset = scrollY * 0.5; // 스크롤 민감도 조정
+      grid.style.transform = `rotateX(50deg) rotateY(-15deg) translateZ(-200px) translateY(-${scrollOffset}px)`;
+    }
   }
 
   /**
    * SWITCHING 상태 진입
    */
   private enterSwitchingState(): void {
+    this.currentState = 'SWITCHING';
+
     if (!this.statusLabel) return;
 
     // 라벨 업데이트
@@ -127,6 +186,8 @@ export class Dom2DLayer {
    * SURFACE_ISO 상태 진입
    */
   private enterSurfaceIsoState(): void {
+    this.currentState = 'SURFACE_ISO';
+
     if (!this.statusLabel) return;
 
     // 라벨 업데이트
@@ -143,6 +204,8 @@ export class Dom2DLayer {
    * 리셋
    */
   private reset(): void {
+    this.currentState = 'DEFAULT_2D';
+
     if (!this.statusLabel) return;
 
     this.statusLabel.textContent = i18n.t('MODE_ON');
@@ -150,6 +213,8 @@ export class Dom2DLayer {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
     if (grid) {
       grid.setAttribute('data-state', 'DEFAULT_2D');
+      // transform 초기화
+      grid.style.transform = '';
     }
 
     // 카드 변형 초기화
