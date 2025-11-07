@@ -95,15 +95,15 @@ body {
 }
 
 .surface-grid[data-state='SWITCHING'] {
-  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) scale(0.96);
+  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) translateX(-15vw) scale(0.96);
   opacity: 0.9;
 }
 
 .surface-grid[data-state='SURFACE_ISO'] {
-  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) scale(0.96);
+  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) translateX(-15vw) scale(0.96);
   opacity: 0.3;
   filter: saturate(0.5) brightness(0.7);
-  pointer-events: none;
+  pointer-events: all;
 }
 
 /* ==================== Cards ==================== */
@@ -130,6 +130,24 @@ body {
 .surface-card:focus-visible {
   outline: 2px solid var(--surface-fg);
   outline-offset: 4px;
+}
+
+/* Bubble animation on click */
+.surface-card.bubble-active {
+  animation: bubbleUp 800ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  z-index: 100;
+}
+
+@keyframes bubbleUp {
+  0% {
+    transform: scale(1) translateZ(0);
+  }
+  50% {
+    transform: scale(1.15) translateZ(80px);
+  }
+  100% {
+    transform: scale(1.08) translateZ(60px);
+  }
 }
 
 .surface-card-text {
