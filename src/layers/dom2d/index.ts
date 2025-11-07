@@ -50,14 +50,27 @@ export class Dom2DLayer {
     grid.className = 'surface-grid';
     grid.setAttribute('data-state', 'DEFAULT_2D');
 
-    // 카드 생성 (샘플)
-    const cardData = [
+    // 카드 생성 (다수의 샘플 카드)
+    const totalCards = 36; // 6x6 그리드
+    const cardData = [];
+
+    // 처음 5개는 의미있는 텍스트
+    cardData.push(
       { id: 'prologue', text: i18n.t('PROLOGUE') },
       { id: 'layers', text: i18n.t('LAYERS') },
       { id: 'threshold', text: i18n.t('THRESHOLD') },
       { id: 'debut', text: i18n.t('DEBUT') },
-      { id: 'epilogue', text: i18n.t('EPILOGUE') },
-    ];
+      { id: 'epilogue', text: i18n.t('EPILOGUE') }
+    );
+
+    // 나머지는 번호로 채움
+    for (let i = 6; i <= totalCards; i++) {
+      const num = String(i).padStart(2, '0');
+      cardData.push({
+        id: `card-${num}`,
+        text: `CARD ${num}`
+      });
+    }
 
     cardData.forEach((data) => {
       const card = document.createElement('div');
