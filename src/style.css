@@ -59,19 +59,6 @@ body {
   overflow: visible;
 }
 
-/* ==================== Status Label ==================== */
-.surface-status-label {
-  position: fixed;
-  top: 2rem;
-  right: 2rem;
-  font-family: var(--surface-font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  color: var(--surface-gray);
-  z-index: 1000;
-  pointer-events: none;
-  user-select: none;
-}
 
 /* ==================== Grid ==================== */
 .surface-grid {
@@ -82,28 +69,6 @@ body {
   width: 100%;
   min-height: 100vh;
   align-content: start;
-  transition: transform var(--surface-duration) var(--surface-easing),
-    opacity var(--surface-duration) var(--surface-easing),
-    filter var(--surface-duration) var(--surface-easing);
-}
-
-/* Grid States */
-.surface-grid[data-state='DEFAULT_2D'] {
-  transform: none;
-  opacity: 1;
-  filter: none;
-}
-
-.surface-grid[data-state='SWITCHING'] {
-  transform: none;
-  opacity: 0.9;
-}
-
-.surface-grid[data-state='SURFACE_ISO'] {
-  transform: none;
-  opacity: 0.3;
-  filter: saturate(0.5) brightness(0.7);
-  pointer-events: all;
 }
 
 /* ==================== Cards ==================== */
@@ -113,27 +78,14 @@ body {
   min-height: 400px;
   background: var(--surface-accent);
   border: 1px solid rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  transition: transform 300ms var(--surface-easing),
-    box-shadow 300ms var(--surface-easing);
-  outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: box-shadow 300ms var(--surface-easing);
 }
 
 .surface-card:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-.surface-card:focus-visible {
-  outline: 2px solid var(--surface-fg);
-  outline-offset: 4px;
-}
-
-/* Card active state (for 3D bubble) */
-.surface-card.bubble-active {
-  z-index: 100;
 }
 
 .surface-card-text {
@@ -143,47 +95,10 @@ body {
   user-select: none;
 }
 
-/* ==================== WebGL Canvas ==================== */
-.gl-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 100;
-  opacity: 0;
-  transition: opacity var(--surface-duration) var(--surface-easing);
-}
-
-.surface-grid[data-state='SURFACE_ISO'] ~ .gl-canvas,
-.gl-canvas.active {
-  opacity: 1;
-}
-
 /* ==================== Accessibility ==================== */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  * {
     transition-duration: 0.01ms !important;
-  }
-
-  .surface-grid {
-    transition: opacity 200ms linear;
-  }
-
-  .surface-grid[data-state='SWITCHING'],
-  .surface-grid[data-state='SURFACE_ISO'] {
-    transform: none;
-  }
-}
-
-@media (prefers-contrast: high) {
-  .surface-card {
-    border: 2px solid var(--surface-fg);
   }
 }
 
@@ -211,13 +126,3 @@ body {
   }
 }
 
-/* ==================== Debug ==================== */
-body.debug .surface-card {
-  outline: 1px dashed red;
-}
-
-body.debug .surface-status-label {
-  background: yellow;
-  color: black;
-  padding: 0.25rem 0.5rem;
-}
