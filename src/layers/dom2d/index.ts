@@ -148,9 +148,9 @@ export class Dom2DLayer {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
 
     if (grid) {
-      // Y축 회전 추가하여 입체감 부여 (컨베이어 효과)
+      // isometric view 유지하며 컨베이어 효과
       const scrollOffset = scrollY * 0.5; // 스크롤 민감도 조정
-      grid.style.transform = `rotateX(50deg) rotateY(-15deg) translateZ(-200px) translateY(-${scrollOffset}px)`;
+      grid.style.transform = `rotateX(60deg) rotateZ(45deg) scale(0.8) translateY(-${scrollOffset}px)`;
     }
   }
 
