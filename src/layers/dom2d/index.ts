@@ -61,12 +61,14 @@ export class Dom2DLayer {
    * 레이아웃 구성
    */
   private buildLayout(): void {
+    console.log('[DEBUG] buildLayout 시작');
     // 기존 로딩 메시지 제거
     this.container.innerHTML = '';
 
     // 그리드 컨테이너
     const grid = document.createElement('div');
     grid.className = 'surface-grid';
+    console.log('[DEBUG] Grid element 생성:', grid);
 
     // 카드 생성
     const totalCards = 216;
@@ -102,7 +104,28 @@ export class Dom2DLayer {
       this.cards.push(card);
     });
 
+    console.log('[DEBUG] 카드 생성 완료:', this.cards.length, '개');
     this.container.appendChild(grid);
+    console.log('[DEBUG] Grid가 container에 추가됨');
+
+    // Transform 확인
+    setTimeout(() => {
+      const computedStyle = window.getComputedStyle(grid);
+      console.log('[DEBUG] Grid computed transform:', computedStyle.transform);
+      console.log('[DEBUG] Grid computed display:', computedStyle.display);
+      console.log('[DEBUG] Grid bounding box:', grid.getBoundingClientRect());
+
+      if (this.cards.length > 0) {
+        const firstCard = this.cards[0];
+        const cardRect = firstCard.getBoundingClientRect();
+        console.log('[DEBUG] 첫 번째 카드 위치:', cardRect);
+        console.log('[DEBUG] 첫 번째 카드 computed style:', {
+          background: window.getComputedStyle(firstCard).background,
+          display: window.getComputedStyle(firstCard).display,
+          visibility: window.getComputedStyle(firstCard).visibility
+        });
+      }
+    }, 100);
   }
 
   /**
