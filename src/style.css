@@ -49,7 +49,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 배경 래퍼 - ISO 모드에서 배경과 함께 변환 */
+/* 배경 래퍼 - 그리드와 완전히 동일한 속도로 스크롤 */
 body::before {
   content: '';
   position: fixed;
@@ -62,7 +62,9 @@ body::before {
   background-repeat: repeat; /* 타일링 */
   background-position: center;
   z-index: 0;
-  transition: transform 0.1s linear;
+  /* 그리드와 동일한 스크롤 오프셋 적용 */
+  transform: translateY(calc(var(--scroll-offset) * -1));
+  transition: none; /* 즉시 반응 */
 }
 
 /* ==================== Container ==================== */
@@ -162,6 +164,7 @@ body::before {
   --scroll-offset: 0px;
 }
 
+/* ISO 모드: 배경과 container를 완전히 동일하게 변환 */
 body.iso-mode::before {
   transform: rotateX(30deg) rotateZ(15deg) scale(1.2) translateY(calc(var(--scroll-offset) * -1));
   transform-origin: center center;
@@ -169,7 +172,7 @@ body.iso-mode::before {
 
 body.iso-mode .surface-container {
   transform: rotateX(30deg) rotateZ(15deg) scale(1);
-  transform-origin: center top;
+  transform-origin: center center;
   transition: transform 0.5s var(--surface-easing);
 }
 

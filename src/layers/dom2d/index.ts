@@ -10,6 +10,7 @@ export class Dom2DLayer {
   private cards: HTMLElement[] = [];
   private scrollOffset: number = 0; // 누적 스크롤 오프셋
   private isIsoMode: boolean = false; // ISO 뷰 모드
+  private gridHeight: number = 0; // 그리드 총 높이 (컨베이어 벨트용)
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -77,36 +78,50 @@ export class Dom2DLayer {
   }
 
   /**
-   * Wheel 핸들러 - 스크롤 오프셋 업데이트
+   * Wheel 핸들러 - 컨베이어 벨트 스크롤
    */
   private handleWheel(e: WheelEvent): void {
     // deltaY 값을 누적
     this.scrollOffset += e.deltaY * 0.5; // 스크롤 속도 조절
 
-    // 최소값 제한 (위로 너무 많이 못가게)
-    this.scrollOffset = Math.max(0, this.scrollOffset);
+    // 그리드 높이 계산 (처음 한 번만)
+    if (this.gridHeight === 0) {
+      const grid = this.container.querySelector('.surface-grid') as HTMLElement;
+      if (grid) {
+        this.gridHeight = grid.scrollHeight;
+      }
+    }
+
+    // 컨베이어 벨트: 무한 스크롤 (양방향)
+    if (this.gridHeight > 0) {
+      // 음수 방지 및 순환
+      while (this.scrollOffset < 0) {
+        this.scrollOffset += this.gridHeight;
+      }
+      while (this.scrollOffset >= this.gridHeight) {
+        this.scrollOffset -= this.gridHeight;
+      }
+    } else {
+      // gridHeight 계산 전에는 최소값만 제한
+      this.scrollOffset = Math.max(0, this.scrollOffset);
+    }
 
     // transform 업데이트 (2D or ISO 모드에 따라)
     this.updateTransform();
   }
 
   /**
-   * Transform 업데이트 - 배경과 그리드 동시 이동
+   * Transform 업데이트 - 배경과 그리드 완전 동기화
    */
   private updateTransform(): void {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
     if (!grid) return;
 
-    // 그리드 transform 적용 (스크롤만)
+    // 그리드와 배경 모두 동일한 스크롤 오프셋 적용
     grid.style.transform = `translateY(-${this.scrollOffset}px)`;
 
-    // ISO 모드일 때는 배경도 함께 이동
-    if (this.isIsoMode) {
-      // body::before 요소에 직접 접근할 수 없으므로, CSS custom property 사용
-      document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
-    } else {
-      document.body.style.setProperty('--scroll-offset', '0px');
-    }
+    // 배경도 정확히 동일한 속도로 이동 (CSS custom property 사용)
+    document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
   }
 
   /**
@@ -160,8 +175,12 @@ export class Dom2DLayer {
     this.container.appendChild(grid);
     console.log('[DEBUG] Grid가 container에 추가됨');
 
-    // Transform 확인
+    // Transform 확인 및 컨베이어 벨트 높이 계산
     setTimeout(() => {
+      // 그리드 높이 계산 (컨베이어 벨트용)
+      this.gridHeight = grid.scrollHeight;
+      console.log('[DEBUG] 컨베이어 벨트 높이:', this.gridHeight, 'px');
+
       const gridRect = grid.getBoundingClientRect();
       console.log('[DEBUG] Grid 위치 상세:', {
         x: gridRect.x,
