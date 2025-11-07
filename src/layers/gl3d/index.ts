@@ -23,6 +23,11 @@ export class GL3DLayer {
   private activeCardMesh: THREE.Mesh | null = null; // 임시 정리용 (제거 시 사용)
   private bubbleAnimation: { scale: number; targetScale: number; time: number } | null = null;
 
+  // 스크롤 관련
+  private isActive: boolean = false;
+  private scrollContainer: HTMLElement | null = null;
+  private baseCameraY: number = 0;
+
   constructor(canvasId: string = 'gl-canvas') {
     let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
 
@@ -34,6 +39,7 @@ export class GL3DLayer {
     }
 
     this.canvas = canvas;
+    this.scrollContainer = document.getElementById('app');
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(
       50,
@@ -82,9 +88,11 @@ export class GL3DLayer {
     const distance = 20;
     const rad = THREE.MathUtils.degToRad;
 
+    this.baseCameraY = distance * Math.sin(rad(config.rx));
+
     this.camera.position.set(
       distance * Math.sin(rad(config.rz)),
-      distance * Math.sin(rad(config.rx)),
+      this.baseCameraY,
       distance * Math.cos(rad(config.rz))
     );
 
@@ -171,6 +179,8 @@ export class GL3DLayer {
    * 활성화
    */
   private activate(): void {
+    this.isActive = true;
+
     // 캔버스 표시
     this.canvas.style.opacity = '1';
 
@@ -198,6 +208,11 @@ export class GL3DLayer {
       bubble.visible = false;
     });
 
+    // 스크롤 이벤트 리스너 추가
+    if (this.scrollContainer) {
+      this.scrollContainer.addEventListener('scroll', this.handleScroll);
+    }
+
     this.startRenderLoop();
     console.log('GL3D Layer activated, canvas opacity set to 1');
   }
@@ -206,6 +221,8 @@ export class GL3DLayer {
    * 비활성화
    */
   private deactivate(): void {
+    this.isActive = false;
+
     // 캔버스 숨김
     this.canvas.style.opacity = '0';
 
@@ -218,8 +235,33 @@ export class GL3DLayer {
       bubble.visible = false;
     });
 
+    // 스크롤 이벤트 리스너 제거
+    if (this.scrollContainer) {
+      this.scrollContainer.removeEventListener('scroll', this.handleScroll);
+    }
+
     this.stopRenderLoop();
   }
+
+  /**
+   * 스크롤 핸들러 (화살표 함수로 this 바인딩)
+   */
+  private handleScroll = (): void => {
+    if (!this.scrollContainer || !this.isActive) return;
+
+    const scrollY = this.scrollContainer.scrollTop;
+    const scrollHeight = this.scrollContainer.scrollHeight - this.scrollContainer.clientHeight;
+
+    // 스크롤 진행률 (0 ~ 1)
+    const scrollProgress = scrollHeight > 0 ? scrollY / scrollHeight : 0;
+
+    // 카메라 Y 위치 조정 (스크롤에 따라 아래로 이동)
+    // 전체 콘텐츠 높이에 맞춰 카메라 이동 범위 계산
+    const cameraYOffset = -scrollProgress * 50; // 스크롤 시 카메라가 아래로 이동
+
+    this.camera.position.y = this.baseCameraY + cameraYOffset;
+    this.camera.lookAt(0, cameraYOffset, 0);
+  };
 
   /**
    * 렌더 루프 시작
