@@ -76,7 +76,7 @@ body {
 /* ==================== Grid ==================== */
 .surface-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--surface-gap);
   padding: 4rem 2rem;
   width: 100%;
@@ -109,7 +109,8 @@ body {
 /* ==================== Cards ==================== */
 .surface-card {
   position: relative;
-  padding: 2rem;
+  padding: 3rem 2rem;
+  min-height: 400px;
   background: var(--surface-accent);
   border: 1px solid rgba(0, 0, 0, 0.05);
   cursor: pointer;
@@ -117,6 +118,9 @@ body {
     box-shadow 300ms var(--surface-easing);
   transform-style: preserve-3d;
   outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .surface-card:hover {
@@ -180,10 +184,20 @@ body {
 }
 
 /* ==================== Responsive ==================== */
+@media (max-width: 1024px) {
+  .surface-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .surface-grid {
     grid-template-columns: 1fr;
     padding: 2rem 1rem;
+  }
+
+  .surface-card {
+    min-height: 300px;
   }
 
   .surface-status-label {
