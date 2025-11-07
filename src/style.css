@@ -53,9 +53,9 @@ body {
 .surface-container {
   position: relative;
   width: 100%;
-  height: 100%;
-  perspective: 1200px;
-  overflow: hidden;
+  min-height: 100vh;
+  /* perspective removed for true isometric view */
+  overflow: visible;
 }
 
 /* ==================== Status Label ==================== */
