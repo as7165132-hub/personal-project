@@ -1,0 +1,26 @@
+{
+  "KR": {
+    "PROLOGUE": "정답의 표면.",
+    "LAYERS": "겹이 쌓인다.",
+    "THRESHOLD": "사이의 시간.",
+    "DEBUT": "브레이크아웃은 결점이 아니라 데뷔다.",
+    "EPILOGUE": "전형은 가라앉고, 표면이 말한다.",
+    "MODE_ON": "Archetype: On",
+    "MODE_OFF": "Archetype: Off / Surface: On",
+    "MODE_SWITCHING": "Switching…",
+    "APRIL": "정형은 농담이 되고, 표면은 진심이 된다.",
+    "MIDSOMMAR": "얕은 밤, 짙은 표면."
+  },
+  "EN": {
+    "PROLOGUE": "The surface of answers.",
+    "LAYERS": "Layers gather.",
+    "THRESHOLD": "At the threshold.",
+    "DEBUT": "A breakout isn't a flaw — it's a debut.",
+    "EPILOGUE": "Archetypes sink; the surface speaks.",
+    "MODE_ON": "Archetype: On",
+    "MODE_OFF": "Archetype: Off / Surface: On",
+    "MODE_SWITCHING": "Switching…",
+    "APRIL": "Jokes unset forms; the surface stays earnest.",
+    "MIDSOMMAR": "Shallow nights, deep surfaces."
+  }
+}

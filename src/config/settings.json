@@ -1,0 +1,47 @@
+{
+  "modes": {
+    "default": true,
+    "april": false,
+    "midsommar": false
+  },
+  "specialDays": {
+    "aprilFools": "local:04-01",
+    "midsommar": "UTC:2025-06-21"
+  },
+  "threshold": {
+    "clicks": 6,
+    "hoverMs": 2800,
+    "dragCount": 2
+  },
+  "camera": {
+    "top": {
+      "rx": 0,
+      "rz": 0,
+      "ty": 0,
+      "scale": 1
+    },
+    "iso": {
+      "rx": 55,
+      "rz": 45,
+      "tyVh": -5,
+      "scale": 0.96
+    }
+  },
+  "motion": {
+    "switchMs": 1100,
+    "easing": "cubic-bezier(.22,.8,.26,1)",
+    "bubbleFloatMs": 3200,
+    "cardSkewMax": 2,
+    "cardTranslateZ": -120
+  },
+  "a11y": {
+    "reducedMotion": true,
+    "keyboardEnabled": true
+  },
+  "performance": {
+    "targetFps": 60,
+    "lcpMs": 2500,
+    "bundleKbGzip": 250,
+    "maxDrawCalls": 150
+  }
+}

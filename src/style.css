@@ -1,0 +1,204 @@
+/**
+ * SURFACE DEBUT - Styles
+ * 드라이·간결·차분한 급진성
+ */
+
+/* ==================== CSS Variables ==================== */
+:root {
+  /* Surface Colors */
+  --surface-bg: #fafafa;
+  --surface-fg: #121212;
+  --surface-gray: #8a8a8a;
+  --surface-accent: #e8e8e8;
+
+  /* Typography */
+  --surface-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --surface-font-mono: 'SF Mono', Monaco, 'Courier New', monospace;
+
+  /* Spacing */
+  --surface-gap: 2rem;
+
+  /* Motion */
+  --surface-easing: cubic-bezier(0.22, 0.8, 0.26, 1);
+  --surface-duration: 1100ms;
+}
+
+/* ==================== Reset ==================== */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--surface-font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--surface-fg);
+  background: var(--surface-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==================== Container ==================== */
+.surface-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  perspective: 1200px;
+  overflow: hidden;
+}
+
+/* ==================== Status Label ==================== */
+.surface-status-label {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  font-family: var(--surface-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--surface-gray);
+  z-index: 1000;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ==================== Grid ==================== */
+.surface-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--surface-gap);
+  padding: 4rem 2rem;
+  width: 100%;
+  height: 100%;
+  align-content: center;
+  transition: transform var(--surface-duration) var(--surface-easing),
+    opacity var(--surface-duration) var(--surface-easing),
+    filter var(--surface-duration) var(--surface-easing);
+}
+
+/* Grid States */
+.surface-grid[data-state='DEFAULT_2D'] {
+  transform: none;
+  opacity: 1;
+  filter: none;
+}
+
+.surface-grid[data-state='SWITCHING'] {
+  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) scale(0.96);
+  opacity: 0.9;
+}
+
+.surface-grid[data-state='SURFACE_ISO'] {
+  transform: rotateX(55deg) rotateZ(45deg) translateY(-5vh) scale(0.96);
+  opacity: 0.3;
+  filter: saturate(0.5) brightness(0.7);
+  pointer-events: none;
+}
+
+/* ==================== Cards ==================== */
+.surface-card {
+  position: relative;
+  padding: 2rem;
+  background: var(--surface-accent);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform 300ms var(--surface-easing),
+    box-shadow 300ms var(--surface-easing);
+  transform-style: preserve-3d;
+  outline: none;
+}
+
+.surface-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.surface-card:focus-visible {
+  outline: 2px solid var(--surface-fg);
+  outline-offset: 4px;
+}
+
+.surface-card-text {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--surface-fg);
+  user-select: none;
+}
+
+/* ==================== WebGL Canvas ==================== */
+.gl-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity var(--surface-duration) var(--surface-easing);
+}
+
+.surface-grid[data-state='SURFACE_ISO'] ~ .gl-canvas,
+.gl-canvas.active {
+  opacity: 1;
+}
+
+/* ==================== Accessibility ==================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .surface-grid {
+    transition: opacity 200ms linear;
+  }
+
+  .surface-grid[data-state='SWITCHING'],
+  .surface-grid[data-state='SURFACE_ISO'] {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .surface-card {
+    border: 2px solid var(--surface-fg);
+  }
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 768px) {
+  .surface-grid {
+    grid-template-columns: 1fr;
+    padding: 2rem 1rem;
+  }
+
+  .surface-status-label {
+    top: 1rem;
+    right: 1rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* ==================== Debug ==================== */
+body.debug .surface-card {
+  outline: 1px dashed red;
+}
+
+body.debug .surface-status-label {
+  background: yellow;
+  color: black;
+  padding: 0.25rem 0.5rem;
+}
