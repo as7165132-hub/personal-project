@@ -1,64 +1,52 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Shopping Mall</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <!-- Header -->
-    <header>
-        <div class="container">
-            <h1 class="logo">🛍️ Simple Shop</h1>
-            <nav>
-                <button class="cart-btn" id="cartBtn">
-                    🛒 장바구니 (<span id="cartCount">0</span>)
-                </button>
-            </nav>
-        </div>
-    </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="SURFACE DEBUT — 26SS: 아키타입 해체·겹의 자아 발현" />
 
-    <!-- Main Content -->
-    <main class="container">
-        <!-- Products Section -->
-        <section class="products-section">
-            <h2>상품 목록</h2>
-            <div class="products-grid" id="productsGrid">
-                <!-- Products will be dynamically loaded here -->
-            </div>
-        </section>
+    <title>SURFACE DEBUT</title>
 
-        <!-- Cart Modal -->
-        <div class="modal" id="cartModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>장바구니</h2>
-                    <button class="close-btn" id="closeBtn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div id="cartItems">
-                        <p class="empty-cart">장바구니가 비어있습니다.</p>
-                    </div>
-                    <div class="cart-total">
-                        <h3>총 금액: <span id="totalPrice">0</span>원</h3>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" id="clearCartBtn">장바구니 비우기</button>
-                    <button class="btn btn-primary" id="checkoutBtn">주문하기</button>
-                </div>
-            </div>
-        </div>
-    </main>
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 Simple Shopping Mall. All rights reserved.</p>
-        </div>
-    </footer>
+    <style>
+      /* Critical CSS for initial load */
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fafafa;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
 
-    <script src="script.js"></script>
-</body>
+      #app {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Loading state */
+      .loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.875rem;
+        color: #8a8a8a;
+        letter-spacing: 0.05em;
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/main-C37gW1Wz.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/main-DlRf1YVd.css">
+  </head>
+  <body>
+    <!-- Main Container -->
+    <div id="app">
+      <div class="loading">Loading…</div>
+    </div>
+
+    <!-- WebGL Canvas (injected by GL3DLayer) -->
+
+    <!-- Main Script -->
+  </body>
 </html>
