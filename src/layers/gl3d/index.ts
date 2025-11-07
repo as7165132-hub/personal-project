@@ -168,7 +168,7 @@ export class GL3DLayer {
     // 카드 클릭 이벤트 (3D 풍선 생성)
     eventBus.on<{ cardId: string; position: THREE.Vector3 }>('card:clicked', (data) => {
       if (data) {
-        alert(`Card clicked: ${data.cardId}, position: ${data.position.x}, ${data.position.y}, ${data.position.z}`);
+        console.log(`Card clicked: ${data.cardId}`);
         this.createBalloon(data.position);
       }
     });
@@ -234,8 +234,11 @@ export class GL3DLayer {
    * 3D 풍선 생성 - 카드가 부풀어 오르는 효과
    */
   private createBalloon(position: THREE.Vector3): void {
+    console.log('createBalloon called with position:', position);
+
     // 렌더링 루프가 실행 중이 아니면 시작
     if (this.animationFrameId === null) {
+      console.log('Starting render loop');
       this.startRenderLoop();
     }
 
@@ -255,57 +258,61 @@ export class GL3DLayer {
       this.activeCardMesh = null;
     }
 
-    // 카드 형태의 3D 메시 생성 (둥근 박스)
-    const cardGeometry = new THREE.BoxGeometry(2, 2.5, 0.1, 8, 8, 1);
+    // 카드 형태의 3D 메시 생성 (둥근 박스) - 훨씬 크게
+    const cardGeometry = new THREE.BoxGeometry(3, 4, 0.2, 8, 8, 1);
     const cardMaterial = new THREE.MeshStandardMaterial({
       color: 0xff3333, // 빨간색
-      transparent: true,
-      opacity: 0.9,
+      transparent: false, // 투명도 제거
+      opacity: 1.0,
       roughness: 0.3,
       metalness: 0.1,
       emissive: 0xff0000,
-      emissiveIntensity: 0.4,
+      emissiveIntensity: 0.5,
     });
 
     this.activeCardMesh = new THREE.Mesh(cardGeometry, cardMaterial);
     this.activeCardMesh.position.copy(position);
-    this.activeCardMesh.position.z = 0.5; // 카드 위치에서 시작
-    this.activeCardMesh.scale.set(0.1, 0.1, 0.1);
+    this.activeCardMesh.position.z = 2; // 더 위로
+    this.activeCardMesh.scale.set(1, 1, 1); // 큰 크기로 시작
     this.scene.add(this.activeCardMesh);
+    console.log('Card mesh created at:', this.activeCardMesh.position);
 
-    // 구형 풍선도 추가 (카드에서 튀어나오는 효과)
-    const bubbleGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    // 구형 풍선도 추가 (카드에서 튀어나오는 효과) - 훨씬 크게
+    const bubbleGeometry = new THREE.SphereGeometry(2, 32, 32);
     const bubbleMaterial = new THREE.MeshStandardMaterial({
-      color: 0xff3333, // 빨간색
-      transparent: true,
-      opacity: 0.85,
+      color: 0xff0000, // 순수 빨간색
+      transparent: false,
+      opacity: 1.0,
       roughness: 0.2,
       metalness: 0.1,
       emissive: 0xff0000,
-      emissiveIntensity: 0.3,
+      emissiveIntensity: 0.5,
     });
 
     this.activeBubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
     this.activeBubble.position.copy(position);
-    this.activeBubble.position.z = 1;
-    this.activeBubble.scale.set(0.1, 0.1, 0.1);
+    this.activeBubble.position.z = 4; // 훨씬 위로
+    this.activeBubble.scale.set(1, 1, 1); // 큰 크기로 시작
     this.scene.add(this.activeBubble);
+    console.log('Bubble created at:', this.activeBubble.position);
 
     // 카드 inflation 애니메이션 시작
     this.cardInflationAnimation = {
-      scaleXY: 0.1,
-      scaleZ: 0.1,
-      targetScaleXY: 1.0, // 카드는 약간만 커짐
-      targetScaleZ: 3.0, // Z 방향으로 크게 부풂
+      scaleXY: 1.0,
+      scaleZ: 1.0,
+      targetScaleXY: 1.5, // 카드는 약간만 커짐
+      targetScaleZ: 4.0, // Z 방향으로 크게 부풂
       time: 0,
     };
 
     // 풍선 애니메이션 시작
     this.bubbleAnimation = {
-      scale: 0.1,
-      targetScale: 1.8,
+      scale: 1.0,
+      targetScale: 3.0,
       time: 0,
     };
+
+    console.log('Animation started');
   }
 
   /**
