@@ -168,6 +168,7 @@ export class GL3DLayer {
     // 카드 클릭 이벤트 (3D 풍선 생성)
     eventBus.on<{ cardId: string; position: THREE.Vector3 }>('card:clicked', (data) => {
       if (data) {
+        alert(`Card clicked: ${data.cardId}, position: ${data.position.x}, ${data.position.y}, ${data.position.z}`);
         this.createBalloon(data.position);
       }
     });
