@@ -9,6 +9,7 @@ export class Dom2DLayer {
   private container: HTMLElement;
   private cards: HTMLElement[] = [];
   private scrollOffset: number = 0; // 누적 스크롤 오프셋
+  private isIsoMode: boolean = false; // ISO 뷰 모드
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -26,6 +27,43 @@ export class Dom2DLayer {
     this.container.className = 'surface-container';
     this.buildLayout();
     this.attachWheelListener();
+    this.setupIsoToggle();
+  }
+
+  /**
+   * ISO 토글 버튼 설정
+   */
+  private setupIsoToggle(): void {
+    const toggleBtn = document.getElementById('iso-toggle');
+    if (!toggleBtn) {
+      console.warn('ISO toggle button not found');
+      return;
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      this.toggleIsoMode();
+    });
+  }
+
+  /**
+   * ISO 모드 전환
+   */
+  private toggleIsoMode(): void {
+    this.isIsoMode = !this.isIsoMode;
+    const toggleBtn = document.getElementById('iso-toggle');
+
+    if (this.isIsoMode) {
+      document.body.classList.add('iso-mode');
+      toggleBtn?.classList.add('active');
+      console.log('✨ ISO 뷰 활성화');
+    } else {
+      document.body.classList.remove('iso-mode');
+      toggleBtn?.classList.remove('active');
+      console.log('📐 2D 뷰로 전환');
+    }
+
+    // 현재 스크롤 오프셋 유지한 채로 transform 다시 적용
+    this.updateTransform();
   }
 
   /**
@@ -39,7 +77,7 @@ export class Dom2DLayer {
   }
 
   /**
-   * Wheel 핸들러 - 순수 2D 스크롤
+   * Wheel 핸들러 - 스크롤 오프셋 업데이트
    */
   private handleWheel(e: WheelEvent): void {
     // deltaY 값을 누적
@@ -48,10 +86,26 @@ export class Dom2DLayer {
     // 최소값 제한 (위로 너무 많이 못가게)
     this.scrollOffset = Math.max(0, this.scrollOffset);
 
+    // transform 업데이트 (2D or ISO 모드에 따라)
+    this.updateTransform();
+  }
+
+  /**
+   * Transform 업데이트 - 배경과 그리드 동시 이동
+   */
+  private updateTransform(): void {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
-    if (grid) {
-      // 순수 2D translateY만 적용 (ISO transform 제거)
-      grid.style.transform = `translateY(-${this.scrollOffset}px)`;
+    if (!grid) return;
+
+    // 그리드 transform 적용 (스크롤만)
+    grid.style.transform = `translateY(-${this.scrollOffset}px)`;
+
+    // ISO 모드일 때는 배경도 함께 이동
+    if (this.isIsoMode) {
+      // body::before 요소에 직접 접근할 수 없으므로, CSS custom property 사용
+      document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
+    } else {
+      document.body.style.setProperty('--scroll-offset', '0px');
     }
   }
 
