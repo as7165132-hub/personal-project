@@ -60,9 +60,7 @@ body {
   width: 100%;
   min-height: 100vh;
   overflow: visible;
-  /* ISO view를 위한 perspective */
-  perspective: 2000px;
-  perspective-origin: 50% 30%;
+  /* perspective 제거 - ISO view는 parallel projection */
 }
 
 /* ==================== Grid ==================== */
@@ -74,8 +72,8 @@ body {
   width: 100%;
   min-height: 100vh;
   align-content: start;
-  /* ISO view transform - 일단 비활성화해서 카드가 생성되었는지 확인 */
-  /* transform: rotateX(60deg) rotateZ(45deg) scale(0.6) translateY(-20vh); */
+  /* ISO view transform - perspective 없이 순수 rotation */
+  transform: rotateX(60deg) rotateZ(45deg) scale(1.2) translateY(10vh);
   transform-origin: center center;
   transition: transform 0.1s linear;
 }
@@ -85,8 +83,8 @@ body {
   position: relative;
   padding: 3rem 2rem;
   min-height: 400px;
-  background: #ffffff; /* 흰색으로 변경하여 명확히 보이도록 */
-  border: 2px solid #000000; /* 검은 테두리로 명확히 보이도록 */
+  background: var(--surface-accent);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;

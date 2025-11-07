@@ -51,9 +51,9 @@ export class Dom2DLayer {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
     if (grid) {
       // ISO view 유지하면서 Y축으로만 이동 (컨베이어 효과)
-      // scale과 초기 translateY 오프셋을 유지하면서 스크롤 적용
-      const baseOffset = 20; // -20vh를 vw 단위로 근사
-      grid.style.transform = `rotateX(60deg) rotateZ(45deg) scale(0.6) translateY(calc(-${baseOffset}vh - ${this.scrollOffset}px))`;
+      // CSS 초기값과 동일한 transform 유지: rotateX(60deg) rotateZ(45deg) scale(1.2) translateY(10vh)
+      const baseOffsetVh = 10; // 초기 CSS의 translateY 값
+      grid.style.transform = `rotateX(60deg) rotateZ(45deg) scale(1.2) translateY(calc(${baseOffsetVh}vh - ${this.scrollOffset}px))`;
     }
   }
 
@@ -61,14 +61,12 @@ export class Dom2DLayer {
    * 레이아웃 구성
    */
   private buildLayout(): void {
-    console.log('Building layout...');
     // 기존 로딩 메시지 제거
     this.container.innerHTML = '';
 
     // 그리드 컨테이너
     const grid = document.createElement('div');
     grid.className = 'surface-grid';
-    console.log('Grid created');
 
     // 카드 생성
     const totalCards = 216;
@@ -105,7 +103,6 @@ export class Dom2DLayer {
     });
 
     this.container.appendChild(grid);
-    console.log(`Layout built: ${this.cards.length} cards created`);
   }
 
   /**
