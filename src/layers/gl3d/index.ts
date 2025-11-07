@@ -20,7 +20,15 @@ export class GL3DLayer {
   private islandMesh: THREE.Mesh | null = null;
   private bubbles: THREE.Mesh[] = [];
   private activeBubble: THREE.Mesh | null = null;
+  private activeCardMesh: THREE.Mesh | null = null; // 카드 inflating 메시
   private bubbleAnimation: { scale: number; targetScale: number; time: number } | null = null;
+  private cardInflationAnimation: {
+    scaleXY: number;
+    scaleZ: number;
+    targetScaleXY: number;
+    targetScaleZ: number;
+    time: number
+  } | null = null;
 
   constructor(canvasId: string = 'gl-canvas') {
     let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -222,7 +230,7 @@ export class GL3DLayer {
   }
 
   /**
-   * 3D 풍선 생성
+   * 3D 풍선 생성 - 카드가 부풀어 오르는 효과
    */
   private createBalloon(position: THREE.Vector3): void {
     // 렌더링 루프가 실행 중이 아니면 시작
@@ -238,40 +246,63 @@ export class GL3DLayer {
       this.activeBubble = null;
     }
 
-    // 새 풍선 생성 (구체)
-    const geometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
+    // 기존 카드 메시 제거
+    if (this.activeCardMesh) {
+      this.scene.remove(this.activeCardMesh);
+      this.activeCardMesh.geometry.dispose();
+      (this.activeCardMesh.material as THREE.Material).dispose();
+      this.activeCardMesh = null;
+    }
+
+    // 카드 형태의 3D 메시 생성 (둥근 박스)
+    const cardGeometry = new THREE.BoxGeometry(2, 2.5, 0.1, 8, 8, 1);
+    const cardMaterial = new THREE.MeshStandardMaterial({
+      color: 0xff3333, // 빨간색
       transparent: true,
       opacity: 0.9,
-      roughness: 0.1,
-      metalness: 0.3,
-      emissive: 0xffffff,
-      emissiveIntensity: 0.2,
+      roughness: 0.3,
+      metalness: 0.1,
+      emissive: 0xff0000,
+      emissiveIntensity: 0.4,
     });
 
-    this.activeBubble = new THREE.Mesh(geometry, material);
+    this.activeCardMesh = new THREE.Mesh(cardGeometry, cardMaterial);
+    this.activeCardMesh.position.copy(position);
+    this.activeCardMesh.position.z = 0.5; // 카드 위치에서 시작
+    this.activeCardMesh.scale.set(0.1, 0.1, 0.1);
+    this.scene.add(this.activeCardMesh);
 
-    // 카메라 앞 보이는 위치에 생성 (position은 참고용)
-    // 카메라 정면에서 약간 오프셋된 위치
-    const cameraDirection = new THREE.Vector3();
-    this.camera.getWorldDirection(cameraDirection);
+    // 구형 풍선도 추가 (카드에서 튀어나오는 효과)
+    const bubbleGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const bubbleMaterial = new THREE.MeshStandardMaterial({
+      color: 0xff3333, // 빨간색
+      transparent: true,
+      opacity: 0.85,
+      roughness: 0.2,
+      metalness: 0.1,
+      emissive: 0xff0000,
+      emissiveIntensity: 0.3,
+    });
 
-    // 카메라 앞 5 유닛 위치에 배치
-    this.activeBubble.position.copy(this.camera.position);
-    this.activeBubble.position.add(cameraDirection.multiplyScalar(5));
-
-    // 약간 랜덤한 오프셋 추가 (카드 위치 기반)
-    this.activeBubble.position.x += (position.x * 0.1);
-    this.activeBubble.position.y += (position.y * 0.1);
-
+    this.activeBubble = new THREE.Mesh(bubbleGeometry, bubbleMaterial);
+    this.activeBubble.position.copy(position);
+    this.activeBubble.position.z = 1;
     this.activeBubble.scale.set(0.1, 0.1, 0.1);
     this.scene.add(this.activeBubble);
 
-    // 애니메이션 시작
+    // 카드 inflation 애니메이션 시작
+    this.cardInflationAnimation = {
+      scaleXY: 0.1,
+      scaleZ: 0.1,
+      targetScaleXY: 1.0, // 카드는 약간만 커짐
+      targetScaleZ: 3.0, // Z 방향으로 크게 부풂
+      time: 0,
+    };
+
+    // 풍선 애니메이션 시작
     this.bubbleAnimation = {
       scale: 0.1,
-      targetScale: 2.5,
+      targetScale: 1.8,
       time: 0,
     };
   }
@@ -286,6 +317,36 @@ export class GL3DLayer {
       const offset = index * 0.5;
       bubble.position.y += Math.sin(time + offset) * 0.001;
     });
+
+    // 카드 inflation 애니메이션
+    if (this.cardInflationAnimation && this.activeCardMesh) {
+      this.cardInflationAnimation.time += 0.016; // ~60fps
+      const duration = 0.9; // 900ms
+
+      if (this.cardInflationAnimation.time < duration) {
+        const t = this.cardInflationAnimation.time / duration;
+        const easeOut = 1 - Math.pow(1 - t, 3);
+
+        // XY는 약간만, Z는 크게 부풀어오름 (pimple 효과)
+        const scaleXY = this.cardInflationAnimation.scaleXY +
+                       (this.cardInflationAnimation.targetScaleXY - this.cardInflationAnimation.scaleXY) * easeOut;
+        const scaleZ = this.cardInflationAnimation.scaleZ +
+                      (this.cardInflationAnimation.targetScaleZ - this.cardInflationAnimation.scaleZ) * easeOut;
+
+        this.activeCardMesh.scale.set(scaleXY, scaleXY, scaleZ);
+
+        // 약간 위로 떠오름
+        this.activeCardMesh.position.z = 0.5 + (scaleZ * 0.15);
+      } else {
+        // 애니메이션 완료
+        this.activeCardMesh.scale.set(
+          this.cardInflationAnimation.targetScaleXY,
+          this.cardInflationAnimation.targetScaleXY,
+          this.cardInflationAnimation.targetScaleZ
+        );
+        this.cardInflationAnimation = null;
+      }
+    }
 
     // 활성 풍선 애니메이션
     if (this.bubbleAnimation && this.activeBubble) {
@@ -341,6 +402,18 @@ export class GL3DLayer {
       this.scene.remove(bubble);
     });
     this.bubbles = [];
+
+    if (this.activeBubble) {
+      this.activeBubble.geometry.dispose();
+      (this.activeBubble.material as THREE.Material).dispose();
+      this.scene.remove(this.activeBubble);
+    }
+
+    if (this.activeCardMesh) {
+      this.activeCardMesh.geometry.dispose();
+      (this.activeCardMesh.material as THREE.Material).dispose();
+      this.scene.remove(this.activeCardMesh);
+    }
 
     if (this.islandMesh) {
       this.islandMesh.geometry.dispose();
