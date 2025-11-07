@@ -163,13 +163,13 @@ body::before {
 }
 
 body.iso-mode::before {
-  transform: rotateX(45deg) rotateZ(30deg) scale(1.5) translateY(calc(var(--scroll-offset) * -1));
+  transform: rotateX(30deg) rotateZ(15deg) scale(1.2) translateY(calc(var(--scroll-offset) * -0.5));
   transform-origin: center center;
 }
 
 body.iso-mode .surface-container {
-  transform: rotateX(45deg) rotateZ(30deg) scale(0.8);
-  transform-origin: center center;
+  transform: rotateX(30deg) rotateZ(15deg) scale(1) translateY(-10vh);
+  transform-origin: center top;
   transition: transform 0.5s var(--surface-easing);
 }
 
