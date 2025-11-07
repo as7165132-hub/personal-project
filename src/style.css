@@ -85,8 +85,8 @@ body {
   position: relative;
   padding: 3rem 2rem;
   min-height: 400px;
-  background: var(--surface-accent);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #ffffff; /* 흰색으로 변경하여 명확히 보이도록 */
+  border: 2px solid #000000; /* 검은 테두리로 명확히 보이도록 */
   display: flex;
   align-items: center;
   justify-content: center;
