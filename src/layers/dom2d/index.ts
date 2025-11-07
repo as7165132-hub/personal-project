@@ -148,10 +148,10 @@ export class Dom2DLayer {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
 
     if (grid) {
-      // 기존 3D transform에 translateY 추가 (컨베이어 효과)
-      const baseTransform = 'rotateX(55deg) rotateZ(45deg) translateY(-5vh) translateX(-40vw) scale(0.96)';
+      // 2점 투시 기본 transform에 translateY 추가 (컨베이어 효과)
+      const baseTransform = 'rotateX(60deg) translateY(-10vh) translateX(-30vw) scale(0.9)';
       const scrollOffset = -scrollY * 0.5; // 스크롤 민감도 조정
-      grid.style.transform = `${baseTransform} translateY(${scrollOffset}px)`;
+      grid.style.transform = `${baseTransform} translateY(calc(-10vh + ${scrollOffset}px))`;
     }
   }
 

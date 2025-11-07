@@ -7,7 +7,6 @@ import * as THREE from 'three';
 import type { AppState } from '@core/types';
 import { eventBus } from '@core/event-bus';
 import { anchorMap } from '@systems/anchor-map';
-import settings from '@config/settings.json';
 
 export class GL3DLayer {
   private canvas: HTMLCanvasElement;
@@ -26,7 +25,6 @@ export class GL3DLayer {
   // 스크롤 관련
   private isActive: boolean = false;
   private scrollContainer: HTMLElement | null = null;
-  private baseCameraY: number = 0;
 
   constructor(canvasId: string = 'gl-canvas') {
     let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -79,23 +77,12 @@ export class GL3DLayer {
   }
 
   /**
-   * 아이소메트릭 카메라 설정
+   * 카메라 설정 (고정 - 2점 투시)
    */
   private setupIsometricCamera(): void {
-    const config = settings.camera.iso;
-
-    // 카메라 위치 (아이소메트릭 각도)
-    const distance = 20;
-    const rad = THREE.MathUtils.degToRad;
-
-    this.baseCameraY = distance * Math.sin(rad(config.rx));
-
-    this.camera.position.set(
-      distance * Math.sin(rad(config.rz)),
-      this.baseCameraY,
-      distance * Math.cos(rad(config.rz))
-    );
-
+    // 카메라를 위에서 내려다보는 각도로 고정
+    // 2점 투시: 수직선은 평행, 수평 방향으로만 소실점
+    this.camera.position.set(0, 15, 15);
     this.camera.lookAt(0, 0, 0);
   }
 
@@ -184,10 +171,12 @@ export class GL3DLayer {
     // 캔버스 표시
     this.canvas.style.opacity = '1';
 
-    // 씬 위치 초기화 (스크롤 위치에 맞춤)
+    // 씬 위치 초기화 (현재 스크롤 위치에 맞춤)
     if (this.scrollContainer) {
       const scrollY = this.scrollContainer.scrollTop;
-      this.scene.position.y = -scrollY * 0.01;
+      const sceneOffset = scrollY * 0.015;
+      this.scene.position.y = sceneOffset;
+      this.scene.position.z = -sceneOffset * 0.5;
     }
 
     // 이전에 생성된 풍선/카드 메시 제거
@@ -232,8 +221,8 @@ export class GL3DLayer {
     // 캔버스 숨김
     this.canvas.style.opacity = '0';
 
-    // 씬 위치 초기화
-    this.scene.position.y = 0;
+    // 씬 위치 완전히 초기화
+    this.scene.position.set(0, 0, 0);
 
     // 섬과 버블 숨김
     if (this.islandMesh) {
@@ -260,11 +249,13 @@ export class GL3DLayer {
 
     const scrollY = this.scrollContainer.scrollTop;
 
-    // 스크롤 양에 비례하여 씬을 위로 이동 (컨베이어 효과)
-    // 스크롤 다운 = 씬이 위로 올라감
-    const sceneYOffset = scrollY * 0.01; // 스크롤 민감도 조정
+    // 스크롤 양에 비례하여 씬을 이동 (컨베이어 효과)
+    // 2점 투시 효과를 유지하면서 씬만 움직임
+    const sceneOffset = scrollY * 0.015; // 스크롤 민감도
 
-    this.scene.position.y = -sceneYOffset;
+    // Y축과 Z축을 함께 이동하여 2점 투시 효과 유지
+    this.scene.position.y = sceneOffset;
+    this.scene.position.z = -sceneOffset * 0.5;
   };
 
   /**
