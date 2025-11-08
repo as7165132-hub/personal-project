@@ -447,7 +447,7 @@ export class Dom2DLayer {
     // Y 위치 기준으로 정렬 (하단부터 = Y가 큰 것부터)
     cardPositions.sort((a, b) => b.y - a.y);
 
-    // 착지 애니메이션 (ghost 레이어만 움직임)
+    // 착지 애니메이션 (카드와 ghost 같이 내려오고, ghost만 올라감)
     cardPositions.forEach((pos, index) => {
       const card = pos.card;
       const ghost = card.querySelector('.surface-card-ghost') as HTMLElement;
@@ -459,31 +459,35 @@ export class Dom2DLayer {
       landingSpot.style.top = `${pos.y + 250}px`; // 카드 중앙 지점
       this.grid.appendChild(landingSpot);
 
-      // 카드 위치 설정
+      // 카드 초기 위치 (위쪽에서 시작)
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
-      card.style.transform = `rotate(${pos.rotation}deg) scale(${pos.scale})`;
+      card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+      card.style.transition = 'transform 1s ease-out';
 
-      // ghost 초기 위치 (위쪽)
+      // ghost 초기 위치 (카드와 함께 위쪽)
       if (ghost) {
-        ghost.style.transform = 'translate(-50%, -50%) translateY(-1000px)';
+        ghost.style.transform = 'translate(-50%, -50%)';
         ghost.style.transition = 'transform 1s ease-out';
-
-        // 1단계: 하단 카드부터 순차적으로 바닥에 내려앉기
-        setTimeout(() => {
-          ghost.style.transform = 'translate(-50%, -50%) translateY(0)';
-
-          // 2단계: 착지 후 ghost만 다시 위로 올라가며 사라짐
-          setTimeout(() => {
-            ghost.style.transform = 'translate(-50%, -50%) translateY(-1000px)';
-          }, 1000); // 착지 1초 후
-        }, index * 50); // 50ms 간격으로 순차 시작
       }
+
+      // 1단계: 카드와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기
+      setTimeout(() => {
+        card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+
+        // 2단계: 착지 후 ghost만 다시 위로 올라가며 사라짐
+        setTimeout(() => {
+          if (ghost) {
+            ghost.style.transform = 'translate(-50%, -50%) translateY(-1000px)';
+          }
+        }, 1000); // 착지 1초 후
+      }, index * 50); // 50ms 간격으로 순차 시작
     });
 
     // 애니메이션 완료 후 transition 제거
     setTimeout(() => {
       cardPositions.forEach(pos => {
+        pos.card.style.transition = '';
         const ghost = pos.card.querySelector('.surface-card-ghost') as HTMLElement;
         if (ghost) {
           ghost.style.transition = '';
