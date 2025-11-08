@@ -377,28 +377,31 @@ export class Dom2DLayer {
     const allCards = this.grid.querySelectorAll('.surface-card') as NodeListOf<HTMLElement>;
     const containerWidth = this.grid.offsetWidth || 1920;
     const cardWidth = 300; // 카드 너비
-    const columns = 4; // 4개 칼럼으로 나눔
+    const columns = 6; // 6개 칼럼으로 증가
     const columnWidth = containerWidth / columns;
     const minRowHeight = 700; // 최소 줄 간격
     const maxRowHeight = 1000; // 최대 줄 간격
 
     let currentY = 0;
     let cardsInCurrentRow = 0;
-    const maxCardsPerRow = 2;
+    const maxCardsPerRow = 4; // 한 줄에 최대 4개
     let usedColumnsInRow: number[] = []; // 현재 줄에 사용된 칼럼
+
+    // 카드 위치 정보를 저장할 배열
+    const cardPositions: Array<{card: HTMLElement; x: number; y: number; rotation: number; scale: number}> = [];
 
     allCards.forEach((card) => {
       card.style.position = 'absolute';
       card.style.width = `${cardWidth}px`;
 
-      // 한 줄에 2개가 찼으면 다음 줄로
+      // 한 줄에 4개가 찼으면 다음 줄로
       if (cardsInCurrentRow >= maxCardsPerRow) {
         currentY += Math.random() * (maxRowHeight - minRowHeight) + minRowHeight;
         cardsInCurrentRow = 0;
         usedColumnsInRow = []; // 새 줄에서 칼럼 리셋
       }
 
-      // 4개 칼럼 중 사용하지 않은 칼럼 선택
+      // 6개 칼럼 중 사용하지 않은 칼럼 선택
       let randomColumn: number;
       let attempts = 0;
       do {
@@ -413,20 +416,54 @@ export class Dom2DLayer {
 
       const baseX = randomColumn * columnWidth + (columnWidth / 2) - (cardWidth / 2);
 
-      // 칼럼 내에서 약간의 랜덤 오프셋 (줄임)
-      const randomX = baseX + (Math.random() * 100 - 50); // ±50px 랜덤 (줄임)
+      // 칼럼 내에서 약간의 랜덤 오프셋
+      const randomX = baseX + (Math.random() * 100 - 50); // ±50px 랜덤
       const randomY = currentY + (Math.random() * 150 - 75); // ±75px 랜덤
 
       // 랜덤 회전 및 크기
       const randomRotation = Math.random() * 120 - 60; // -60도 ~ 60도
       const randomScale = Math.random() * 0.7 + 0.8; // 0.8 ~ 1.5
 
-      card.style.left = `${Math.max(0, Math.min(containerWidth - cardWidth, randomX))}px`;
-      card.style.top = `${randomY}px`;
-      card.style.transform = `rotate(${randomRotation}deg) scale(${randomScale})`; // 회전 + 크기
+      const finalX = Math.max(0, Math.min(containerWidth - cardWidth, randomX));
+      const finalY = randomY;
+
+      // 위치 정보 저장
+      cardPositions.push({
+        card,
+        x: finalX,
+        y: finalY,
+        rotation: randomRotation,
+        scale: randomScale
+      });
 
       cardsInCurrentRow++;
     });
+
+    // Y 위치 기준으로 정렬 (하단부터 = Y가 큰 것부터)
+    cardPositions.sort((a, b) => b.y - a.y);
+
+    // 초기 위치를 위쪽으로 설정하고 애니메이션
+    cardPositions.forEach((pos, index) => {
+      const card = pos.card;
+
+      // 초기 위치 (위쪽 먼 곳에서 시작)
+      card.style.left = `${pos.x}px`;
+      card.style.top = `${pos.y}px`;
+      card.style.transform = `translate(0, -2000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+      card.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'; // 바운스 효과
+
+      // 하단 카드부터 순차적으로 떨어지는 애니메이션
+      setTimeout(() => {
+        card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+      }, index * 50); // 50ms 간격으로 순차 시작
+    });
+
+    // 애니메이션 완료 후 transition 제거
+    setTimeout(() => {
+      cardPositions.forEach(pos => {
+        pos.card.style.transition = '';
+      });
+    }, cardPositions.length * 50 + 1000);
 
     console.log(`[ISO] ${allCards.length} cards randomly positioned (max ${maxCardsPerRow} per row, ${columns} columns)`);
   }
