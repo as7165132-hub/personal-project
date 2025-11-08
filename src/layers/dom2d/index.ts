@@ -125,10 +125,10 @@ export class Dom2DLayer {
       // ISO 뷰: 기울기와 위치는 고정, 회전된 공간 안에서 스크롤
       // 중간 세트 기준으로 오프셋 조정 (totalHeight를 빼서 상대적 위치 계산)
       const relativeScroll = this.scrollOffset - this.totalHeight;
-      const offsetY = 2000 - relativeScroll;
-      const transformStr = `rotateX(30deg) rotateZ(25deg) scale(1) translateX(-200px) translateY(${offsetY}px)`;
+      const offsetY = 0 - relativeScroll;
+      const transformStr = `rotateX(30deg) rotateZ(25deg) scale(1) translateX(0px) translateY(${offsetY}px)`;
       grid.style.transform = transformStr;
-      console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset.toFixed(0), 'relative:', relativeScroll.toFixed(0), 'offsetY:', offsetY.toFixed(0));
+      console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset.toFixed(0), 'relative:', relativeScroll.toFixed(0), 'offsetY:', offsetY.toFixed(0), 'transform:', transformStr);
     } else {
       // 2D 뷰: 단순 스크롤
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;

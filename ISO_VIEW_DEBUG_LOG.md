@@ -161,6 +161,77 @@ body.iso-mode::before {
 }
 ```
 
+## 근본 원인 분석
+
+### ⚠️ 발견된 주요 문제
+
+**1. PERSPECTIVE 없음** (style.css:77)
+```css
+.surface-container {
+  /* perspective 제거 - ISO view는 parallel projection */
+}
+```
+→ **3D rotateX + rotateZ를 사용하려면 perspective 필수!**
+
+**2. translateX(-200px)** (index.ts:129)
+```typescript
+translateX(-200px)  // 카드를 왼쪽으로 200px 이동 → 화면 밖으로
+```
+
+### 문제 요약
+BASE_Y 값을 -200, 0, 400, 1000, 2000으로 변경했으나 모두 변화 없음 또는 보이지 않음.
+→ **BASE_Y 조정이 아닌 다른 근본적인 문제 존재**
+
+### 가능한 원인들
+
+#### 1. CSS Perspective 문제
+**증상**: 3D transform이 평면적으로 보이거나 보이지 않음
+**원인**: `perspective` 속성이 부모 요소에 없을 수 있음
+**확인 방법**:
+```css
+.surface-container {
+  perspective: 1000px; /* 이게 없으면 3D가 제대로 안 보임 */
+}
+```
+
+#### 2. translateX(-200px) 문제
+**증상**: 카드가 화면 왼쪽 밖으로 벗어남
+**원인**: `-200px` 이동이 회전된 공간에서 예상과 다른 방향으로 작용
+**테스트**: `translateX(0px)` 또는 제거
+
+#### 3. Rotation 각도 문제
+**증상**: 카드가 회전으로 인해 앞면이 아닌 뒷면이 보이거나 엣지만 보임
+**원인**: `rotateX(30deg) rotateZ(25deg)` 조합이 카드를 화면 밖으로
+**테스트**: 각도를 더 작게 (예: `rotateX(15deg) rotateZ(15deg)`)
+
+#### 4. Scale 문제
+**증상**: 카드가 너무 작아서 보이지 않음
+**원인**: `scale(1)`이 회전된 공간에서 너무 작게 보일 수 있음
+**테스트**: `scale(2)` 또는 `scale(3)`
+
+#### 5. Z-index / Stacking Context
+**증상**: 카드가 배경 뒤에 숨음
+**원인**: z-index나 stacking context 문제
+**확인**: `.surface-grid { z-index: 10; }`
+
+#### 6. Overflow Hidden
+**증상**: 부모 요소의 overflow로 인해 잘림
+**원인**: `.surface-container { overflow: hidden; }`
+**확인**: `overflow: visible` 로 변경
+
+#### 7. Transform Origin 위치
+**증상**: 회전 중심이 잘못되어 카드가 화면 밖으로
+**현재**: `transform-origin: 50% 100%` (하단)
+**테스트**: `transform-origin: 50% 50%` (중앙)
+
+#### 8. CSS 적용 순서
+**증상**: CSS가 덮어써짐
+**확인**:
+```typescript
+console.log('Grid element:', grid);
+console.log('Computed style:', window.getComputedStyle(grid).transform);
+```
+
 ## 변경 이력
 
 | 날짜 | BASE_Y | 결과 | 비고 |
@@ -172,15 +243,40 @@ body.iso-mode::before {
 | 2024-11-08 | 0 | ❌ 보이지 않음 | 여전히 아래로 치우침 |
 | 2024-11-08 | -200 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
 | 2024-11-08 | 1000 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
-| 2024-11-08 | 2000 | 🔄 테스트 중 | 매우 큰 양수 값으로 극단 테스트 |
+| 2024-11-08 | 2000 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
+| 2024-11-08 | 0 | 🔄 재테스트 | 근본 원인 수정 후 재테스트 |
+
+## 근본 원인 수정 사항 (2024-11-08)
+
+### 수정 1: perspective 추가
+```css
+.surface-container {
+  perspective: 1500px; /* 3D transform을 위한 perspective 추가 */
+  perspective-origin: 50% 50%;
+}
+```
+
+### 수정 2: translateX 제거
+```typescript
+// Before: translateX(-200px) → 카드를 왼쪽 밖으로
+// After:  translateX(0px)
+const transformStr = `rotateX(30deg) rotateZ(25deg) scale(1) translateX(0px) translateY(${offsetY}px)`;
+```
+
+### 수정 3: 배경 translateX 제거
+```css
+/* Before: translateX(-200px) translateY(calc(-100px - ...)) */
+/* After:  translateX(0px) translateY(calc(0px - ...)) */
+transform: rotateX(30deg) rotateZ(25deg) scale(1.05) translateX(0px) translateY(calc(0px - var(--scroll-offset) * 1px));
+```
 
 ## 다음 시도할 값들
 
-BASE_Y 후보 (2000이 안되면):
-- -2000 (큰 음수 값으로 극단 테스트)
-- 3000 (더 큰 양수)
-- -3000 (더 큰 음수)
-- 5000 (극단적으로 큰 양수)
+이제 perspective와 translateX가 수정되었으므로 BASE_Y 조정이 제대로 작동할 것으로 예상.
+필요 시 미세 조정:
+- -100 ~ 100 범위에서 미세 조정
+- Scale 조정 (1 → 1.2 ~ 1.5)
+- Rotation 각도 조정
 
 ## 참고 코드
 
