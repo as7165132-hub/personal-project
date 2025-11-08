@@ -87,6 +87,7 @@ export class Dom2DLayer {
    */
   private handleWheel(e: WheelEvent): void {
     // deltaY 값을 누적
+    const beforeOffset = this.scrollOffset;
     this.scrollOffset += e.deltaY * 0.5; // 스크롤 속도 조절
 
     // 컨베이어 벨트: 1세트 높이 기준으로 순환
@@ -94,10 +95,12 @@ export class Dom2DLayer {
       // 아래로 스크롤: 1세트 끝에 도달하면 처음으로
       if (this.scrollOffset >= this.totalHeight) {
         this.scrollOffset -= this.totalHeight;
+        console.log('[WRAP] 아래 → 위:', beforeOffset, '→', this.scrollOffset);
       }
       // 위로 스크롤: 0 미만이면 마지막 세트 끝으로
       else if (this.scrollOffset < 0) {
         this.scrollOffset += this.totalHeight;
+        console.log('[WRAP] 위 → 아래:', beforeOffset, '→', this.scrollOffset);
       }
     }
 
@@ -115,20 +118,29 @@ export class Dom2DLayer {
     // ISO 모드 여부에 따라 다른 transform 적용
     if (this.isIsoMode) {
       // ISO 뷰: 기울기와 위치는 고정, 회전된 공간 안에서만 스크롤
-      // 1. 먼저 회전 (ISO 각도 설정)
-      // 2. 그 다음 위치 조정 (회전된 공간에서 이동)
-      // 3. 마지막으로 스크롤 (회전된 Y축을 따라 이동)
-      const offsetY = -100 - this.scrollOffset; // 위로 100px + 스크롤 (중간 위치)
+      // scrollOffset을 작은 범위로 정규화 (0~totalHeight → 0~2000)
+      const isoScrollRange = 2000;
+      const normalizedScroll = this.totalHeight > 0
+        ? (this.scrollOffset / this.totalHeight) * isoScrollRange
+        : 0;
+      const offsetY = -100 - normalizedScroll;
       const transformStr = `rotateX(30deg) rotateZ(25deg) scale(1) translateX(-200px) translateY(${offsetY}px)`;
       grid.style.transform = transformStr;
-      console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset, 'offsetY:', offsetY, 'transform:', transformStr);
+      console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset, 'normalized:', normalizedScroll.toFixed(0), 'offsetY:', offsetY.toFixed(0));
     } else {
       // 2D 뷰: 단순 스크롤
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;
     }
 
     // 배경도 정확히 동일한 속도로 이동 (CSS custom property 사용)
-    document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
+    if (this.isIsoMode && this.totalHeight > 0) {
+      // ISO 모드에서는 정규화된 값 사용
+      const isoScrollRange = 2000;
+      const normalizedScroll = (this.scrollOffset / this.totalHeight) * isoScrollRange;
+      document.body.style.setProperty('--scroll-offset', `${normalizedScroll}px`);
+    } else {
+      document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
+    }
   }
 
   /**
