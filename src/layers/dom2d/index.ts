@@ -57,13 +57,13 @@ export class Dom2DLayer {
     if (this.isIsoMode) {
       document.body.classList.add('iso-mode');
       toggleBtn?.classList.add('active');
-      // ISO 모드로 전환 시 스크롤 위치 리셋 (중간 세트)
+      // ISO 모드: 중간 세트로 리셋 (무한 스크롤을 위한 중앙 위치)
       this.scrollOffset = this.totalHeight;
       console.log('✨ ISO 뷰 활성화 (중간 세트로 리셋)');
     } else {
       document.body.classList.remove('iso-mode');
       toggleBtn?.classList.remove('active');
-      // 2D 모드로 전환 시 스크롤 위치 리셋 (처음으로)
+      // 2D 모드: 처음으로 리셋
       this.scrollOffset = 0;
       console.log('📐 2D 뷰로 전환 (처음으로 리셋)');
     }
@@ -83,28 +83,28 @@ export class Dom2DLayer {
   }
 
   /**
-   * Wheel 핸들러 - 컨베이어 벨트 스크롤 (복제된 그룹 순환)
+   * Wheel 핸들러 - 모드별로 다른 스크롤 동작
    */
   private handleWheel(e: WheelEvent): void {
     // deltaY 값을 누적
     const beforeOffset = this.scrollOffset;
     this.scrollOffset += e.deltaY * 0.5; // 스크롤 속도 조절
 
-    // ISO 모드에서만 컨베이어 벨트 wrapping 적용
+    // ISO 모드: 무한 스크롤 (중간 세트 기준으로 wrapping)
     if (this.isIsoMode && this.totalHeight > 0) {
-      // 아래로 스크롤: 3번째 세트 끝에 도달하면 2번째 세트로
+      // 아래로 스크롤: 2 * totalHeight에 도달하면 중간으로
       if (this.scrollOffset >= 2 * this.totalHeight) {
         this.scrollOffset -= this.totalHeight;
         console.log('[WRAP] 아래 → 중간:', beforeOffset.toFixed(0), '→', this.scrollOffset.toFixed(0));
       }
-      // 위로 스크롤: 1번째 세트 시작 전이면 2번째 세트로
+      // 위로 스크롤: totalHeight 미만이면 중간으로
       else if (this.scrollOffset < this.totalHeight) {
         this.scrollOffset += this.totalHeight;
         console.log('[WRAP] 위 → 중간:', beforeOffset.toFixed(0), '→', this.scrollOffset.toFixed(0));
       }
     }
 
-    // 2D 모드에서는 0 이하로 스크롤 방지
+    // 2D 모드: 음수 방지
     if (!this.isIsoMode && this.scrollOffset < 0) {
       this.scrollOffset = 0;
     }
@@ -134,9 +134,8 @@ export class Dom2DLayer {
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;
     }
 
-    // 배경도 정확히 동일한 속도로 이동 (CSS custom property 사용)
+    // 배경 스크롤 동기화
     if (this.isIsoMode && this.totalHeight > 0) {
-      // ISO 모드에서는 중간 세트 기준 상대적 값 사용
       const relativeScroll = this.scrollOffset - this.totalHeight;
       document.body.style.setProperty('--scroll-offset', `${relativeScroll}px`);
     } else {

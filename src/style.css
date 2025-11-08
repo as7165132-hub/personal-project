@@ -74,7 +74,7 @@ body::before {
   min-height: 100vh;
   overflow: visible;
   z-index: 10; /* 배경 이미지보다 앞에 */
-  /* Perspective 제거 - parallel projection (ISO view) */
+  /* perspective 제거 - ISO view는 parallel projection */
 }
 
 /* ==================== Grid ==================== */
