@@ -447,10 +447,10 @@ export class Dom2DLayer {
       const card = pos.card;
       const innerBox = card.querySelector('.surface-card-inner') as HTMLElement;
 
-      // 착지 지점에 작은 원 생성
+      // 착지 지점에 큰 원 생성
       const landingSpot = document.createElement('div');
       landingSpot.className = 'landing-spot';
-      landingSpot.style.left = `${pos.x + cardWidth / 2 - 15}px`; // 중앙 정렬
+      landingSpot.style.left = `${pos.x + cardWidth / 2 - 30}px`; // 중앙 정렬 (60px 원)
       landingSpot.style.top = `${pos.y + 250}px`; // 카드 중앙 지점
       this.grid.appendChild(landingSpot);
 
@@ -458,35 +458,22 @@ export class Dom2DLayer {
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
       card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
-      card.style.opacity = '0.6'; // 반투명 카드
+      card.style.opacity = '0.5'; // 반투명 외부 컨테이너
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
-      // 내부 박스 초기 상태
+      // 내부 박스는 항상 불투명
       if (innerBox) {
-        innerBox.style.opacity = '0.3'; // 더 투명
-        innerBox.style.transform = 'translate(0, 0)'; // 초기 위치
-        innerBox.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
+        innerBox.style.opacity = '1'; // 처음부터 불투명
       }
 
       // 1단계: 하단 카드부터 순차적으로 바닥에 내려앉기
       setTimeout(() => {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
 
-        // 내부 박스도 함께 내려오면서 불투명해짐
-        if (innerBox) {
-          innerBox.style.opacity = '1';
-        }
-
-        // 2단계: 착지 후 외부 컨테이너는 다시 올라가고, 내부만 남김
+        // 2단계: 착지 후 외부 컨테이너만 다시 위로 올라가며 사라짐
         setTimeout(() => {
-          // 외부 컨테이너 다시 올리기
           card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
           card.style.opacity = '0';
-
-          // 내부 박스는 반대 방향으로 이동해 제자리 고정
-          if (innerBox) {
-            innerBox.style.transform = `translate(0, 1000px) rotate(${-pos.rotation}deg) scale(${1/pos.scale})`; // 부모 transform 상쇄
-          }
         }, 1000); // 착지 1초 후
       }, index * 50); // 50ms 간격으로 순차 시작
     });
@@ -495,10 +482,6 @@ export class Dom2DLayer {
     setTimeout(() => {
       cardPositions.forEach(pos => {
         pos.card.style.transition = '';
-        const innerBox = pos.card.querySelector('.surface-card-inner') as HTMLElement;
-        if (innerBox) {
-          innerBox.style.transition = '';
-        }
       });
     }, cardPositions.length * 50 + 2200);
 
