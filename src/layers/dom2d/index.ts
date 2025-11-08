@@ -108,8 +108,15 @@ export class Dom2DLayer {
     const grid = this.container.querySelector('.surface-grid') as HTMLElement;
     if (!grid) return;
 
-    // 그리드와 배경 모두 동일한 스크롤 오프셋 적용
-    grid.style.transform = `translateY(-${this.scrollOffset}px)`;
+    // ISO 모드 여부에 따라 다른 transform 적용
+    if (this.isIsoMode) {
+      // ISO 뷰: 회전 후 이동 (올바른 순서)
+      // translateY를 맨 앞에 두면 마지막에 적용됨 (오른쪽→왼쪽 순서)
+      grid.style.transform = `translateY(-${this.scrollOffset + 200}px) rotateX(15deg) rotateZ(8deg) scale(0.95)`;
+    } else {
+      // 2D 뷰: 단순 스크롤
+      grid.style.transform = `translateY(-${this.scrollOffset}px)`;
+    }
 
     // 배경도 정확히 동일한 속도로 이동 (CSS custom property 사용)
     document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
