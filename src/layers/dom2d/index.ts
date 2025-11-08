@@ -12,6 +12,7 @@ export class Dom2DLayer {
   private cardSets: HTMLElement[][] = [[], [], []]; // 3개 세트로 분리
 
   private scrollY: number = 0;
+  private baseScrollOffset: number = 0; // DOM 재배치 누적 오프셋
   private cardSetHeight: number = 0; // 1세트 높이 (무한 스크롤용)
   private isIsoMode: boolean = false;
 
@@ -108,8 +109,8 @@ export class Dom2DLayer {
     const firstSet = this.cardSets.shift()!;
     this.cardSets.push(firstSet);
     this.renderSets();
-    this.scrollY -= this.cardSetHeight;
-    console.log('[ROTATE ↓] 첫 세트를 마지막으로 이동, scrollY:', this.scrollY.toFixed(0));
+    this.baseScrollOffset += this.cardSetHeight; // scrollY는 유지, base만 조정
+    console.log('[ROTATE ↓] 첫 세트를 마지막으로 이동, scrollY:', this.scrollY.toFixed(0), 'base:', this.baseScrollOffset.toFixed(0));
   }
 
   /**
@@ -119,8 +120,8 @@ export class Dom2DLayer {
     const lastSet = this.cardSets.pop()!;
     this.cardSets.unshift(lastSet);
     this.renderSets();
-    this.scrollY += this.cardSetHeight;
-    console.log('[ROTATE ↑] 마지막 세트를 첫 번째로 이동, scrollY:', this.scrollY.toFixed(0));
+    this.baseScrollOffset -= this.cardSetHeight; // scrollY는 유지, base만 조정
+    console.log('[ROTATE ↑] 마지막 세트를 첫 번째로 이동, scrollY:', this.scrollY.toFixed(0), 'base:', this.baseScrollOffset.toFixed(0));
   }
 
   private setupScrolling(): void {
@@ -130,12 +131,15 @@ export class Dom2DLayer {
 
       // ISO 모드: 컨베이어 벨트 방식 무한 스크롤
       if (this.isIsoMode && this.cardSetHeight > 0) {
+        // 현재 DOM 배치 기준으로 실제 스크롤 위치 계산
+        const effectiveScroll = this.scrollY - this.baseScrollOffset;
+
         // 아래로 스크롤: 2세트 끝에 도달하면 DOM 재배치
-        if (this.scrollY >= 2 * this.cardSetHeight) {
+        if (effectiveScroll >= 2 * this.cardSetHeight) {
           this.rotateDown();
         }
         // 위로 스크롤: 1세트 시작 미만이면 DOM 재배치
-        else if (this.scrollY < this.cardSetHeight) {
+        else if (effectiveScroll < this.cardSetHeight) {
           this.rotateUp();
         }
       }
@@ -161,10 +165,12 @@ export class Dom2DLayer {
       if (this.isIsoMode) {
         // ISO 모드: 중간 세트로 시작 (무한 스크롤 대응)
         this.scrollY = this.cardSetHeight;
+        this.baseScrollOffset = 0; // base도 리셋
         console.log('✨ ISO 모드 활성화 (중간 세트로 시작)');
       } else {
         // 2D 모드: 처음으로 리셋
         this.scrollY = 0;
+        this.baseScrollOffset = 0; // base도 리셋
         console.log('📐 2D 모드로 전환 (처음으로 리셋)');
       }
 
@@ -181,7 +187,10 @@ export class Dom2DLayer {
     if (this.isIsoMode) {
       // ISO: isometric view
       this.camera.style.transform = `rotateX(45deg) rotateZ(45deg) scale(0.8)`;
-      this.grid.style.transform = `translateY(${-this.scrollY}px)`;
+
+      // 시각적 오프셋: scrollY - baseScrollOffset (DOM 재배치를 고려한 실제 위치)
+      const effectiveScroll = this.scrollY - this.baseScrollOffset;
+      this.grid.style.transform = `translateY(${-effectiveScroll}px)`;
     } else {
       // 2D: camera 초기화, grid만 스크롤
       this.camera.style.transform = 'none';
