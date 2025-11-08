@@ -377,22 +377,32 @@ export class Dom2DLayer {
     const allCards = this.grid.querySelectorAll('.surface-card') as NodeListOf<HTMLElement>;
     const containerWidth = this.grid.offsetWidth || 1920;
     const cardWidth = 300; // 카드 너비
-    const cardsPerRow = 3; // 한 줄에 3개씩 배치
-    const rowHeight = 600; // 줄 간격
+    const columns = 4; // 4개 칼럼으로 나눔
+    const columnWidth = containerWidth / columns;
+    const minRowHeight = 700; // 최소 줄 간격
+    const maxRowHeight = 1000; // 최대 줄 간격
 
-    allCards.forEach((card, index) => {
+    let currentY = 0;
+    let cardsInCurrentRow = 0;
+    const maxCardsPerRow = 2;
+
+    allCards.forEach((card) => {
       card.style.position = 'absolute';
       card.style.width = `${cardWidth}px`;
 
-      // 그리드 기반 위치 계산 (한 줄에 여러 개)
-      const rowIndex = Math.floor(index / cardsPerRow);
-      const colIndex = index % cardsPerRow;
+      // 한 줄에 2개가 찼으면 다음 줄로
+      if (cardsInCurrentRow >= maxCardsPerRow) {
+        currentY += Math.random() * (maxRowHeight - minRowHeight) + minRowHeight;
+        cardsInCurrentRow = 0;
+      }
 
-      // 기본 그리드 위치에 랜덤 오프셋 추가
-      const baseX = (containerWidth / cardsPerRow) * colIndex;
-      const randomX = baseX + (Math.random() * 300 - 150); // ±150px 랜덤
-      const baseY = rowIndex * rowHeight;
-      const randomY = baseY + (Math.random() * 250 - 125); // ±125px 랜덤
+      // 4개 칼럼 중 랜덤하게 선택
+      const randomColumn = Math.floor(Math.random() * columns);
+      const baseX = randomColumn * columnWidth + (columnWidth / 2) - (cardWidth / 2);
+
+      // 칼럼 내에서 약간의 랜덤 오프셋
+      const randomX = baseX + (Math.random() * 200 - 100); // ±100px 랜덤
+      const randomY = currentY + (Math.random() * 150 - 75); // ±75px 랜덤
 
       // 랜덤 회전 및 크기
       const randomRotation = Math.random() * 120 - 60; // -60도 ~ 60도
@@ -401,9 +411,11 @@ export class Dom2DLayer {
       card.style.left = `${Math.max(0, Math.min(containerWidth - cardWidth, randomX))}px`;
       card.style.top = `${randomY}px`;
       card.style.transform = `rotate(${randomRotation}deg) scale(${randomScale})`; // 회전 + 크기
+
+      cardsInCurrentRow++;
     });
 
-    console.log(`[ISO] ${allCards.length} cards randomly positioned (${cardsPerRow} per row)`);
+    console.log(`[ISO] ${allCards.length} cards randomly positioned (max ${maxCardsPerRow} per row, ${columns} columns)`);
   }
 
   /**
