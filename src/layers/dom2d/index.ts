@@ -384,9 +384,13 @@ export class Dom2DLayer {
       const randomX = Math.random() * (containerWidth - cardWidth);
       const randomY = (index * 500) + (Math.random() * 200 - 100); // 세로로는 순서대로, 약간의 랜덤
 
+      // 랜덤 회전 및 크기
+      const randomRotation = Math.random() * 120 - 60; // -60도 ~ 60도
+      const randomScale = Math.random() * 0.7 + 0.8; // 0.8 ~ 1.5
+
       card.style.left = `${randomX}px`;
       card.style.top = `${randomY}px`;
-      card.style.transform = `rotate(${Math.random() * 120 - 60}deg)`; // -60도 ~ 60도 랜덤 회전
+      card.style.transform = `rotate(${randomRotation}deg) scale(${randomScale})`; // 회전 + 크기
     });
 
     console.log(`[ISO] ${allCards.length} cards randomly positioned`);
