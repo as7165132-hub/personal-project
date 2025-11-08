@@ -85,13 +85,14 @@ export class Dom2DLayer {
     // deltaY 값을 누적
     this.scrollOffset += e.deltaY * 0.5; // 스크롤 속도 조절
 
-    // 컨베이어 벨트: 전체 높이 기준으로 순환 (순간이동)
+    // 컨베이어 벨트: 1세트 높이 기준으로 순환
     if (this.totalHeight > 0) {
-      // 중간 세트를 기준으로 순환
-      // totalHeight = 원본 높이이므로, 중간 세트는 totalHeight ~ 2*totalHeight
-      if (this.scrollOffset >= this.totalHeight * 2) {
+      // 아래로 스크롤: 1세트 끝에 도달하면 처음으로
+      if (this.scrollOffset >= this.totalHeight) {
         this.scrollOffset -= this.totalHeight;
-      } else if (this.scrollOffset < this.totalHeight) {
+      }
+      // 위로 스크롤: 0 미만이면 마지막 세트 끝으로
+      else if (this.scrollOffset < 0) {
         this.scrollOffset += this.totalHeight;
       }
     }
@@ -191,14 +192,14 @@ export class Dom2DLayer {
       console.log('[DEBUG] 1세트 높이:', this.totalHeight, 'px');
       console.log('[DEBUG] 전체 높이:', grid.scrollHeight, 'px');
 
-      // 중간 세트 시작 위치로 초기화 (순환을 위해)
-      this.scrollOffset = this.totalHeight;
+      // 첫 번째 세트에서 시작 (0부터)
+      this.scrollOffset = 0;
 
-      // 초기 위치 설정 (처음에만 적용)
+      // 초기 위치 설정
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;
       document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
 
-      console.log('[DEBUG] 초기 scrollOffset:', this.scrollOffset, 'px (중간 세트 시작)');
+      console.log('[DEBUG] 초기 scrollOffset:', this.scrollOffset, 'px (첫 번째 세트)');
     }, 100);
   }
 
