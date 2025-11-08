@@ -112,6 +112,11 @@ export class Dom2DLayer {
       this.isIsoMode = !this.isIsoMode;
       document.body.classList.toggle('iso-mode', this.isIsoMode);
       btn.classList.toggle('active', this.isIsoMode);
+
+      // ISO 모드 전환 시 스크롤 리셋
+      this.scrollY = 0;
+      console.log('[MODE SWITCH]', this.isIsoMode ? 'ISO' : '2D', '- scrollY reset to 0');
+
       this.updateTransform();
     });
   }
