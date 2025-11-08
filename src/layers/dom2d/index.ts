@@ -386,7 +386,7 @@ export class Dom2DLayer {
 
       card.style.left = `${randomX}px`;
       card.style.top = `${randomY}px`;
-      card.style.transform = `rotate(${Math.random() * 10 - 5}deg)`; // 약간 회전
+      card.style.transform = `rotate(${Math.random() * 120 - 60}deg)`; // -60도 ~ 60도 랜덤 회전
     });
 
     console.log(`[ISO] ${allCards.length} cards randomly positioned`);
