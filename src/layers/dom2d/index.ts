@@ -126,7 +126,11 @@ export class Dom2DLayer {
     card.className = 'surface-card';
     card.dataset.cardIndex = String(index); // 카드 인덱스 저장
 
-    // 중앙 사각형 컨테이너
+    // 외부 컨테이너 (반투명 파란색 - 애니메이션용)
+    const ghost = document.createElement('div');
+    ghost.className = 'surface-card-ghost';
+
+    // 중앙 사각형 컨테이너 (실제 카드)
     const innerBox = document.createElement('div');
     innerBox.className = 'surface-card-inner';
 
@@ -145,6 +149,7 @@ export class Dom2DLayer {
     p.textContent = cardData.text;
     innerBox.appendChild(p);
 
+    card.appendChild(ghost);
     card.appendChild(innerBox);
 
     return card;
@@ -442,46 +447,47 @@ export class Dom2DLayer {
     // Y 위치 기준으로 정렬 (하단부터 = Y가 큰 것부터)
     cardPositions.sort((a, b) => b.y - a.y);
 
-    // 초기 위치를 위쪽으로 설정하고 2단계 애니메이션
+    // 착지 애니메이션 (ghost 레이어만 움직임)
     cardPositions.forEach((pos, index) => {
       const card = pos.card;
-      const innerBox = card.querySelector('.surface-card-inner') as HTMLElement;
+      const ghost = card.querySelector('.surface-card-ghost') as HTMLElement;
 
-      // 착지 지점에 큰 원 생성
+      // 착지 지점에 큰 원 생성 (300px)
       const landingSpot = document.createElement('div');
       landingSpot.className = 'landing-spot';
-      landingSpot.style.left = `${pos.x + cardWidth / 2 - 30}px`; // 중앙 정렬 (60px 원)
+      landingSpot.style.left = `${pos.x + cardWidth / 2 - 150}px`; // 중앙 정렬 (300px 원)
       landingSpot.style.top = `${pos.y + 250}px`; // 카드 중앙 지점
       this.grid.appendChild(landingSpot);
 
-      // 초기 위치 (화면 밖에서 시작)
+      // 카드 위치 설정
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
-      card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
-      card.style.opacity = '0.5'; // 반투명 외부 컨테이너
-      card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
+      card.style.transform = `rotate(${pos.rotation}deg) scale(${pos.scale})`;
 
-      // 내부 박스는 항상 불투명
-      if (innerBox) {
-        innerBox.style.opacity = '1'; // 처음부터 불투명
-      }
+      // ghost 초기 위치 (위쪽)
+      if (ghost) {
+        ghost.style.transform = 'translate(-50%, -50%) translateY(-1000px)';
+        ghost.style.transition = 'transform 1s ease-out';
 
-      // 1단계: 하단 카드부터 순차적으로 바닥에 내려앉기
-      setTimeout(() => {
-        card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
-
-        // 2단계: 착지 후 외부 컨테이너만 다시 위로 올라가며 사라짐
+        // 1단계: 하단 카드부터 순차적으로 바닥에 내려앉기
         setTimeout(() => {
-          card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
-          card.style.opacity = '0';
-        }, 1000); // 착지 1초 후
-      }, index * 50); // 50ms 간격으로 순차 시작
+          ghost.style.transform = 'translate(-50%, -50%) translateY(0)';
+
+          // 2단계: 착지 후 ghost만 다시 위로 올라가며 사라짐
+          setTimeout(() => {
+            ghost.style.transform = 'translate(-50%, -50%) translateY(-1000px)';
+          }, 1000); // 착지 1초 후
+        }, index * 50); // 50ms 간격으로 순차 시작
+      }
     });
 
     // 애니메이션 완료 후 transition 제거
     setTimeout(() => {
       cardPositions.forEach(pos => {
-        pos.card.style.transition = '';
+        const ghost = pos.card.querySelector('.surface-card-ghost') as HTMLElement;
+        if (ghost) {
+          ghost.style.transition = '';
+        }
       });
     }, cardPositions.length * 50 + 2200);
 
