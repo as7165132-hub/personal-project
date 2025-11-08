@@ -57,14 +57,18 @@ export class Dom2DLayer {
     if (this.isIsoMode) {
       document.body.classList.add('iso-mode');
       toggleBtn?.classList.add('active');
-      console.log('✨ ISO 뷰 활성화');
+      // ISO 모드로 전환 시 스크롤 위치 리셋
+      this.scrollOffset = 0;
+      console.log('✨ ISO 뷰 활성화 (스크롤 리셋)');
     } else {
       document.body.classList.remove('iso-mode');
       toggleBtn?.classList.remove('active');
-      console.log('📐 2D 뷰로 전환');
+      // 2D 모드로 전환 시에도 스크롤 위치 리셋
+      this.scrollOffset = 0;
+      console.log('📐 2D 뷰로 전환 (스크롤 리셋)');
     }
 
-    // 현재 스크롤 오프셋 유지한 채로 transform 다시 적용
+    // 리셋된 스크롤 오프셋으로 transform 다시 적용
     this.updateTransform();
   }
 
