@@ -1,6 +1,6 @@
 /**
- * SURFACE DEBUT - Styles (v44 - 참조 구조 정확 구현)
- * 참조 코드 패턴 적용
+ * SURFACE DEBUT - Styles (v51 - 50 cards with ISO view)
+ * 8개 카드 성공 → 50개로 스케일업
  */
 
 /* ==================== Variables ==================== */
@@ -56,9 +56,9 @@ body::before {
   transition: transform 1100ms cubic-bezier(0.22, 0.8, 0.26, 1);
 }
 
-/* ISO 모드: 배경도 회전 (단순화) */
+/* ISO 모드: 배경도 회전 */
 body.iso-mode::before {
-  transform: rotateX(45deg) scale(0.8) translateY(calc(var(--scroll-offset) * -1px));
+  transform: rotateX(45deg) rotateZ(45deg) scale(0.8) translateY(calc(var(--scroll-offset) * -1px));
 }
 
 /* ==================== Stage (참조: perspective container) ==================== */

@@ -1,6 +1,6 @@
 /**
- * SURFACE DEBUT - 2D DOM Layer (v44 - 참조 구조 정확 구현)
- * 참조 코드 패턴: stage > camera > world
+ * SURFACE DEBUT - 2D DOM Layer (v51 - 50 cards with ISO view)
+ * 8개 카드 성공 → 50개로 스케일업
  */
 
 import { i18n } from '@systems/i18n';
@@ -45,19 +45,17 @@ export class Dom2DLayer {
     this.grid = document.createElement('div');
     this.grid.className = 'surface-grid';
 
-    // 카드 생성 (8개만 - 테스트)
+    // 카드 생성 (50개 - 적당한 수)
     const cardTexts = [
       i18n.t('PROLOGUE'),
       i18n.t('LAYERS'),
       i18n.t('THRESHOLD'),
       i18n.t('DEBUT'),
       i18n.t('EPILOGUE'),
-      'CARD 06',
-      'CARD 07',
-      'CARD 08'
+      ...Array.from({ length: 45 }, (_, i) => `CARD ${String(i + 6).padStart(3, '0')}`)
     ];
 
-    // 단일 세트만 생성 (복제 없음)
+    // 단일 세트 생성
     cardTexts.forEach(text => {
       const card = document.createElement('div');
       card.className = 'surface-card';
@@ -78,7 +76,7 @@ export class Dom2DLayer {
 
     setTimeout(() => {
       this.cardSetHeight = this.grid.scrollHeight;
-      console.log('[INIT] Total height:', this.cardSetHeight, 'px (8 cards only)');
+      console.log('[INIT] Grid height:', this.cardSetHeight, 'px -', this.cards.length, 'cards');
       this.updateTransform();
     }, 100);
   }
@@ -118,8 +116,8 @@ export class Dom2DLayer {
     if (!this.camera || !this.grid) return;
 
     if (this.isIsoMode) {
-      // ISO: 극단적으로 단순화 - rotateX만
-      this.camera.style.transform = `rotateX(45deg) scale(0.8)`;
+      // ISO: isometric view
+      this.camera.style.transform = `rotateX(45deg) rotateZ(45deg) scale(0.8)`;
       this.grid.style.transform = `translateY(${-this.scrollY}px)`;
     } else {
       // 2D: camera 초기화, grid만 스크롤
