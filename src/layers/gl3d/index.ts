@@ -23,8 +23,8 @@ export class GL3DLayer {
   private bubbleAnimation: { scale: number; targetScale: number; time: number } | null = null;
 
   // 카메라 고정 위치 (ISO 모드에서 스크롤 무관)
-  private initialCameraPosition: THREE.Vector3 = new THREE.Vector3(0, 8, 18);
-  private lookAtTarget: THREE.Vector3 = new THREE.Vector3(0, 1, 0); // 화면 중앙에 위치
+  private initialCameraPosition: THREE.Vector3 = new THREE.Vector3(0, 12, 15);
+  private lookAtTarget: THREE.Vector3 = new THREE.Vector3(0, 0, 0); // 원점을 바라봄 (화면 중앙)
 
   constructor(canvasId: string = 'gl-canvas') {
     let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
