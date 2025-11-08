@@ -11,7 +11,7 @@
   --surface-accent: #e8e8e8;
   --surface-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --surface-font-mono: 'SF Mono', Monaco, 'Courier New', monospace;
-  --surface-gap: 2rem;
+  --surface-gap: 1rem; /* 2rem → 1rem (간격 축소) */
   --scroll-offset: 0px;
 }
 
@@ -67,7 +67,7 @@ body.iso-mode::before {
   width: 100%;
   min-height: 100vh;
   overflow: hidden;
-  perspective: 1200px;
+  perspective: 8000px; /* 투시 거의 제거 (1200px → 8000px) */
   perspective-origin: 50% 50%;
   z-index: 10;
 }
@@ -86,11 +86,11 @@ body.iso-mode::before {
 /* ==================== Grid (참조: world) ==================== */
 .surface-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr); /* 4 → 6 컬럼 */
   gap: var(--surface-gap);
-  padding: 4rem 2rem;
-  width: 80%;
-  max-width: 1400px;
+  padding: 2rem 2rem; /* 4rem 2rem → 2rem 2rem */
+  width: 90%; /* 80% → 90% */
+  max-width: 1800px; /* 1400px → 1800px */
   margin: 0 auto;
   min-height: 100vh;
   align-content: start;
@@ -102,8 +102,8 @@ body.iso-mode::before {
 /* ==================== Cards ==================== */
 .surface-card {
   position: relative;
-  padding: 3rem 2rem;
-  min-height: 400px;
+  padding: 1.5rem 1rem; /* 3rem 2rem → 1.5rem 1rem */
+  min-height: 180px; /* 400px → 180px */
   background: var(--surface-accent);
   border: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
@@ -167,18 +167,18 @@ body.iso-mode::before {
 /* ==================== Responsive ==================== */
 @media (max-width: 1024px) {
   .surface-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr); /* 2 → 3 컬럼 */
   }
 }
 
 @media (max-width: 768px) {
   .surface-grid {
-    grid-template-columns: 1fr;
-    padding: 2rem 1rem;
+    grid-template-columns: repeat(2, 1fr); /* 1 → 2 컬럼 */
+    padding: 1.5rem 1rem;
   }
 
   .surface-card {
-    min-height: 300px;
+    min-height: 150px; /* 300px → 150px */
   }
 
   .iso-toggle-btn {
