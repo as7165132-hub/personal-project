@@ -1,6 +1,6 @@
 /**
- * SURFACE DEBUT - 2D DOM Layer (v52 - 120 cards with ISO view)
- * 50개 → 120개로 스케일업 (ISO 고정 위치 테스트)
+ * SURFACE DEBUT - 2D DOM Layer (v53 - 360 cards with infinite scroll)
+ * 무한 스크롤 구현 (3세트 복제)
  */
 
 import { i18n } from '@systems/i18n';
@@ -12,7 +12,7 @@ export class Dom2DLayer {
   private cards: HTMLElement[] = [];
 
   private scrollY: number = 0;
-  private cardSetHeight: number = 0;
+  private cardSetHeight: number = 0; // 1세트 높이 (무한 스크롤용)
   private isIsoMode: boolean = false;
 
   constructor(containerId: string = 'app') {
@@ -45,7 +45,7 @@ export class Dom2DLayer {
     this.grid = document.createElement('div');
     this.grid.className = 'surface-grid';
 
-    // 카드 생성 (120개 - ISO 고정 위치 테스트)
+    // 카드 데이터 (120개)
     const cardTexts = [
       i18n.t('PROLOGUE'),
       i18n.t('LAYERS'),
@@ -55,17 +55,21 @@ export class Dom2DLayer {
       ...Array.from({ length: 115 }, (_, i) => `CARD ${String(i + 6).padStart(3, '0')}`)
     ];
 
-    // 단일 세트 생성
-    cardTexts.forEach(text => {
-      const card = document.createElement('div');
-      card.className = 'surface-card';
-      const p = document.createElement('p');
-      p.className = 'surface-card-text';
-      p.textContent = text;
-      card.appendChild(p);
-      this.grid.appendChild(card);
-      this.cards.push(card);
-    });
+    // 3세트 복제 (무한 스크롤용)
+    for (let set = 0; set < 3; set++) {
+      cardTexts.forEach(text => {
+        const card = document.createElement('div');
+        card.className = 'surface-card';
+        const p = document.createElement('p');
+        p.className = 'surface-card-text';
+        p.textContent = text;
+        card.appendChild(p);
+        this.grid.appendChild(card);
+        this.cards.push(card);
+      });
+    }
+
+    console.log('[INIT] Total cards:', this.cards.length, '(120 × 3 sets)');
 
     this.camera.appendChild(this.grid);
     this.container.appendChild(this.camera);
@@ -75,8 +79,10 @@ export class Dom2DLayer {
     this.grid.style.transform = 'translateY(0px)';
 
     setTimeout(() => {
-      this.cardSetHeight = this.grid.scrollHeight;
-      console.log('[INIT] Grid height:', this.cardSetHeight, 'px -', this.cards.length, 'cards');
+      // 1세트 높이 = 전체 높이 / 3
+      this.cardSetHeight = this.grid.scrollHeight / 3;
+      console.log('[INIT] 1 set height:', this.cardSetHeight, 'px');
+      console.log('[INIT] Total height:', this.grid.scrollHeight, 'px (3 sets)');
       this.updateTransform();
     }, 100);
   }
@@ -84,10 +90,27 @@ export class Dom2DLayer {
   private setupScrolling(): void {
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
+      const beforeScroll = this.scrollY;
       this.scrollY += e.deltaY * 0.5;
 
-      // 단순 스크롤 (음수 방지만)
-      if (this.scrollY < 0) this.scrollY = 0;
+      // ISO 모드: 무한 스크롤 (3세트 wrapping)
+      if (this.isIsoMode && this.cardSetHeight > 0) {
+        // 아래로 스크롤: 2세트 끝에 도달하면 중간 세트로 점프
+        if (this.scrollY >= 2 * this.cardSetHeight) {
+          this.scrollY -= this.cardSetHeight;
+          console.log('[WRAP ↓] 아래 → 중간:', beforeScroll.toFixed(0), '→', this.scrollY.toFixed(0));
+        }
+        // 위로 스크롤: 1세트 시작 미만이면 중간 세트로 점프
+        else if (this.scrollY < this.cardSetHeight) {
+          this.scrollY += this.cardSetHeight;
+          console.log('[WRAP ↑] 위 → 중간:', beforeScroll.toFixed(0), '→', this.scrollY.toFixed(0));
+        }
+      }
+
+      // 2D 모드: 음수 방지만
+      if (!this.isIsoMode && this.scrollY < 0) {
+        this.scrollY = 0;
+      }
 
       this.updateTransform();
     }, { passive: false });
@@ -102,8 +125,15 @@ export class Dom2DLayer {
       document.body.classList.toggle('iso-mode', this.isIsoMode);
       btn.classList.toggle('active', this.isIsoMode);
 
-      // 모드 전환 시 스크롤 리셋
-      this.scrollY = 0;
+      if (this.isIsoMode) {
+        // ISO 모드: 중간 세트로 시작 (무한 스크롤 대응)
+        this.scrollY = this.cardSetHeight;
+        console.log('✨ ISO 모드 활성화 (중간 세트로 시작)');
+      } else {
+        // 2D 모드: 처음으로 리셋
+        this.scrollY = 0;
+        console.log('📐 2D 모드로 전환 (처음으로 리셋)');
+      }
 
       this.updateTransform();
     });
