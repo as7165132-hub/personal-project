@@ -15,6 +15,8 @@ export class Dom2DLayer {
   private cardSetHeight: number = 0; // 1세트 높이 (무한 스크롤용)
   private isIsoMode: boolean = false;
 
+  private readonly BG_REPEAT_HEIGHT = 2160; // 배경 반복 단위 (bg-gradient.svg 높이)
+
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -186,7 +188,11 @@ export class Dom2DLayer {
       this.grid.style.transform = `translateY(${-this.scrollY}px)`;
     }
 
-    // 배경 동기화
+    // 배경 무한 스크롤: scrollY를 배경 높이로 modulo 연산
+    const bgOffset = -this.scrollY % this.BG_REPEAT_HEIGHT;
+    document.body.style.setProperty('--bg-offset', `${bgOffset}`);
+
+    // 레거시 변수 (호환성)
     document.body.style.setProperty('--scroll-offset', `${this.scrollY}px`);
   }
 
