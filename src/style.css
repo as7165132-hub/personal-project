@@ -1,6 +1,6 @@
 /**
- * SURFACE DEBUT - Styles (v51 - 50 cards with ISO view)
- * 8개 카드 성공 → 50개로 스케일업
+ * SURFACE DEBUT - Styles (v52 - 120 cards with fixed ISO viewport)
+ * 고정된 뷰포트에서 카드가 스크롤되는 방식
  */
 
 /* ==================== Variables ==================== */
@@ -76,8 +76,8 @@ body.iso-mode::before {
 .surface-camera {
   position: relative;
   width: 100%;
-  height: auto;
-  min-height: 100vh;
+  height: 100vh; /* 고정된 뷰포트 높이 */
+  overflow: hidden; /* 뷰포트 밖 카드 숨김 */
   transform-style: preserve-3d;
   transition: transform 1100ms cubic-bezier(0.22, 0.8, 0.26, 1);
   transform: none; /* 초기값 명시 */
