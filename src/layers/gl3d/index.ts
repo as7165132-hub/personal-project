@@ -25,6 +25,7 @@ export class GL3DLayer {
   // 스크롤 관련
   private isActive: boolean = false;
   private scrollContainer: HTMLElement | null = null;
+  private initialCameraPosition: THREE.Vector3 = new THREE.Vector3(0, 10, 20);
 
   constructor(canvasId: string = 'gl-canvas') {
     let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -82,7 +83,7 @@ export class GL3DLayer {
   private setupIsometricCamera(): void {
     // 카메라를 위에서 내려다보는 각도로 고정 (CSS rotateX(45deg)와 매치)
     // 2점 투시: 수직선은 평행, 수평 방향으로만 소실점
-    this.camera.position.set(0, 10, 20);
+    this.camera.position.copy(this.initialCameraPosition);
     this.camera.lookAt(0, 0, 0);
 
     console.log('Camera position:', this.camera.position);
@@ -186,13 +187,13 @@ export class GL3DLayer {
     this.canvas.style.opacity = '1';
     console.log('GL3D Layer: Canvas opacity set to 1');
 
-    // 씬 위치 초기화 (현재 스크롤 위치에 맞춤)
-    if (this.scrollContainer) {
-      const scrollY = this.scrollContainer.scrollTop;
-      const sceneOffset = scrollY * 0.01;
-      this.scene.position.y = -sceneOffset;
-      console.log('Scene position updated:', this.scene.position);
-    }
+    // 카메라 위치 초기화 (고정된 위치로 리셋)
+    this.camera.position.copy(this.initialCameraPosition);
+    this.camera.lookAt(0, 0, 0);
+    console.log('Camera position reset:', this.camera.position);
+
+    // 씬은 원점에 고정
+    this.scene.position.set(0, 0, 0);
 
     // 이전에 생성된 풍선/카드 메시 제거
     if (this.activeBubble) {
@@ -236,7 +237,11 @@ export class GL3DLayer {
     // 캔버스 숨김
     this.canvas.style.opacity = '0';
 
-    // 씬 위치 완전히 초기화
+    // 카메라 위치 초기화
+    this.camera.position.copy(this.initialCameraPosition);
+    this.camera.lookAt(0, 0, 0);
+
+    // 씬 위치 완전히 초기화 (이미 고정되어 있지만 명시적으로)
     this.scene.position.set(0, 0, 0);
 
     // 섬과 버블 숨김
@@ -264,9 +269,10 @@ export class GL3DLayer {
 
     const scrollY = this.scrollContainer.scrollTop;
 
-    // 스크롤 양에 비례하여 씬을 Y축으로만 이동 (컨베이어 효과)
-    const sceneOffset = scrollY * 0.01; // 스크롤 민감도
-    this.scene.position.y = -sceneOffset;
+    // 스크롤 양에 비례하여 카메라를 Y축으로 이동 (씬은 고정)
+    const cameraOffset = scrollY * 0.01; // 스크롤 민감도
+    this.camera.position.y = this.initialCameraPosition.y + cameraOffset;
+    this.camera.lookAt(0, cameraOffset, 0); // 카메라가 항상 같은 상대 위치를 바라보도록
   };
 
   /**
