@@ -114,7 +114,7 @@ export class Dom2DLayer {
       // 1. 먼저 회전 (ISO 각도 설정)
       // 2. 그 다음 위치 조정 (회전된 공간에서 이동)
       // 3. 마지막으로 스크롤 (회전된 Y축을 따라 이동)
-      const offsetY = -400 - this.scrollOffset; // 위로 400px + 스크롤
+      const offsetY = -100 - this.scrollOffset; // 위로 100px + 스크롤 (중간 위치)
       const transformStr = `rotateX(30deg) rotateZ(25deg) scale(1) translateX(-200px) translateY(${offsetY}px)`;
       grid.style.transform = transformStr;
       console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset, 'offsetY:', offsetY, 'transform:', transformStr);
