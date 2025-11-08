@@ -123,12 +123,12 @@ export class Dom2DLayer {
     // ISO 모드 여부에 따라 다른 transform 적용
     if (this.isIsoMode) {
       // ISO 뷰: parallel projection (perspective 없이)
-      // Scale 0.5로 줄여서 전체 뷰 확인 가능하도록
+      // rotateX: 위에서 아래로 보는 각도, rotateZ: 옆에서 보는 각도
       const relativeScroll = this.scrollOffset - this.totalHeight;
       const offsetY = 0 - relativeScroll;
-      const transformStr = `rotateX(45deg) rotateY(0deg) rotateZ(0deg) scale(0.5) translateY(${offsetY}px)`;
+      const transformStr = `rotateX(35deg) rotateZ(45deg) scale(0.5) translateY(${offsetY}px)`;
       grid.style.transform = transformStr;
-      console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset.toFixed(0), 'relative:', relativeScroll.toFixed(0), 'offsetY:', offsetY.toFixed(0), 'scale: 0.5');
+      console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset.toFixed(0), 'relative:', relativeScroll.toFixed(0), 'offsetY:', offsetY.toFixed(0), 'angles: 35deg/45deg');
     } else {
       // 2D 뷰: 단순 스크롤
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;

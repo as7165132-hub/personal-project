@@ -165,8 +165,8 @@ body::before {
 
 /* ISO 모드: 배경만 회전 (Grid는 JavaScript로 제어) */
 body.iso-mode::before {
-  /* Parallel projection - perspective 없이 단순 회전 */
-  transform: rotateX(45deg) rotateY(0deg) rotateZ(0deg) scale(0.5) translateY(calc(0px - var(--scroll-offset) * 1px));
+  /* Parallel projection - isometric view (35deg X축, 45deg Z축) */
+  transform: rotateX(35deg) rotateZ(45deg) scale(0.5) translateY(calc(0px - var(--scroll-offset) * 1px));
   transform-origin: 50% 50%; /* 중앙 기준 */
 }
 
