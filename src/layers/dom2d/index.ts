@@ -1,6 +1,6 @@
 /**
- * SURFACE DEBUT - 2D DOM Layer (v53 - 360 cards with infinite scroll)
- * 무한 스크롤 구현 (3세트 복제)
+ * SURFACE DEBUT - 2D DOM Layer (v54 - True infinite scroll with DOM reordering)
+ * 컨베이어 벨트 방식 무한 스크롤 (DOM 재배치)
  */
 
 import { i18n } from '@systems/i18n';
@@ -9,7 +9,7 @@ export class Dom2DLayer {
   private container: HTMLElement;
   private camera!: HTMLElement;
   private grid!: HTMLElement;
-  private cards: HTMLElement[] = [];
+  private cardSets: HTMLElement[][] = [[], [], []]; // 3개 세트로 분리
 
   private scrollY: number = 0;
   private cardSetHeight: number = 0; // 1세트 높이 (무한 스크롤용)
@@ -55,7 +55,7 @@ export class Dom2DLayer {
       ...Array.from({ length: 115 }, (_, i) => `CARD ${String(i + 6).padStart(3, '0')}`)
     ];
 
-    // 3세트 복제 (무한 스크롤용)
+    // 3세트 생성 및 세트별로 분리 저장
     for (let set = 0; set < 3; set++) {
       cardTexts.forEach(text => {
         const card = document.createElement('div');
@@ -64,12 +64,14 @@ export class Dom2DLayer {
         p.className = 'surface-card-text';
         p.textContent = text;
         card.appendChild(p);
-        this.grid.appendChild(card);
-        this.cards.push(card);
+        this.cardSets[set].push(card); // 세트별로 저장
       });
     }
 
-    console.log('[INIT] Total cards:', this.cards.length, '(120 × 3 sets)');
+    // 초기 DOM 순서: [세트0][세트1][세트2]
+    this.renderSets();
+
+    console.log('[INIT] Total cards:', this.cardSets.flat().length, '(120 × 3 sets)');
 
     this.camera.appendChild(this.grid);
     this.container.appendChild(this.camera);
@@ -87,23 +89,52 @@ export class Dom2DLayer {
     }, 100);
   }
 
+  /**
+   * DOM에 세트 렌더링 (현재 cardSets 순서대로)
+   */
+  private renderSets(): void {
+    this.grid.innerHTML = '';
+    this.cardSets.forEach(set => {
+      set.forEach(card => this.grid.appendChild(card));
+    });
+  }
+
+  /**
+   * 컨베이어 벨트: 아래로 스크롤 - 첫 세트를 마지막으로 이동
+   */
+  private rotateDown(): void {
+    const firstSet = this.cardSets.shift()!;
+    this.cardSets.push(firstSet);
+    this.renderSets();
+    this.scrollY -= this.cardSetHeight;
+    console.log('[ROTATE ↓] 첫 세트를 마지막으로 이동, scrollY:', this.scrollY.toFixed(0));
+  }
+
+  /**
+   * 컨베이어 벨트: 위로 스크롤 - 마지막 세트를 첫 번째로 이동
+   */
+  private rotateUp(): void {
+    const lastSet = this.cardSets.pop()!;
+    this.cardSets.unshift(lastSet);
+    this.renderSets();
+    this.scrollY += this.cardSetHeight;
+    console.log('[ROTATE ↑] 마지막 세트를 첫 번째로 이동, scrollY:', this.scrollY.toFixed(0));
+  }
+
   private setupScrolling(): void {
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
-      const beforeScroll = this.scrollY;
       this.scrollY += e.deltaY * 0.5;
 
-      // ISO 모드: 무한 스크롤 (3세트 wrapping)
+      // ISO 모드: 컨베이어 벨트 방식 무한 스크롤
       if (this.isIsoMode && this.cardSetHeight > 0) {
-        // 아래로 스크롤: 2세트 끝에 도달하면 중간 세트로 점프
+        // 아래로 스크롤: 2세트 끝에 도달하면 DOM 재배치
         if (this.scrollY >= 2 * this.cardSetHeight) {
-          this.scrollY -= this.cardSetHeight;
-          console.log('[WRAP ↓] 아래 → 중간:', beforeScroll.toFixed(0), '→', this.scrollY.toFixed(0));
+          this.rotateDown();
         }
-        // 위로 스크롤: 1세트 시작 미만이면 중간 세트로 점프
+        // 위로 스크롤: 1세트 시작 미만이면 DOM 재배치
         else if (this.scrollY < this.cardSetHeight) {
-          this.scrollY += this.cardSetHeight;
-          console.log('[WRAP ↑] 위 → 중간:', beforeScroll.toFixed(0), '→', this.scrollY.toFixed(0));
+          this.rotateUp();
         }
       }
 
@@ -160,7 +191,7 @@ export class Dom2DLayer {
   }
 
   destroy(): void {
-    this.cards = [];
+    this.cardSets = [[], [], []];
     this.container.innerHTML = '';
   }
 }
