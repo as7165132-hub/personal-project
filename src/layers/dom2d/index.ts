@@ -5,6 +5,11 @@
 
 import { i18n } from '@systems/i18n';
 
+interface CardData {
+  text: string;
+  image?: string; // 선택적 이미지 경로
+}
+
 export class Dom2DLayer {
   private container: HTMLElement;
   private camera!: HTMLElement;
@@ -12,10 +17,20 @@ export class Dom2DLayer {
   private cardSets: HTMLElement[][] = [[], [], []]; // 3개 세트로 분리
 
   private scrollY: number = 0;
+  private baseScrollOffset: number = 0; // DOM 재배치 누적 오프셋
   private cardSetHeight: number = 0; // 1세트 높이 (무한 스크롤용)
   private isIsoMode: boolean = false;
 
   private readonly BG_REPEAT_HEIGHT = 2160; // 배경 반복 단위 (bg-gradient.svg 높이)
+
+  // 카드 데이터 저장 (이미지 매핑용)
+  private cardDataList: CardData[] = [];
+
+  // 자동 스크롤 관련
+  private autoScrollEnabled: boolean = true; // 자동 스크롤 기본 활성화
+  private autoScrollSpeed: number = 0.3; // 스크롤 속도 (px/frame)
+  private autoScrollAnimationId: number | null = null;
+  private userInteractionTimeout: number | null = null;
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -28,9 +43,42 @@ export class Dom2DLayer {
 
   private init(): void {
     this.container.className = 'surface-stage';
+    this.buildBackgroundTiles();
     this.buildStructure();
     this.setupScrolling();
     this.setupIsoToggle();
+  }
+
+  /**
+   * 배경 타일 생성 (8칸으로 분할)
+   */
+  private buildBackgroundTiles(): void {
+    // 기존 배경 컨테이너 제거 (있다면)
+    const existingBg = document.querySelector('.bg-tiles-container');
+    if (existingBg) {
+      existingBg.remove();
+    }
+
+    // 배경 타일 컨테이너 생성
+    const bgContainer = document.createElement('div');
+    bgContainer.className = 'bg-tiles-container';
+
+    // 8개 타일 생성
+    for (let i = 0; i < 8; i++) {
+      const tile = document.createElement('div');
+      tile.className = 'bg-tile';
+      tile.dataset.tileIndex = String(i); // 나중에 랜덤 이미지 적용 시 사용
+
+      // 임시로 기존 bg-gradient.svg 사용 (나중에 개별 타일 이미지로 교체 가능)
+      tile.style.backgroundImage = `url('/bg-gradient.svg')`;
+
+      bgContainer.appendChild(tile);
+    }
+
+    // body 맨 앞에 추가 (모든 요소 뒤에 배경으로)
+    document.body.insertBefore(bgContainer, document.body.firstChild);
+
+    console.log('[BG] 8-tile background created');
   }
 
   /**
@@ -47,29 +95,57 @@ export class Dom2DLayer {
     this.grid = document.createElement('div');
     this.grid.className = 'surface-grid';
 
-    // 카드 데이터 (120개)
-    const cardTexts = [
-      i18n.t('PROLOGUE'),
-      i18n.t('LAYERS'),
-      i18n.t('THRESHOLD'),
-      i18n.t('DEBUT'),
-      i18n.t('EPILOGUE'),
-      ...Array.from({ length: 115 }, (_, i) => `CARD ${String(i + 6).padStart(3, '0')}`)
+    // 카드 데이터 (120개) - 이미지 경로 포함 가능
+    this.cardDataList = [
+      { text: i18n.t('PROLOGUE') }, // 이미지를 추가하려면: { text: i18n.t('PROLOGUE'), image: '/images/card-01.png' }
+      { text: i18n.t('LAYERS') },
+      { text: i18n.t('THRESHOLD') },
+      { text: i18n.t('DEBUT') },
+      { text: i18n.t('EPILOGUE') },
+      ...Array.from({ length: 115 }, (_, i) => ({
+        text: `CARD ${String(i + 6).padStart(3, '0')}`
+        // 이미지 예시: image: `/images/card-${String(i + 6).padStart(3, '0')}.png`
+      }))
     ];
 
     // 3세트 생성 및 세트별로 분리 저장
     for (let set = 0; set < 3; set++) {
-      cardTexts.forEach(text => {
-        const card = document.createElement('div');
-        card.className = 'surface-card';
-        const p = document.createElement('p');
-        p.className = 'surface-card-text';
-        p.textContent = text;
-        card.appendChild(p);
+      this.cardDataList.forEach((cardData, index) => {
+        const card = this.createCard(cardData, index);
         this.cardSets[set].push(card); // 세트별로 저장
       });
     }
 
+    this.completeStructureSetup();
+  }
+
+  /**
+   * 카드 생성 (텍스트 + 선택적 이미지)
+   */
+  private createCard(cardData: CardData, index: number): HTMLElement {
+    const card = document.createElement('div');
+    card.className = 'surface-card';
+    card.dataset.cardIndex = String(index); // 카드 인덱스 저장
+
+    // 이미지가 있으면 추가
+    if (cardData.image) {
+      const img = document.createElement('img');
+      img.src = cardData.image;
+      img.className = 'surface-card-image';
+      img.alt = cardData.text;
+      card.appendChild(img);
+    }
+
+    // 텍스트 추가
+    const p = document.createElement('p');
+    p.className = 'surface-card-text';
+    p.textContent = cardData.text;
+    card.appendChild(p);
+
+    return card;
+  }
+
+  private completeStructureSetup(): void {
     // 초기 DOM 순서: [세트0][세트1][세트2]
     this.renderSets();
 
@@ -108,8 +184,9 @@ export class Dom2DLayer {
     const firstSet = this.cardSets.shift()!;
     this.cardSets.push(firstSet);
     this.renderSets();
-    this.scrollY -= this.cardSetHeight;
-    console.log('[ROTATE ↓] 첫 세트를 마지막으로 이동, scrollY:', this.scrollY.toFixed(0));
+    this.baseScrollOffset += this.cardSetHeight; // scrollY는 유지, base만 조정
+    // 로그 간소화: 필요 시 주석 해제
+    // console.log('[ROTATE ↓] base:', this.baseScrollOffset.toFixed(0));
   }
 
   /**
@@ -119,23 +196,33 @@ export class Dom2DLayer {
     const lastSet = this.cardSets.pop()!;
     this.cardSets.unshift(lastSet);
     this.renderSets();
-    this.scrollY += this.cardSetHeight;
-    console.log('[ROTATE ↑] 마지막 세트를 첫 번째로 이동, scrollY:', this.scrollY.toFixed(0));
+    this.baseScrollOffset -= this.cardSetHeight; // scrollY는 유지, base만 조정
+    // 로그 간소화: 필요 시 주석 해제
+    // console.log('[ROTATE ↑] base:', this.baseScrollOffset.toFixed(0));
   }
 
   private setupScrolling(): void {
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
+
+      // 수동 스크롤 시 자동 스크롤 일시 정지
+      if (this.isIsoMode && this.autoScrollEnabled) {
+        this.pauseAutoScroll();
+      }
+
       this.scrollY += e.deltaY * 0.5;
 
       // ISO 모드: 컨베이어 벨트 방식 무한 스크롤
       if (this.isIsoMode && this.cardSetHeight > 0) {
+        // 현재 DOM 배치 기준으로 실제 스크롤 위치 계산
+        const effectiveScroll = this.scrollY - this.baseScrollOffset;
+
         // 아래로 스크롤: 2세트 끝에 도달하면 DOM 재배치
-        if (this.scrollY >= 2 * this.cardSetHeight) {
+        if (effectiveScroll >= 2 * this.cardSetHeight) {
           this.rotateDown();
         }
         // 위로 스크롤: 1세트 시작 미만이면 DOM 재배치
-        else if (this.scrollY < this.cardSetHeight) {
+        else if (effectiveScroll < this.cardSetHeight) {
           this.rotateUp();
         }
       }
@@ -146,7 +233,83 @@ export class Dom2DLayer {
       }
 
       this.updateTransform();
+
+      // 3초 후 자동 스크롤 재개
+      if (this.isIsoMode && this.autoScrollEnabled) {
+        this.resumeAutoScrollAfterDelay(3000);
+      }
     }, { passive: false });
+  }
+
+  /**
+   * 자동 스크롤 시작
+   */
+  private startAutoScroll(): void {
+    if (this.autoScrollAnimationId !== null) return;
+
+    const autoScroll = () => {
+      if (!this.isIsoMode || !this.autoScrollEnabled) {
+        this.autoScrollAnimationId = null;
+        return;
+      }
+
+      // 천천히 스크롤
+      this.scrollY += this.autoScrollSpeed;
+
+      // 무한 스크롤 로직 적용
+      if (this.cardSetHeight > 0) {
+        const effectiveScroll = this.scrollY - this.baseScrollOffset;
+
+        if (effectiveScroll >= 2 * this.cardSetHeight) {
+          this.rotateDown();
+        }
+        else if (effectiveScroll < this.cardSetHeight) {
+          this.rotateUp();
+        }
+      }
+
+      this.updateTransform();
+      this.autoScrollAnimationId = requestAnimationFrame(autoScroll);
+    };
+
+    this.autoScrollAnimationId = requestAnimationFrame(autoScroll);
+  }
+
+  /**
+   * 자동 스크롤 중지
+   */
+  private stopAutoScroll(): void {
+    if (this.autoScrollAnimationId !== null) {
+      cancelAnimationFrame(this.autoScrollAnimationId);
+      this.autoScrollAnimationId = null;
+    }
+
+    if (this.userInteractionTimeout !== null) {
+      clearTimeout(this.userInteractionTimeout);
+      this.userInteractionTimeout = null;
+    }
+  }
+
+  /**
+   * 자동 스크롤 일시 정지 (수동 스크롤 시)
+   */
+  private pauseAutoScroll(): void {
+    this.stopAutoScroll();
+  }
+
+  /**
+   * 지연 후 자동 스크롤 재개
+   */
+  private resumeAutoScrollAfterDelay(delayMs: number): void {
+    if (this.userInteractionTimeout !== null) {
+      clearTimeout(this.userInteractionTimeout);
+    }
+
+    this.userInteractionTimeout = window.setTimeout(() => {
+      if (this.isIsoMode && this.autoScrollEnabled) {
+        this.startAutoScroll();
+      }
+    }, delayMs);
   }
 
   private setupIsoToggle(): void {
@@ -161,11 +324,21 @@ export class Dom2DLayer {
       if (this.isIsoMode) {
         // ISO 모드: 중간 세트로 시작 (무한 스크롤 대응)
         this.scrollY = this.cardSetHeight;
-        console.log('✨ ISO 모드 활성화 (중간 세트로 시작)');
+        this.baseScrollOffset = 0; // base도 리셋
+        console.log('✨ ISO 모드 활성화 (자동 스크롤 시작)');
+
+        // 자동 스크롤 시작
+        if (this.autoScrollEnabled) {
+          this.startAutoScroll();
+        }
       } else {
         // 2D 모드: 처음으로 리셋
         this.scrollY = 0;
-        console.log('📐 2D 모드로 전환 (처음으로 리셋)');
+        this.baseScrollOffset = 0; // base도 리셋
+        console.log('📐 2D 모드로 전환 (자동 스크롤 중지)');
+
+        // 자동 스크롤 중지
+        this.stopAutoScroll();
       }
 
       this.updateTransform();
@@ -181,7 +354,10 @@ export class Dom2DLayer {
     if (this.isIsoMode) {
       // ISO: isometric view
       this.camera.style.transform = `rotateX(45deg) rotateZ(45deg) scale(0.8)`;
-      this.grid.style.transform = `translateY(${-this.scrollY}px)`;
+
+      // 시각적 오프셋: scrollY - baseScrollOffset (DOM 재배치를 고려한 실제 위치)
+      const effectiveScroll = this.scrollY - this.baseScrollOffset;
+      this.grid.style.transform = `translateY(${-effectiveScroll}px)`;
     } else {
       // 2D: camera 초기화, grid만 스크롤
       this.camera.style.transform = 'none';
@@ -196,8 +372,103 @@ export class Dom2DLayer {
     document.body.style.setProperty('--scroll-offset', `${this.scrollY}px`);
   }
 
+  /**
+   * 특정 카드에 이미지 추가 (외부에서 호출 가능)
+   * @param cardIndex 카드 인덱스 (0-119)
+   * @param imagePath 이미지 경로
+   */
+  public setCardImage(cardIndex: number, imagePath: string): void {
+    if (cardIndex < 0 || cardIndex >= this.cardDataList.length) {
+      console.warn(`[CARD] Invalid card index: ${cardIndex}`);
+      return;
+    }
+
+    // 카드 데이터에 이미지 추가
+    this.cardDataList[cardIndex].image = imagePath;
+
+    // 모든 세트의 해당 카드 업데이트
+    this.cardSets.forEach(set => {
+      const card = set[cardIndex];
+      if (!card) return;
+
+      // 기존 이미지 제거
+      const existingImg = card.querySelector('.surface-card-image');
+      if (existingImg) {
+        existingImg.remove();
+      }
+
+      // 새 이미지 추가
+      const img = document.createElement('img');
+      img.src = imagePath;
+      img.className = 'surface-card-image';
+      img.alt = this.cardDataList[cardIndex].text;
+
+      // 텍스트 앞에 이미지 삽입
+      const textElement = card.querySelector('.surface-card-text');
+      if (textElement) {
+        card.insertBefore(img, textElement);
+      } else {
+        card.appendChild(img);
+      }
+    });
+
+    console.log(`[CARD] Image set for card ${cardIndex}: ${imagePath}`);
+  }
+
+  /**
+   * 여러 카드에 이미지 일괄 추가
+   * @param imageMap 카드 인덱스 -> 이미지 경로 맵
+   */
+  public setCardImages(imageMap: Record<number, string>): void {
+    Object.entries(imageMap).forEach(([index, path]) => {
+      this.setCardImage(Number(index), path);
+    });
+  }
+
+  /**
+   * 자동 스크롤 토글
+   */
+  public toggleAutoScroll(): void {
+    this.autoScrollEnabled = !this.autoScrollEnabled;
+
+    if (this.autoScrollEnabled && this.isIsoMode) {
+      this.startAutoScroll();
+      console.log('[AUTO SCROLL] 활성화');
+    } else {
+      this.stopAutoScroll();
+      console.log('[AUTO SCROLL] 비활성화');
+    }
+  }
+
+  /**
+   * 자동 스크롤 속도 설정
+   * @param speed 스크롤 속도 (px/frame, 기본값: 0.3)
+   */
+  public setAutoScrollSpeed(speed: number): void {
+    this.autoScrollSpeed = speed;
+    console.log(`[AUTO SCROLL] 속도 설정: ${speed} px/frame`);
+  }
+
+  /**
+   * 자동 스크롤 상태 확인
+   */
+  public getAutoScrollStatus(): { enabled: boolean; speed: number; isRunning: boolean } {
+    return {
+      enabled: this.autoScrollEnabled,
+      speed: this.autoScrollSpeed,
+      isRunning: this.autoScrollAnimationId !== null
+    };
+  }
+
   destroy(): void {
+    this.stopAutoScroll();
     this.cardSets = [[], [], []];
     this.container.innerHTML = '';
+
+    // 배경 타일 제거
+    const bgContainer = document.querySelector('.bg-tiles-container');
+    if (bgContainer) {
+      bgContainer.remove();
+    }
   }
 }
