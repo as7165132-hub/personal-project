@@ -327,9 +327,17 @@ export class Dom2DLayer {
         this.baseScrollOffset = 0; // base도 리셋
         console.log('✨ ISO 모드 활성화 (자동 스크롤 시작)');
 
-        // 자동 스크롤 시작
+        // 자동 스크롤 시작 (cardSetHeight 초기화 대기)
         if (this.autoScrollEnabled) {
-          this.startAutoScroll();
+          // cardSetHeight가 0이면 잠시 후 재시도
+          if (this.cardSetHeight === 0) {
+            setTimeout(() => {
+              this.scrollY = this.cardSetHeight; // 다시 설정
+              this.startAutoScroll();
+            }, 150);
+          } else {
+            this.startAutoScroll();
+          }
         }
       } else {
         // 2D 모드: 처음으로 리셋
