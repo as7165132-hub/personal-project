@@ -10,7 +10,8 @@ export class Dom2DLayer {
   private cards: HTMLElement[] = [];
   private scrollOffset: number = 0; // 누적 스크롤 오프셋
   private isIsoMode: boolean = false; // ISO 뷰 모드
-  private cardHeight: number = 0; // 카드 하나의 높이 (컨베이어 벨트용)
+  private totalHeight: number = 0; // 전체 카드 그룹 높이 (컨베이어 벨트용)
+  private originalCardCount: number = 0; // 원본 카드 수
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -78,48 +79,20 @@ export class Dom2DLayer {
   }
 
   /**
-   * Wheel 핸들러 - 컨베이어 벨트 스크롤 (DOM 재배치)
+   * Wheel 핸들러 - 컨베이어 벨트 스크롤 (복제된 그룹 순환)
    */
   private handleWheel(e: WheelEvent): void {
     // deltaY 값을 누적
     this.scrollOffset += e.deltaY * 0.5; // 스크롤 속도 조절
 
-    // 카드 높이 계산 (처음 한 번만)
-    if (this.cardHeight === 0 && this.cards.length > 0) {
-      const firstCard = this.cards[0];
-      const rect = firstCard.getBoundingClientRect();
-      const grid = this.container.querySelector('.surface-grid') as HTMLElement;
-      if (grid) {
-        const style = window.getComputedStyle(grid);
-        const gap = parseFloat(style.gap || '0');
-        this.cardHeight = rect.height + gap;
-        console.log('[DEBUG] 카드 높이 (gap 포함):', this.cardHeight, 'px');
-      }
-    }
-
-    // 컨베이어 벨트: DOM 재배치로 무한 스크롤
-    if (this.cardHeight > 0) {
-      const grid = this.container.querySelector('.surface-grid') as HTMLElement;
-      if (!grid) return;
-
-      // 아래로 스크롤: 첫 카드를 맨 뒤로
-      while (this.scrollOffset >= this.cardHeight) {
-        const firstCard = this.cards.shift(); // 배열에서 첫 요소 제거
-        if (firstCard) {
-          this.cards.push(firstCard); // 배열 끝에 추가
-          grid.appendChild(firstCard); // DOM 맨 뒤로 이동
-          this.scrollOffset -= this.cardHeight;
-        }
-      }
-
-      // 위로 스크롤: 마지막 카드를 맨 앞으로
-      while (this.scrollOffset < 0) {
-        const lastCard = this.cards.pop(); // 배열에서 마지막 요소 제거
-        if (lastCard) {
-          this.cards.unshift(lastCard); // 배열 앞에 추가
-          grid.insertBefore(lastCard, grid.firstChild); // DOM 맨 앞으로 이동
-          this.scrollOffset += this.cardHeight;
-        }
+    // 컨베이어 벨트: 전체 높이 기준으로 순환 (순간이동)
+    if (this.totalHeight > 0) {
+      // 중간 세트를 기준으로 순환
+      // totalHeight = 원본 높이이므로, 중간 세트는 totalHeight ~ 2*totalHeight
+      if (this.scrollOffset >= this.totalHeight * 2) {
+        this.scrollOffset -= this.totalHeight;
+      } else if (this.scrollOffset < this.totalHeight) {
+        this.scrollOffset += this.totalHeight;
       }
     }
 
@@ -175,6 +148,7 @@ export class Dom2DLayer {
       });
     }
 
+    // 원본 카드 생성
     cardData.forEach((data) => {
       const card = document.createElement('div');
       card.className = 'surface-card';
@@ -188,28 +162,40 @@ export class Dom2DLayer {
       this.cards.push(card);
     });
 
-    console.log('[DEBUG] 카드 생성 완료:', this.cards.length, '개');
+    this.originalCardCount = this.cards.length;
+
+    // 전체 카드 그룹을 2번 더 복제 (총 3세트)
+    for (let clone = 0; clone < 2; clone++) {
+      cardData.forEach((data) => {
+        const card = document.createElement('div');
+        card.className = 'surface-card';
+
+        const text = document.createElement('p');
+        text.className = 'surface-card-text';
+        text.textContent = data.text;
+
+        card.appendChild(text);
+        grid.appendChild(card);
+        this.cards.push(card);
+      });
+    }
+
+    console.log('[DEBUG] 카드 생성 완료:', this.cards.length, '개 (원본:', this.originalCardCount, '개 × 3세트)');
     this.container.appendChild(grid);
     console.log('[DEBUG] Grid가 container에 추가됨');
 
-    // Transform 확인 및 컨베이어 벨트 카드 높이 계산
+    // Transform 확인 및 컨베이어 벨트 높이 계산
     setTimeout(() => {
-      if (this.cards.length > 0) {
-        const firstCard = this.cards[0];
-        const cardRect = firstCard.getBoundingClientRect();
-        const style = window.getComputedStyle(grid);
-        const gap = parseFloat(style.gap || '0');
-        this.cardHeight = cardRect.height + gap;
+      // 전체 높이 계산
+      this.totalHeight = grid.scrollHeight / 3; // 3세트 중 1세트 높이
+      console.log('[DEBUG] 1세트 높이:', this.totalHeight, 'px');
+      console.log('[DEBUG] 전체 높이:', grid.scrollHeight, 'px');
 
-        console.log('[DEBUG] 카드 높이 (gap 포함):', this.cardHeight, 'px');
-        console.log('[DEBUG] 첫 번째 카드 위치:', {
-          x: cardRect.x,
-          y: cardRect.y,
-          width: cardRect.width,
-          height: cardRect.height
-        });
-        console.log('[DEBUG] 총 카드 수:', this.cards.length);
-      }
+      // 중간 세트 시작 위치로 초기화 (순환을 위해)
+      this.scrollOffset = this.totalHeight;
+      this.updateTransform();
+
+      console.log('[DEBUG] 초기 scrollOffset:', this.scrollOffset, 'px (중간 세트 시작)');
     }, 100);
   }
 

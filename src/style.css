@@ -58,7 +58,7 @@ body::before {
   width: 300%;
   height: 300%;
   background-image: url('/bg-gradient.svg');
-  background-size: 1920px 1080px; /* 타일 크기 */
+  background-size: 3840px 2160px; /* 타일 크기 - 큰 타일로 반복 최소화 */
   background-repeat: repeat; /* 타일링 */
   background-position: center;
   z-index: 0;
