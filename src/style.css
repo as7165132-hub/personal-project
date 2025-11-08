@@ -88,7 +88,7 @@ body.iso-mode::before {
   display: grid;
   grid-template-columns: repeat(4, 1fr); /* 4컬럼 */
   gap: var(--surface-gap);
-  padding: 100vh 2rem; /* 상하 100vh로 스크롤 영역 확장 */
+  padding: 2rem; /* 무한 스크롤용 최소 패딩 */
   width: 85%; /* 적당한 너비 */
   max-width: 1600px;
   margin: 0 auto;
@@ -168,14 +168,14 @@ body.iso-mode::before {
 @media (max-width: 1024px) {
   .surface-grid {
     grid-template-columns: repeat(2, 1fr);
-    padding: 100vh 1.5rem; /* 동일한 스크롤 영역 */
+    padding: 1.5rem; /* 무한 스크롤용 최소 패딩 */
   }
 }
 
 @media (max-width: 768px) {
   .surface-grid {
     grid-template-columns: 1fr;
-    padding: 100vh 1rem; /* 동일한 스크롤 영역 */
+    padding: 1rem; /* 무한 스크롤용 최소 패딩 */
   }
 
   .surface-card {
