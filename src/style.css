@@ -165,8 +165,8 @@ body::before {
 
 /* ISO 모드: 배경만 회전 (Grid는 JavaScript로 제어) */
 body.iso-mode::before {
-  /* 기울기와 위치는 고정, 회전된 공간 안에서만 스크롤 */
-  transform: translateX(300px) translateY(600px) rotateX(50deg) rotateZ(45deg) scale(1.1) translateY(calc(var(--scroll-offset) * -1px));
+  /* 회전 먼저 → 회전된 공간에서 이동 */
+  transform: rotateX(50deg) rotateZ(45deg) scale(1.1) translateX(300px) translateY(calc(600px - var(--scroll-offset) * 1px));
   transform-origin: 50% 50%; /* 중앙 기준으로 회전 */
 }
 

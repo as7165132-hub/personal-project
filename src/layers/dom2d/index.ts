@@ -111,8 +111,13 @@ export class Dom2DLayer {
     // ISO 모드 여부에 따라 다른 transform 적용
     if (this.isIsoMode) {
       // ISO 뷰: 기울기와 위치는 고정, 회전된 공간 안에서만 스크롤
-      // 컨베이어벨트처럼 기울어진 레일 위에서 카드가 움직임
-      grid.style.transform = `translateX(300px) translateY(600px) rotateX(50deg) rotateZ(45deg) scale(0.9) translateY(-${this.scrollOffset}px)`;
+      // 1. 먼저 회전 (ISO 각도 설정)
+      // 2. 그 다음 위치 조정 (회전된 공간에서 이동)
+      // 3. 마지막으로 스크롤 (회전된 Y축을 따라 이동)
+      const offsetY = 600 - this.scrollOffset;
+      const transformStr = `rotateX(50deg) rotateZ(45deg) scale(0.9) translateX(300px) translateY(${offsetY}px)`;
+      grid.style.transform = transformStr;
+      console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset, 'offsetY:', offsetY, 'transform:', transformStr);
     } else {
       // 2D 뷰: 단순 스크롤
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;
