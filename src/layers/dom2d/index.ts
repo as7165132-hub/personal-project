@@ -110,11 +110,9 @@ export class Dom2DLayer {
 
     // ISO 모드 여부에 따라 다른 transform 적용
     if (this.isIsoMode) {
-      // ISO 뷰: 극적인 기울기 (45도 이상)
-      // 큰 각도로 회전하면 좌측 상단으로 이동하므로, 오른쪽 아래로 대폭 이동 필요
-      const isoOffsetY = 600 - this.scrollOffset; // 아래로 600px 기본 오프셋
-      const isoOffsetX = 300; // 오른쪽으로 300px 오프셋
-      grid.style.transform = `translateX(${isoOffsetX}px) translateY(${isoOffsetY}px) rotateX(50deg) rotateZ(45deg) scale(0.9)`;
+      // ISO 뷰: 기울기와 위치는 고정, 회전된 공간 안에서만 스크롤
+      // 컨베이어벨트처럼 기울어진 레일 위에서 카드가 움직임
+      grid.style.transform = `translateX(300px) translateY(600px) rotateX(50deg) rotateZ(45deg) scale(0.9) translateY(-${this.scrollOffset}px)`;
     } else {
       // 2D 뷰: 단순 스크롤
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;
