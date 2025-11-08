@@ -28,7 +28,7 @@ export class Dom2DLayer {
 
   // 자동 스크롤 관련
   private autoScrollEnabled: boolean = true; // 자동 스크롤 기본 활성화
-  private autoScrollSpeed: number = 0.3; // 스크롤 속도 (px/frame)
+  private autoScrollSpeed: number = 0.9; // 스크롤 속도 (px/frame) - 3배 빠르게
   private autoScrollAnimationId: number | null = null;
   private userInteractionTimeout: number | null = null;
 
@@ -70,7 +70,7 @@ export class Dom2DLayer {
       tile.dataset.tileIndex = String(i); // 나중에 랜덤 이미지 적용 시 사용
 
       // 임시로 기존 bg-gradient.svg 사용 (나중에 개별 타일 이미지로 교체 가능)
-      tile.style.backgroundImage = `url('/bg-gradient.svg')`;
+      tile.style.backgroundImage = `url('/personal-project/bg-gradient.svg')`;
 
       bgContainer.appendChild(tile);
     }
