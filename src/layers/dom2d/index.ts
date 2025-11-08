@@ -95,16 +95,15 @@ export class Dom2DLayer {
     this.grid = document.createElement('div');
     this.grid.className = 'surface-grid';
 
-    // 카드 데이터 (120개) - 이미지 경로 포함 가능
+    // 카드 데이터 (30개) - 이미지 경로 포함 가능
     this.cardDataList = [
-      { text: i18n.t('PROLOGUE') }, // 이미지를 추가하려면: { text: i18n.t('PROLOGUE'), image: '/images/card-01.png' }
+      { text: i18n.t('PROLOGUE') },
       { text: i18n.t('LAYERS') },
       { text: i18n.t('THRESHOLD') },
       { text: i18n.t('DEBUT') },
       { text: i18n.t('EPILOGUE') },
-      ...Array.from({ length: 115 }, (_, i) => ({
-        text: `CARD ${String(i + 6).padStart(3, '0')}`
-        // 이미지 예시: image: `/images/card-${String(i + 6).padStart(3, '0')}.png`
+      ...Array.from({ length: 25 }, (_, i) => ({
+        text: `CARD ${String(i + 6).padStart(2, '0')}`
       }))
     ];
 
@@ -127,20 +126,26 @@ export class Dom2DLayer {
     card.className = 'surface-card';
     card.dataset.cardIndex = String(index); // 카드 인덱스 저장
 
+    // 중앙 사각형 컨테이너
+    const innerBox = document.createElement('div');
+    innerBox.className = 'surface-card-inner';
+
     // 이미지가 있으면 추가
     if (cardData.image) {
       const img = document.createElement('img');
       img.src = cardData.image;
       img.className = 'surface-card-image';
       img.alt = cardData.text;
-      card.appendChild(img);
+      innerBox.appendChild(img);
     }
 
     // 텍스트 추가
     const p = document.createElement('p');
     p.className = 'surface-card-text';
     p.textContent = cardData.text;
-    card.appendChild(p);
+    innerBox.appendChild(p);
+
+    card.appendChild(innerBox);
 
     return card;
   }
@@ -322,17 +327,19 @@ export class Dom2DLayer {
       btn.classList.toggle('active', this.isIsoMode);
 
       if (this.isIsoMode) {
-        // ISO 모드: 중간 세트로 시작 (무한 스크롤 대응)
+        // ISO 모드: 랜덤 배치로 전환
         this.scrollY = this.cardSetHeight;
-        this.baseScrollOffset = 0; // base도 리셋
-        console.log('✨ ISO 모드 활성화 (자동 스크롤 시작)');
+        this.baseScrollOffset = 0;
+        console.log('✨ ISO 모드 활성화 (랜덤 배치)');
 
-        // 자동 스크롤 시작 (cardSetHeight 초기화 대기)
+        // 그리드를 absolute positioning으로 변경하고 카드들을 랜덤 배치
+        this.applyRandomLayout();
+
+        // 자동 스크롤 시작
         if (this.autoScrollEnabled) {
-          // cardSetHeight가 0이면 잠시 후 재시도
           if (this.cardSetHeight === 0) {
             setTimeout(() => {
-              this.scrollY = this.cardSetHeight; // 다시 설정
+              this.scrollY = this.cardSetHeight;
               this.startAutoScroll();
             }, 150);
           } else {
@@ -340,10 +347,13 @@ export class Dom2DLayer {
           }
         }
       } else {
-        // 2D 모드: 처음으로 리셋
+        // 2D 모드: 그리드 레이아웃으로 복원
         this.scrollY = 0;
-        this.baseScrollOffset = 0; // base도 리셋
-        console.log('📐 2D 모드로 전환 (자동 스크롤 중지)');
+        this.baseScrollOffset = 0;
+        console.log('📐 2D 모드로 전환 (그리드 레이아웃)');
+
+        // 그리드 레이아웃으로 복원
+        this.applyGridLayout();
 
         // 자동 스크롤 중지
         this.stopAutoScroll();
@@ -351,6 +361,56 @@ export class Dom2DLayer {
 
       this.updateTransform();
     });
+  }
+
+  /**
+   * ISO 모드: 카드들을 랜덤하게 배치
+   */
+  private applyRandomLayout(): void {
+    this.grid.style.position = 'relative';
+    this.grid.style.display = 'block';
+    this.grid.style.height = `${this.grid.scrollHeight}px`; // 기존 높이 유지
+
+    // 모든 카드에 랜덤 위치 적용
+    const allCards = this.grid.querySelectorAll('.surface-card') as NodeListOf<HTMLElement>;
+    const containerWidth = this.grid.offsetWidth || 1920;
+    const cardWidth = 300; // 카드 너비
+
+    allCards.forEach((card, index) => {
+      card.style.position = 'absolute';
+      card.style.width = `${cardWidth}px`;
+
+      // 랜덤 위치 계산
+      const randomX = Math.random() * (containerWidth - cardWidth);
+      const randomY = (index * 500) + (Math.random() * 200 - 100); // 세로로는 순서대로, 약간의 랜덤
+
+      card.style.left = `${randomX}px`;
+      card.style.top = `${randomY}px`;
+      card.style.transform = `rotate(${Math.random() * 10 - 5}deg)`; // 약간 회전
+    });
+
+    console.log(`[ISO] ${allCards.length} cards randomly positioned`);
+  }
+
+  /**
+   * 2D 모드: 그리드 레이아웃으로 복원
+   */
+  private applyGridLayout(): void {
+    this.grid.style.position = '';
+    this.grid.style.display = '';
+    this.grid.style.height = '';
+
+    // 모든 카드의 inline 스타일 제거
+    const allCards = this.grid.querySelectorAll('.surface-card') as NodeListOf<HTMLElement>;
+    allCards.forEach(card => {
+      card.style.position = '';
+      card.style.width = '';
+      card.style.left = '';
+      card.style.top = '';
+      card.style.transform = '';
+    });
+
+    console.log('[2D] Grid layout restored');
   }
 
   /**
@@ -399,8 +459,11 @@ export class Dom2DLayer {
       const card = set[cardIndex];
       if (!card) return;
 
+      const innerBox = card.querySelector('.surface-card-inner');
+      if (!innerBox) return;
+
       // 기존 이미지 제거
-      const existingImg = card.querySelector('.surface-card-image');
+      const existingImg = innerBox.querySelector('.surface-card-image');
       if (existingImg) {
         existingImg.remove();
       }
@@ -412,11 +475,11 @@ export class Dom2DLayer {
       img.alt = this.cardDataList[cardIndex].text;
 
       // 텍스트 앞에 이미지 삽입
-      const textElement = card.querySelector('.surface-card-text');
+      const textElement = innerBox.querySelector('.surface-card-text');
       if (textElement) {
-        card.insertBefore(img, textElement);
+        innerBox.insertBefore(img, textElement);
       } else {
-        card.appendChild(img);
+        innerBox.appendChild(img);
       }
     });
 
