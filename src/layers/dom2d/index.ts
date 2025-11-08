@@ -445,18 +445,30 @@ export class Dom2DLayer {
     // 초기 위치를 위쪽으로 설정하고 애니메이션
     cardPositions.forEach((pos, index) => {
       const card = pos.card;
+      const innerBox = card.querySelector('.surface-card-inner') as HTMLElement;
 
       // 초기 위치 (매우 높은 곳에서 시작 - 화면 밖)
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
       card.style.transform = `translate(0, -5000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
-      card.style.transition = 'transform 1s ease-out, box-shadow 1s ease-out'; // 부드러운 떨어짐
-      card.style.boxShadow = '0 50px 100px rgba(0, 0, 0, 0.5)'; // 떨어지는 중 그림자
+      card.style.transition = 'transform 1s ease-out';
+
+      // 내부 박스에 투명도와 그림자 효과
+      if (innerBox) {
+        innerBox.style.opacity = '0'; // 처음엔 투명
+        innerBox.style.boxShadow = '0 50px 100px rgba(0, 0, 0, 0.5)'; // 바닥 그림자
+        innerBox.style.transition = 'opacity 1s ease-out, box-shadow 1s ease-out';
+      }
 
       // 하단 카드부터 순차적으로 떨어지는 애니메이션
       setTimeout(() => {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
-        card.style.boxShadow = 'none'; // 착지 후 그림자 제거
+
+        // 착지하면서 불투명해지고 그림자 제거
+        if (innerBox) {
+          innerBox.style.opacity = '1'; // 불투명
+          innerBox.style.boxShadow = ''; // 기본 그림자로 복원
+        }
       }, index * 50); // 50ms 간격으로 순차 시작
     });
 
@@ -464,6 +476,10 @@ export class Dom2DLayer {
     setTimeout(() => {
       cardPositions.forEach(pos => {
         pos.card.style.transition = '';
+        const innerBox = pos.card.querySelector('.surface-card-inner') as HTMLElement;
+        if (innerBox) {
+          innerBox.style.transition = '';
+        }
       });
     }, cardPositions.length * 50 + 1200);
 
