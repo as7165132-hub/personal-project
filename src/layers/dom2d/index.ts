@@ -406,15 +406,17 @@ export class Dom2DLayer {
         usedColumnsInRow = []; // 새 줄에서 칼럼 리셋
       }
 
-      // 6개 칼럼 중 사용하지 않은 칼럼 선택
+      // 6개 칼럼 중 사용하지 않은 칼럼 선택 (인접 칼럼 포함 체크)
       let randomColumn: number;
       let attempts = 0;
       do {
         randomColumn = Math.floor(Math.random() * columns);
         attempts++;
-        // 같은 칼럼이 이미 사용되었으면 재시도 (인접 칼럼 체크 제거)
-        const isUsed = usedColumnsInRow.includes(randomColumn);
-        if (!isUsed || attempts > 20) break; // 20번 시도 후에는 포기
+        // 같은 칼럼이나 바로 옆 칼럼이 이미 사용되었으면 재시도
+        const isTooClose = usedColumnsInRow.some(usedCol =>
+          Math.abs(usedCol - randomColumn) <= 1
+        );
+        if (!isTooClose || attempts > 30) break; // 30번 시도 후에는 포기
       } while (true);
 
       usedColumnsInRow.push(randomColumn);
@@ -479,6 +481,13 @@ export class Dom2DLayer {
         setTimeout(() => {
           if (ghost) {
             ghost.style.transform = 'translate(-50%, -50%) translateY(-1000px)';
+
+            // 올라간 후 1초 뒤 ghost 완전히 제거
+            setTimeout(() => {
+              if (ghost && ghost.parentNode) {
+                ghost.remove();
+              }
+            }, 1000);
           }
         }, 1000); // 착지 1초 후
       }, index * 50); // 50ms 간격으로 순차 시작
