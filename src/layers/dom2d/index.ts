@@ -5,6 +5,11 @@
 
 import { i18n } from '@systems/i18n';
 
+interface CardData {
+  text: string;
+  image?: string; // 선택적 이미지 경로
+}
+
 export class Dom2DLayer {
   private container: HTMLElement;
   private camera!: HTMLElement;
@@ -17,6 +22,9 @@ export class Dom2DLayer {
   private isIsoMode: boolean = false;
 
   private readonly BG_REPEAT_HEIGHT = 2160; // 배경 반복 단위 (bg-gradient.svg 높이)
+
+  // 카드 데이터 저장 (이미지 매핑용)
+  private cardDataList: CardData[] = [];
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -81,29 +89,57 @@ export class Dom2DLayer {
     this.grid = document.createElement('div');
     this.grid.className = 'surface-grid';
 
-    // 카드 데이터 (120개)
-    const cardTexts = [
-      i18n.t('PROLOGUE'),
-      i18n.t('LAYERS'),
-      i18n.t('THRESHOLD'),
-      i18n.t('DEBUT'),
-      i18n.t('EPILOGUE'),
-      ...Array.from({ length: 115 }, (_, i) => `CARD ${String(i + 6).padStart(3, '0')}`)
+    // 카드 데이터 (120개) - 이미지 경로 포함 가능
+    this.cardDataList = [
+      { text: i18n.t('PROLOGUE') }, // 이미지를 추가하려면: { text: i18n.t('PROLOGUE'), image: '/images/card-01.png' }
+      { text: i18n.t('LAYERS') },
+      { text: i18n.t('THRESHOLD') },
+      { text: i18n.t('DEBUT') },
+      { text: i18n.t('EPILOGUE') },
+      ...Array.from({ length: 115 }, (_, i) => ({
+        text: `CARD ${String(i + 6).padStart(3, '0')}`
+        // 이미지 예시: image: `/images/card-${String(i + 6).padStart(3, '0')}.png`
+      }))
     ];
 
     // 3세트 생성 및 세트별로 분리 저장
     for (let set = 0; set < 3; set++) {
-      cardTexts.forEach(text => {
-        const card = document.createElement('div');
-        card.className = 'surface-card';
-        const p = document.createElement('p');
-        p.className = 'surface-card-text';
-        p.textContent = text;
-        card.appendChild(p);
+      this.cardDataList.forEach((cardData, index) => {
+        const card = this.createCard(cardData, index);
         this.cardSets[set].push(card); // 세트별로 저장
       });
     }
 
+    this.completeStructureSetup();
+  }
+
+  /**
+   * 카드 생성 (텍스트 + 선택적 이미지)
+   */
+  private createCard(cardData: CardData, index: number): HTMLElement {
+    const card = document.createElement('div');
+    card.className = 'surface-card';
+    card.dataset.cardIndex = String(index); // 카드 인덱스 저장
+
+    // 이미지가 있으면 추가
+    if (cardData.image) {
+      const img = document.createElement('img');
+      img.src = cardData.image;
+      img.className = 'surface-card-image';
+      img.alt = cardData.text;
+      card.appendChild(img);
+    }
+
+    // 텍스트 추가
+    const p = document.createElement('p');
+    p.className = 'surface-card-text';
+    p.textContent = cardData.text;
+    card.appendChild(p);
+
+    return card;
+  }
+
+  private completeStructureSetup(): void {
     // 초기 DOM 순서: [세트0][세트1][세트2]
     this.renderSets();
 
@@ -143,7 +179,8 @@ export class Dom2DLayer {
     this.cardSets.push(firstSet);
     this.renderSets();
     this.baseScrollOffset += this.cardSetHeight; // scrollY는 유지, base만 조정
-    console.log('[ROTATE ↓] 첫 세트를 마지막으로 이동, scrollY:', this.scrollY.toFixed(0), 'base:', this.baseScrollOffset.toFixed(0));
+    // 로그 간소화: 필요 시 주석 해제
+    // console.log('[ROTATE ↓] base:', this.baseScrollOffset.toFixed(0));
   }
 
   /**
@@ -154,7 +191,8 @@ export class Dom2DLayer {
     this.cardSets.unshift(lastSet);
     this.renderSets();
     this.baseScrollOffset -= this.cardSetHeight; // scrollY는 유지, base만 조정
-    console.log('[ROTATE ↑] 마지막 세트를 첫 번째로 이동, scrollY:', this.scrollY.toFixed(0), 'base:', this.baseScrollOffset.toFixed(0));
+    // 로그 간소화: 필요 시 주석 해제
+    // console.log('[ROTATE ↑] base:', this.baseScrollOffset.toFixed(0));
   }
 
   private setupScrolling(): void {
@@ -236,6 +274,59 @@ export class Dom2DLayer {
 
     // 레거시 변수 (호환성)
     document.body.style.setProperty('--scroll-offset', `${this.scrollY}px`);
+  }
+
+  /**
+   * 특정 카드에 이미지 추가 (외부에서 호출 가능)
+   * @param cardIndex 카드 인덱스 (0-119)
+   * @param imagePath 이미지 경로
+   */
+  public setCardImage(cardIndex: number, imagePath: string): void {
+    if (cardIndex < 0 || cardIndex >= this.cardDataList.length) {
+      console.warn(`[CARD] Invalid card index: ${cardIndex}`);
+      return;
+    }
+
+    // 카드 데이터에 이미지 추가
+    this.cardDataList[cardIndex].image = imagePath;
+
+    // 모든 세트의 해당 카드 업데이트
+    this.cardSets.forEach(set => {
+      const card = set[cardIndex];
+      if (!card) return;
+
+      // 기존 이미지 제거
+      const existingImg = card.querySelector('.surface-card-image');
+      if (existingImg) {
+        existingImg.remove();
+      }
+
+      // 새 이미지 추가
+      const img = document.createElement('img');
+      img.src = imagePath;
+      img.className = 'surface-card-image';
+      img.alt = this.cardDataList[cardIndex].text;
+
+      // 텍스트 앞에 이미지 삽입
+      const textElement = card.querySelector('.surface-card-text');
+      if (textElement) {
+        card.insertBefore(img, textElement);
+      } else {
+        card.appendChild(img);
+      }
+    });
+
+    console.log(`[CARD] Image set for card ${cardIndex}: ${imagePath}`);
+  }
+
+  /**
+   * 여러 카드에 이미지 일괄 추가
+   * @param imageMap 카드 인덱스 -> 이미지 경로 맵
+   */
+  public setCardImages(imageMap: Record<number, string>): void {
+    Object.entries(imageMap).forEach(([index, path]) => {
+      this.setCardImage(Number(index), path);
+    });
   }
 
   destroy(): void {
