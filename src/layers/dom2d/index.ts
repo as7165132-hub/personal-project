@@ -1,6 +1,6 @@
 /**
- * SURFACE DEBUT - 2D DOM Layer (v51 - 50 cards with ISO view)
- * 8개 카드 성공 → 50개로 스케일업
+ * SURFACE DEBUT - 2D DOM Layer (v52 - 120 cards with ISO view)
+ * 50개 → 120개로 스케일업 (ISO 고정 위치 테스트)
  */
 
 import { i18n } from '@systems/i18n';
@@ -45,14 +45,14 @@ export class Dom2DLayer {
     this.grid = document.createElement('div');
     this.grid.className = 'surface-grid';
 
-    // 카드 생성 (50개 - 적당한 수)
+    // 카드 생성 (120개 - ISO 고정 위치 테스트)
     const cardTexts = [
       i18n.t('PROLOGUE'),
       i18n.t('LAYERS'),
       i18n.t('THRESHOLD'),
       i18n.t('DEBUT'),
       i18n.t('EPILOGUE'),
-      ...Array.from({ length: 45 }, (_, i) => `CARD ${String(i + 6).padStart(3, '0')}`)
+      ...Array.from({ length: 115 }, (_, i) => `CARD ${String(i + 6).padStart(3, '0')}`)
     ];
 
     // 단일 세트 생성
