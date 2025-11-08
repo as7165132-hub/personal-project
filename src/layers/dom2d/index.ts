@@ -376,15 +376,15 @@ export class Dom2DLayer {
     // 모든 카드에 랜덤 위치 적용
     const allCards = this.grid.querySelectorAll('.surface-card') as NodeListOf<HTMLElement>;
     const containerWidth = this.grid.offsetWidth || 1920;
-    const cardWidth = 300; // 카드 너비
+    const cardWidth = 450; // 카드 너비 증가
     const columns = 6; // 6개 칼럼으로 증가
     const columnWidth = containerWidth / columns;
-    const minRowHeight = 700; // 최소 줄 간격
-    const maxRowHeight = 1000; // 최대 줄 간격
+    const minRowHeight = 800; // 최소 줄 간격 증가
+    const maxRowHeight = 1200; // 최대 줄 간격 증가
 
     let currentY = 0;
     let cardsInCurrentRow = 0;
-    const maxCardsPerRow = 4; // 한 줄에 최대 4개
+    const maxCardsPerRow = 2; // 한 줄에 최대 2개로 감소
     let usedColumnsInRow: number[] = []; // 현재 줄에 사용된 칼럼
 
     // 카드 위치 정보를 저장할 배열
@@ -442,33 +442,52 @@ export class Dom2DLayer {
     // Y 위치 기준으로 정렬 (하단부터 = Y가 큰 것부터)
     cardPositions.sort((a, b) => b.y - a.y);
 
-    // 초기 위치를 위쪽으로 설정하고 애니메이션
+    // 초기 위치를 위쪽으로 설정하고 2단계 애니메이션
     cardPositions.forEach((pos, index) => {
       const card = pos.card;
       const innerBox = card.querySelector('.surface-card-inner') as HTMLElement;
+
+      // 착지 지점에 작은 원 생성
+      const landingSpot = document.createElement('div');
+      landingSpot.className = 'landing-spot';
+      landingSpot.style.left = `${pos.x + cardWidth / 2 - 15}px`; // 중앙 정렬
+      landingSpot.style.top = `${pos.y + 250}px`; // 카드 중앙 지점
+      this.grid.appendChild(landingSpot);
 
       // 초기 위치 (화면 밖에서 시작)
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
       card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
-      card.style.transition = 'transform 1s ease-out';
+      card.style.opacity = '0.6'; // 반투명 카드
+      card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
-      // 내부 박스에 투명도와 그림자 효과
+      // 내부 박스 초기 상태
       if (innerBox) {
-        innerBox.style.opacity = '0'; // 처음엔 투명
-        innerBox.style.boxShadow = '0 50px 100px rgba(0, 0, 0, 0.5)'; // 바닥 그림자
-        innerBox.style.transition = 'opacity 1s ease-out, box-shadow 1s ease-out';
+        innerBox.style.opacity = '0.3'; // 더 투명
+        innerBox.style.transform = 'translate(0, 0)'; // 초기 위치
+        innerBox.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
       }
 
-      // 하단 카드부터 순차적으로 떨어지는 애니메이션
+      // 1단계: 하단 카드부터 순차적으로 바닥에 내려앉기
       setTimeout(() => {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
 
-        // 착지하면서 불투명해지고 그림자 제거
+        // 내부 박스도 함께 내려오면서 불투명해짐
         if (innerBox) {
-          innerBox.style.opacity = '1'; // 불투명
-          innerBox.style.boxShadow = ''; // 기본 그림자로 복원
+          innerBox.style.opacity = '1';
         }
+
+        // 2단계: 착지 후 외부 컨테이너는 다시 올라가고, 내부만 남김
+        setTimeout(() => {
+          // 외부 컨테이너 다시 올리기
+          card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+          card.style.opacity = '0';
+
+          // 내부 박스는 반대 방향으로 이동해 제자리 고정
+          if (innerBox) {
+            innerBox.style.transform = `translate(0, 1000px) rotate(${-pos.rotation}deg) scale(${1/pos.scale})`; // 부모 transform 상쇄
+          }
+        }, 1000); // 착지 1초 후
       }, index * 50); // 50ms 간격으로 순차 시작
     });
 
@@ -481,7 +500,7 @@ export class Dom2DLayer {
           innerBox.style.transition = '';
         }
       });
-    }, cardPositions.length * 50 + 1200);
+    }, cardPositions.length * 50 + 2200);
 
     console.log(`[ISO] ${allCards.length} cards randomly positioned (max ${maxCardsPerRow} per row, ${columns} columns)`);
   }
