@@ -72,9 +72,18 @@ export class Dom2DLayer {
     this.camera.appendChild(this.grid);
     this.container.appendChild(this.camera);
 
+    // 초기 transform 설정 (2D 모드)
+    this.camera.style.transform = '';
+    this.grid.style.transform = 'translateY(0px)';
+
+    console.log('[BUILD] Cards created:', this.cards.length);
+    console.log('[BUILD] Grid element:', this.grid);
+    console.log('[BUILD] Camera element:', this.camera);
+
     setTimeout(() => {
       this.cardSetHeight = this.grid.scrollHeight / 3;
       console.log('[INIT] Set height:', this.cardSetHeight);
+      console.log('[INIT] Grid scrollHeight:', this.grid.scrollHeight);
       this.updateTransform();
     }, 100);
   }
@@ -111,23 +120,25 @@ export class Dom2DLayer {
    * 참조 패턴: camera에 transform 적용
    */
   private updateTransform(): void {
-    if (!this.camera || !this.grid) return;
+    if (!this.camera || !this.grid) {
+      console.log('[WARN] camera or grid not ready');
+      return;
+    }
 
     if (this.isIsoMode) {
       // ISO: 참조 코드와 동일한 transform
-      this.camera.style.transform = `
-        rotateX(55deg)
-        rotateZ(45deg)
-        translateY(-5vh)
-        scale(0.96)
-      `.replace(/\s+/g, ' ').trim();
-
-      // Grid는 내부에서 스크롤만
+      const cameraTransform = `rotateX(55deg) rotateZ(45deg) translateY(-5vh) scale(0.96)`;
+      this.camera.style.transform = cameraTransform;
       this.grid.style.transform = `translateY(${-this.scrollY}px)`;
+
+      console.log('[ISO] Camera:', cameraTransform);
+      console.log('[ISO] Grid scrollY:', this.scrollY);
     } else {
       // 2D: camera는 초기화, grid만 스크롤
-      this.camera.style.transform = '';
+      this.camera.style.transform = 'none';
       this.grid.style.transform = `translateY(${-this.scrollY}px)`;
+
+      console.log('[2D] Grid scrollY:', this.scrollY);
     }
 
     // 배경 동기화
