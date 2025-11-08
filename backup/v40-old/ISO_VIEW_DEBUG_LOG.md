@@ -1,0 +1,366 @@
+# ISO View 디버깅 로그
+
+ISO 뷰 구현 과정에서 발생한 문제들과 해결 방법을 기록합니다.
+
+## 파일 위치
+- **메인 로직**: `/src/layers/dom2d/index.ts`
+- **스타일**: `/src/style.css`
+- **배포 HTML**: `/index.html`
+
+## Transform 구조 이해
+
+### CSS Transform 적용 순서
+CSS transforms는 **오른쪽에서 왼쪽**으로 적용됩니다:
+```css
+transform: rotateX(30deg) rotateZ(25deg) scale(1) translateX(-200px) translateY(400px);
+```
+
+실제 적용 순서:
+1. `translateY(400px)` - Y축으로 400px 이동
+2. `translateX(-200px)` - X축으로 -200px 이동
+3. `scale(1)` - 크기 유지
+4. `rotateZ(25deg)` - Z축 기준 25도 회전
+5. `rotateX(30deg)` - X축 기준 30도 회전 (마지막)
+
+### Transform Origin
+```css
+transform-origin: 50% 100%; /* 하단 중앙 기준 회전 */
+```
+
+## 스크롤 시스템
+
+### 2D 모드
+- **초기 scrollOffset**: `0`
+- **wrapping**: 없음
+- **transform**: `translateY(-scrollOffset)`
+- **범위**: `0 ~ 무한` (하단 제한 없음)
+
+### ISO 모드
+- **초기 scrollOffset**: `totalHeight` (중간 세트)
+- **wrapping**: `totalHeight ~ 2*totalHeight` 범위로 순환
+- **transform**: `rotateX(30deg) rotateZ(25deg) scale(1) translateX(-200px) translateY(offsetY)`
+- **offsetY 계산**:
+  - `relativeScroll = scrollOffset - totalHeight`
+  - `offsetY = BASE_Y - relativeScroll`
+  - BASE_Y: 초기 Y 위치 상수
+
+## 문제 해결 히스토리
+
+### 문제 1: Transform 순서 오류
+**증상**: ISO 뷰 전환 시 카드가 전혀 보이지 않음
+
+**원인**: `translateY`가 rotation 전에 적용되어 회전 전 공간에서 이동
+
+**해결**:
+```typescript
+// ❌ 잘못된 순서
+transform: translateY(-scrollOffset) rotateX(30deg) rotateZ(25deg)
+
+// ✅ 올바른 순서
+transform: rotateX(30deg) rotateZ(25deg) translateY(offsetY)
+```
+
+### 문제 2: Transform Origin 위치
+**증상**: 카드가 왼쪽 위로 회전하여 화면 밖으로 사라짐
+
+**원인**: `transform-origin: 50% 50%` (중앙 기준)로 설정되어 회전 시 카드가 위로 이동
+
+**해결**:
+```css
+/* ✅ 하단 기준으로 변경 */
+.surface-grid {
+  transform-origin: 50% 100%;
+}
+```
+
+### 문제 3: 스크롤 정규화로 인한 느린 스크롤
+**증상**: ISO 모드에서 스크롤이 거의 이동하지 않음
+
+**원인**: `23360px` 범위를 `2000px`로 압축하여 스크롤 감도 극도로 감소
+
+**이전 코드**:
+```typescript
+const isoScrollRange = 2000;
+const normalizedScroll = ((scrollOffset - totalHeight) / totalHeight) * isoScrollRange;
+const offsetY = -100 - normalizedScroll; // 최대 -2100px
+```
+
+**해결**: 정규화 제거, 실제 스크롤 값 사용
+```typescript
+const relativeScroll = scrollOffset - totalHeight;
+const offsetY = BASE_Y - relativeScroll; // 자연스러운 스크롤
+```
+
+### 문제 4: 초기 scrollOffset으로 인한 2D 모드 빈 화면
+**증상**: 페이지 로드 시 2D 모드에서 카드가 보이지 않음
+
+**원인**: 초기 `scrollOffset = totalHeight (23360px)`로 설정되어 화면이 중간 세트부터 시작
+
+**해결**:
+```typescript
+// 초기화 시
+this.scrollOffset = 0; // 2D 모드는 0부터 시작
+
+// ISO 전환 시
+this.scrollOffset = this.totalHeight; // 중간 세트로 이동
+```
+
+### 문제 5: 모드 간 wrapping 충돌
+**증상**: 2D 모드에서도 wrapping이 발생하여 흰 화면 등장
+
+**해결**: ISO 모드에서만 wrapping 적용
+```typescript
+if (this.isIsoMode && this.totalHeight > 0) {
+  // wrapping 로직
+}
+
+if (!this.isIsoMode && this.scrollOffset < 0) {
+  this.scrollOffset = 0; // 2D는 0 이하 방지만
+}
+```
+
+### 문제 6: ISO 모드 초기 Y 위치 (현재 디버깅 중)
+**증상**: ISO 모드 전환 시 카드가 화면에 보이지 않음
+
+**시도한 BASE_Y 값들**:
+- `BASE_Y = -400`: 너무 위
+- `BASE_Y = 200`: 여전히 보이지 않음
+- `BASE_Y = -100`: 보이지 않음 (이전)
+- `BASE_Y = 400`: 테스트 중 ← **현재**
+
+**현재 코드**:
+```typescript
+const offsetY = 400 - relativeScroll;
+```
+
+## 디버깅 팁
+
+### 콘솔 로그 확인 사항
+```
+[ISO DEBUG] scrollOffset: XXXX relative: YYYY offsetY: ZZZZ
+```
+
+- `scrollOffset`: 실제 스크롤 누적 값
+- `relative`: 중간 세트 기준 상대 위치 (초기 0)
+- `offsetY`: 최종 Y 변환 값
+
+### BASE_Y 값 조정 가이드
+- **양수**: 카드를 아래로 (화면 안으로)
+- **음수**: 카드를 위로 (화면 밖으로)
+- **권장 범위**: 200 ~ 600
+
+### Transform Origin 확인
+```css
+/* Chrome DevTools에서 확인 */
+.surface-grid {
+  transform-origin: 50% 100%; /* 반드시 하단 */
+}
+
+body.iso-mode::before {
+  transform-origin: 50% 100%; /* 배경도 동일 */
+}
+```
+
+## 근본 원인 분석
+
+### ⚠️ 발견된 주요 문제
+
+**1. PERSPECTIVE 없음** (style.css:77)
+```css
+.surface-container {
+  /* perspective 제거 - ISO view는 parallel projection */
+}
+```
+→ **3D rotateX + rotateZ를 사용하려면 perspective 필수!**
+
+**2. translateX(-200px)** (index.ts:129)
+```typescript
+translateX(-200px)  // 카드를 왼쪽으로 200px 이동 → 화면 밖으로
+```
+
+### 문제 요약
+BASE_Y 값을 -200, 0, 400, 1000, 2000으로 변경했으나 모두 변화 없음 또는 보이지 않음.
+→ **BASE_Y 조정이 아닌 다른 근본적인 문제 존재**
+
+### 가능한 원인들
+
+#### 1. CSS Perspective 문제
+**증상**: 3D transform이 평면적으로 보이거나 보이지 않음
+**원인**: `perspective` 속성이 부모 요소에 없을 수 있음
+**확인 방법**:
+```css
+.surface-container {
+  perspective: 1000px; /* 이게 없으면 3D가 제대로 안 보임 */
+}
+```
+
+#### 2. translateX(-200px) 문제
+**증상**: 카드가 화면 왼쪽 밖으로 벗어남
+**원인**: `-200px` 이동이 회전된 공간에서 예상과 다른 방향으로 작용
+**테스트**: `translateX(0px)` 또는 제거
+
+#### 3. Rotation 각도 문제
+**증상**: 카드가 회전으로 인해 앞면이 아닌 뒷면이 보이거나 엣지만 보임
+**원인**: `rotateX(30deg) rotateZ(25deg)` 조합이 카드를 화면 밖으로
+**테스트**: 각도를 더 작게 (예: `rotateX(15deg) rotateZ(15deg)`)
+
+#### 4. Scale 문제
+**증상**: 카드가 너무 작아서 보이지 않음
+**원인**: `scale(1)`이 회전된 공간에서 너무 작게 보일 수 있음
+**테스트**: `scale(2)` 또는 `scale(3)`
+
+#### 5. Z-index / Stacking Context
+**증상**: 카드가 배경 뒤에 숨음
+**원인**: z-index나 stacking context 문제
+**확인**: `.surface-grid { z-index: 10; }`
+
+#### 6. Overflow Hidden
+**증상**: 부모 요소의 overflow로 인해 잘림
+**원인**: `.surface-container { overflow: hidden; }`
+**확인**: `overflow: visible` 로 변경
+
+#### 7. Transform Origin 위치
+**증상**: 회전 중심이 잘못되어 카드가 화면 밖으로
+**현재**: `transform-origin: 50% 100%` (하단)
+**테스트**: `transform-origin: 50% 50%` (중앙)
+
+#### 8. CSS 적용 순서
+**증상**: CSS가 덮어써짐
+**확인**:
+```typescript
+console.log('Grid element:', grid);
+console.log('Computed style:', window.getComputedStyle(grid).transform);
+```
+
+## 변경 이력
+
+| 날짜 | BASE_Y | 결과 | 비고 |
+|------|--------|------|------|
+| 2024-11-08 | -400 | ❌ 너무 위 | 정규화 적용 시 |
+| 2024-11-08 | 200 | ❌ 보이지 않음 | 정규화 적용 시 |
+| 2024-11-08 | -100 | ❌ 보이지 않음 | 정규화 적용 시 |
+| 2024-11-08 | 400 | ❌ 너무 아래 | 정규화 제거 후, 회전축 하단 확인 |
+| 2024-11-08 | 0 | ❌ 보이지 않음 | 여전히 아래로 치우침 |
+| 2024-11-08 | -200 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
+| 2024-11-08 | 1000 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
+| 2024-11-08 | 2000 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
+| 2024-11-08 | 0 (scale:1) | ❌ 보이지 않음 | perspective 추가했으나 여전히 안 보임 |
+| 2024-11-08 | 0 (scale:2) | ❌ 보이지 않음 | Scale 증가해도 안 보임 |
+| 2024-11-08 | 0 (scale:0.5) | 🔄 테스트 중 | 리팩토링: perspective 제거, 단순화 |
+
+## 리팩토링 (2024-11-08) - 단순화 접근
+
+### 변경 사항
+1. **Perspective 제거**: parallel projection으로 돌아감
+2. **Scale 0.5로 축소**: 전체 화면에서 카드 위치 확인 가능
+3. **Transform 단순화**: `rotateX(45deg)만 사용, rotateZ 제거
+4. **Transform-origin 중앙**: `50% 100%` → `50% 50%`
+
+### 목적
+복잡한 3D transform 대신 단순한 parallel projection으로 먼저 카드가 어디에 있는지 확인
+
+## 근본 원인 수정 사항 (2024-11-08)
+
+### 수정 1: perspective 추가
+```css
+.surface-container {
+  perspective: 1500px; /* 3D transform을 위한 perspective 추가 */
+  perspective-origin: 50% 50%;
+}
+```
+
+### 수정 2: translateX 제거
+```typescript
+// Before: translateX(-200px) → 카드를 왼쪽 밖으로
+// After:  translateX(0px)
+const transformStr = `rotateX(30deg) rotateZ(25deg) scale(1) translateX(0px) translateY(${offsetY}px)`;
+```
+
+### 수정 3: 배경 translateX 제거
+```css
+/* Before: translateX(-200px) translateY(calc(-100px - ...)) */
+/* After:  translateX(0px) translateY(calc(0px - ...)) */
+transform: rotateX(30deg) rotateZ(25deg) scale(1.05) translateX(0px) translateY(calc(0px - var(--scroll-offset) * 1px));
+```
+
+### 수정 4: Scale 증가 (v35 이후)
+```typescript
+// Before: scale(1)
+// After:  scale(2) - 카드를 2배 확대하여 가시성 확보
+const transformStr = `rotateX(30deg) rotateZ(25deg) scale(2) ...`;
+```
+
+```css
+/* 배경도 동일하게 */
+body.iso-mode::before {
+  transform: rotateX(30deg) rotateZ(25deg) scale(2) ...;
+}
+```
+
+## 다음 시도할 값들
+
+이제 perspective와 translateX가 수정되었으므로 BASE_Y 조정이 제대로 작동할 것으로 예상.
+필요 시 미세 조정:
+- -100 ~ 100 범위에서 미세 조정
+- Scale 조정 (1 → 1.2 ~ 1.5)
+- Rotation 각도 조정
+
+## 참고 코드
+
+### updateTransform() 메서드
+```typescript
+private updateTransform(): void {
+  const grid = this.container.querySelector('.surface-grid') as HTMLElement;
+  if (!grid) return;
+
+  if (this.isIsoMode) {
+    const relativeScroll = this.scrollOffset - this.totalHeight;
+    const offsetY = BASE_Y - relativeScroll; // ← 이 값 조정
+    const transformStr = `rotateX(30deg) rotateZ(25deg) scale(1) translateX(-200px) translateY(${offsetY}px)`;
+    grid.style.transform = transformStr;
+    console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset.toFixed(0), 'relative:', relativeScroll.toFixed(0), 'offsetY:', offsetY.toFixed(0));
+  } else {
+    grid.style.transform = `translateY(-${this.scrollOffset}px)`;
+  }
+
+  // 배경 동기화
+  if (this.isIsoMode && this.totalHeight > 0) {
+    const relativeScroll = this.scrollOffset - this.totalHeight;
+    document.body.style.setProperty('--scroll-offset', `${relativeScroll}px`);
+  } else {
+    document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
+  }
+}
+```
+
+### 배경 Transform (CSS)
+```css
+body.iso-mode::before {
+  transform: rotateX(30deg) rotateZ(25deg) scale(1.05) translateX(-200px) translateY(calc(BASE_Y_SAME_AS_GRID - var(--scroll-offset) * 1px));
+  transform-origin: 50% 100%;
+}
+```
+
+## 빌드 & 배포
+
+```bash
+# 1. 소스 파일로 되돌리기
+# index-surface.html에서 빌드 참조를 소스 참조로 변경
+
+# 2. 빌드
+npm run build
+
+# 3. 파일 복사
+cp dist/index-surface.html index-surface.html
+cp dist/assets/main-*.js assets/
+cp dist/assets/main-*.css assets/
+
+# 4. index.html 업데이트 (v 번호 증가)
+# ?v=XX 파라미터 증가
+
+# 5. 커밋 & 푸시
+git add -A
+git commit -m "fix: ISO 뷰 BASE_Y 값 조정 (XXX → YYY)"
+git push [URL] main
+git push [URL] main:claude/surface-debut-implementation-011CUt8cR53VUpiS5a3XtCct
+```
