@@ -110,10 +110,10 @@ export class Dom2DLayer {
 
     // ISO 모드 여부에 따라 다른 transform 적용
     if (this.isIsoMode) {
-      // ISO 뷰: 회전 후 이동
+      // ISO 뷰: 극적인 기울기 (45도 이상)
       // 3D 회전 시 화면에 보이려면 훨씬 더 많이 위로 이동 필요
       const isoOffset = this.scrollOffset - 300; // 아래로 300px 오프셋
-      grid.style.transform = `rotateX(15deg) rotateZ(8deg) scale(0.95) translateY(-${isoOffset}px)`;
+      grid.style.transform = `rotateX(50deg) rotateZ(45deg) scale(0.9) translateY(-${isoOffset}px)`;
     } else {
       // 2D 뷰: 단순 스크롤
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;
