@@ -122,8 +122,8 @@ export class Dom2DLayer {
     if (!this.camera || !this.grid) return;
 
     if (this.isIsoMode) {
-      // ISO: 단순화된 transform
-      this.camera.style.transform = `rotateX(55deg) rotateZ(45deg)`;
+      // ISO: 극단적으로 단순화 - rotateX만
+      this.camera.style.transform = `rotateX(45deg) scale(0.8)`;
       this.grid.style.transform = `translateY(${-this.scrollY}px)`;
     } else {
       // 2D: camera 초기화, grid만 스크롤

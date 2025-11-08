@@ -58,7 +58,7 @@ body::before {
 
 /* ISO 모드: 배경도 회전 (단순화) */
 body.iso-mode::before {
-  transform: rotateX(55deg) rotateZ(45deg) translateY(calc(var(--scroll-offset) * -1px));
+  transform: rotateX(45deg) scale(0.8) translateY(calc(var(--scroll-offset) * -1px));
 }
 
 /* ==================== Stage (참조: perspective container) ==================== */
