@@ -244,7 +244,8 @@ console.log('Computed style:', window.getComputedStyle(grid).transform);
 | 2024-11-08 | -200 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
 | 2024-11-08 | 1000 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
 | 2024-11-08 | 2000 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
-| 2024-11-08 | 0 | 🔄 재테스트 | 근본 원인 수정 후 재테스트 |
+| 2024-11-08 | 0 (scale:1) | ❌ 보이지 않음 | perspective 추가했으나 여전히 안 보임 |
+| 2024-11-08 | 0 (scale:2) | 🔄 테스트 중 | Scale 2배 증가 |
 
 ## 근본 원인 수정 사항 (2024-11-08)
 
@@ -268,6 +269,20 @@ const transformStr = `rotateX(30deg) rotateZ(25deg) scale(1) translateX(0px) tra
 /* Before: translateX(-200px) translateY(calc(-100px - ...)) */
 /* After:  translateX(0px) translateY(calc(0px - ...)) */
 transform: rotateX(30deg) rotateZ(25deg) scale(1.05) translateX(0px) translateY(calc(0px - var(--scroll-offset) * 1px));
+```
+
+### 수정 4: Scale 증가 (v35 이후)
+```typescript
+// Before: scale(1)
+// After:  scale(2) - 카드를 2배 확대하여 가시성 확보
+const transformStr = `rotateX(30deg) rotateZ(25deg) scale(2) ...`;
+```
+
+```css
+/* 배경도 동일하게 */
+body.iso-mode::before {
+  transform: rotateX(30deg) rotateZ(25deg) scale(2) ...;
+}
 ```
 
 ## 다음 시도할 값들
