@@ -385,6 +385,7 @@ export class Dom2DLayer {
     let currentY = 0;
     let cardsInCurrentRow = 0;
     const maxCardsPerRow = 2;
+    let usedColumnsInRow: number[] = []; // 현재 줄에 사용된 칼럼
 
     allCards.forEach((card) => {
       card.style.position = 'absolute';
@@ -394,14 +395,26 @@ export class Dom2DLayer {
       if (cardsInCurrentRow >= maxCardsPerRow) {
         currentY += Math.random() * (maxRowHeight - minRowHeight) + minRowHeight;
         cardsInCurrentRow = 0;
+        usedColumnsInRow = []; // 새 줄에서 칼럼 리셋
       }
 
-      // 4개 칼럼 중 랜덤하게 선택
-      const randomColumn = Math.floor(Math.random() * columns);
+      // 4개 칼럼 중 사용하지 않은 칼럼 선택
+      let randomColumn: number;
+      let attempts = 0;
+      do {
+        randomColumn = Math.floor(Math.random() * columns);
+        attempts++;
+        // 같은 칼럼이나 인접 칼럼이 이미 사용되었으면 재시도
+        const isTooClose = usedColumnsInRow.some(usedCol => Math.abs(usedCol - randomColumn) <= 1);
+        if (!isTooClose || attempts > 10) break; // 10번 시도 후에는 포기
+      } while (true);
+
+      usedColumnsInRow.push(randomColumn);
+
       const baseX = randomColumn * columnWidth + (columnWidth / 2) - (cardWidth / 2);
 
-      // 칼럼 내에서 약간의 랜덤 오프셋
-      const randomX = baseX + (Math.random() * 200 - 100); // ±100px 랜덤
+      // 칼럼 내에서 약간의 랜덤 오프셋 (줄임)
+      const randomX = baseX + (Math.random() * 100 - 50); // ±50px 랜덤 (줄임)
       const randomY = currentY + (Math.random() * 150 - 75); // ±75px 랜덤
 
       // 랜덤 회전 및 크기
