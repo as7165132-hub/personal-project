@@ -29,9 +29,42 @@ export class Dom2DLayer {
 
   private init(): void {
     this.container.className = 'surface-stage';
+    this.buildBackgroundTiles();
     this.buildStructure();
     this.setupScrolling();
     this.setupIsoToggle();
+  }
+
+  /**
+   * 배경 타일 생성 (8칸으로 분할)
+   */
+  private buildBackgroundTiles(): void {
+    // 기존 배경 컨테이너 제거 (있다면)
+    const existingBg = document.querySelector('.bg-tiles-container');
+    if (existingBg) {
+      existingBg.remove();
+    }
+
+    // 배경 타일 컨테이너 생성
+    const bgContainer = document.createElement('div');
+    bgContainer.className = 'bg-tiles-container';
+
+    // 8개 타일 생성
+    for (let i = 0; i < 8; i++) {
+      const tile = document.createElement('div');
+      tile.className = 'bg-tile';
+      tile.dataset.tileIndex = String(i); // 나중에 랜덤 이미지 적용 시 사용
+
+      // 임시로 기존 bg-gradient.svg 사용 (나중에 개별 타일 이미지로 교체 가능)
+      tile.style.backgroundImage = `url('/bg-gradient.svg')`;
+
+      bgContainer.appendChild(tile);
+    }
+
+    // body 맨 앞에 추가 (모든 요소 뒤에 배경으로)
+    document.body.insertBefore(bgContainer, document.body.firstChild);
+
+    console.log('[BG] 8-tile background created');
   }
 
   /**
