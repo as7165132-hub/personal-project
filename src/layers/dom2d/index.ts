@@ -76,14 +76,9 @@ export class Dom2DLayer {
     this.camera.style.transform = '';
     this.grid.style.transform = 'translateY(0px)';
 
-    console.log('[BUILD] Cards created:', this.cards.length);
-    console.log('[BUILD] Grid element:', this.grid);
-    console.log('[BUILD] Camera element:', this.camera);
-
     setTimeout(() => {
       this.cardSetHeight = this.grid.scrollHeight / 3;
-      console.log('[INIT] Set height:', this.cardSetHeight);
-      console.log('[INIT] Grid scrollHeight:', this.grid.scrollHeight);
+      console.log('[INIT] Card set height:', this.cardSetHeight, 'px');
       this.updateTransform();
     }, 100);
   }
@@ -113,9 +108,8 @@ export class Dom2DLayer {
       document.body.classList.toggle('iso-mode', this.isIsoMode);
       btn.classList.toggle('active', this.isIsoMode);
 
-      // ISO 모드 전환 시 스크롤 리셋
+      // 모드 전환 시 스크롤 리셋
       this.scrollY = 0;
-      console.log('[MODE SWITCH]', this.isIsoMode ? 'ISO' : '2D', '- scrollY reset to 0');
 
       this.updateTransform();
     });
@@ -125,25 +119,16 @@ export class Dom2DLayer {
    * 참조 패턴: camera에 transform 적용
    */
   private updateTransform(): void {
-    if (!this.camera || !this.grid) {
-      console.log('[WARN] camera or grid not ready');
-      return;
-    }
+    if (!this.camera || !this.grid) return;
 
     if (this.isIsoMode) {
-      // ISO: 참조 코드와 동일한 transform
-      const cameraTransform = `rotateX(55deg) rotateZ(45deg) translateY(-5vh) scale(0.96)`;
-      this.camera.style.transform = cameraTransform;
+      // ISO: 단순화된 transform
+      this.camera.style.transform = `rotateX(55deg) rotateZ(45deg)`;
       this.grid.style.transform = `translateY(${-this.scrollY}px)`;
-
-      console.log('[ISO] Camera:', cameraTransform);
-      console.log('[ISO] Grid scrollY:', this.scrollY);
     } else {
-      // 2D: camera는 초기화, grid만 스크롤
+      // 2D: camera 초기화, grid만 스크롤
       this.camera.style.transform = 'none';
       this.grid.style.transform = `translateY(${-this.scrollY}px)`;
-
-      console.log('[2D] Grid scrollY:', this.scrollY);
     }
 
     // 배경 동기화
