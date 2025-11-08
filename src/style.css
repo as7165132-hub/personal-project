@@ -23,6 +23,7 @@
 
   /* Scroll offset (동적) */
   --scroll-offset: 0px;
+  --center-offset: 0px;
 }
 
 /* ==================== Reset ==================== */
@@ -70,7 +71,7 @@ body::before {
 
 /* ISO 모드: 배경도 회전 */
 body.iso-mode::before {
-  transform: rotateX(35deg) rotateZ(45deg) scale(0.6) translateY(calc(var(--scroll-offset) * -1px));
+  transform: rotateX(35deg) rotateZ(45deg) scale(0.6) translateY(calc(var(--center-offset) - var(--scroll-offset) * 1px));
   transform-origin: 50% 50%;
 }
 

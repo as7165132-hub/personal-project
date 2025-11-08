@@ -140,16 +140,22 @@ export class Dom2DLayer {
     if (!this.grid) return;
 
     if (this.isIsoMode) {
-      // ISO 뷰: rotateX(35deg) rotateZ(45deg) scale(0.6)
+      // ISO 뷰: 중앙 정렬 + 회전
+      const centerOffset = window.innerHeight * 0.3;
+      const yPos = centerOffset - this.scrollY;
+
       const transform = `
         rotateX(35deg)
         rotateZ(45deg)
         scale(0.6)
-        translateY(${-this.scrollY}px)
+        translateY(${yPos}px)
       `.replace(/\s+/g, ' ').trim();
 
       this.grid.style.transform = transform;
+
+      // 배경도 동일한 오프셋 적용
       document.body.style.setProperty('--scroll-offset', `${this.scrollY}px`);
+      document.body.style.setProperty('--center-offset', `${centerOffset}px`);
 
       console.log('[ISO]', Math.round(this.scrollY));
     } else {
