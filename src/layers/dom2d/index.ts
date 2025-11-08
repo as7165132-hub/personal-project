@@ -140,20 +140,20 @@ export class Dom2DLayer {
     if (!this.grid) return;
 
     if (this.isIsoMode) {
-      // ISO 뷰: 중앙 정렬 + 회전
-      const centerOffset = window.innerHeight * 0.3;
+      // ISO 뷰: perspective + 카메라 회전 (참조 코드 패턴)
+      const centerOffset = window.innerHeight * -0.05; // -5vh와 유사
       const yPos = centerOffset - this.scrollY;
 
       const transform = `
-        rotateX(35deg)
+        rotateX(55deg)
         rotateZ(45deg)
-        scale(0.6)
         translateY(${yPos}px)
+        scale(0.96)
       `.replace(/\s+/g, ' ').trim();
 
       this.grid.style.transform = transform;
 
-      // 배경도 동일한 오프셋 적용
+      // 배경 동기화
       document.body.style.setProperty('--scroll-offset', `${this.scrollY}px`);
       document.body.style.setProperty('--center-offset', `${centerOffset}px`);
 
