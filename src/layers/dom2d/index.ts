@@ -26,6 +26,12 @@ export class Dom2DLayer {
   // 카드 데이터 저장 (이미지 매핑용)
   private cardDataList: CardData[] = [];
 
+  // 자동 스크롤 관련
+  private autoScrollEnabled: boolean = true; // 자동 스크롤 기본 활성화
+  private autoScrollSpeed: number = 0.3; // 스크롤 속도 (px/frame)
+  private autoScrollAnimationId: number | null = null;
+  private userInteractionTimeout: number | null = null;
+
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -198,6 +204,12 @@ export class Dom2DLayer {
   private setupScrolling(): void {
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
+
+      // 수동 스크롤 시 자동 스크롤 일시 정지
+      if (this.isIsoMode && this.autoScrollEnabled) {
+        this.pauseAutoScroll();
+      }
+
       this.scrollY += e.deltaY * 0.5;
 
       // ISO 모드: 컨베이어 벨트 방식 무한 스크롤
@@ -221,7 +233,83 @@ export class Dom2DLayer {
       }
 
       this.updateTransform();
+
+      // 3초 후 자동 스크롤 재개
+      if (this.isIsoMode && this.autoScrollEnabled) {
+        this.resumeAutoScrollAfterDelay(3000);
+      }
     }, { passive: false });
+  }
+
+  /**
+   * 자동 스크롤 시작
+   */
+  private startAutoScroll(): void {
+    if (this.autoScrollAnimationId !== null) return;
+
+    const autoScroll = () => {
+      if (!this.isIsoMode || !this.autoScrollEnabled) {
+        this.autoScrollAnimationId = null;
+        return;
+      }
+
+      // 천천히 스크롤
+      this.scrollY += this.autoScrollSpeed;
+
+      // 무한 스크롤 로직 적용
+      if (this.cardSetHeight > 0) {
+        const effectiveScroll = this.scrollY - this.baseScrollOffset;
+
+        if (effectiveScroll >= 2 * this.cardSetHeight) {
+          this.rotateDown();
+        }
+        else if (effectiveScroll < this.cardSetHeight) {
+          this.rotateUp();
+        }
+      }
+
+      this.updateTransform();
+      this.autoScrollAnimationId = requestAnimationFrame(autoScroll);
+    };
+
+    this.autoScrollAnimationId = requestAnimationFrame(autoScroll);
+  }
+
+  /**
+   * 자동 스크롤 중지
+   */
+  private stopAutoScroll(): void {
+    if (this.autoScrollAnimationId !== null) {
+      cancelAnimationFrame(this.autoScrollAnimationId);
+      this.autoScrollAnimationId = null;
+    }
+
+    if (this.userInteractionTimeout !== null) {
+      clearTimeout(this.userInteractionTimeout);
+      this.userInteractionTimeout = null;
+    }
+  }
+
+  /**
+   * 자동 스크롤 일시 정지 (수동 스크롤 시)
+   */
+  private pauseAutoScroll(): void {
+    this.stopAutoScroll();
+  }
+
+  /**
+   * 지연 후 자동 스크롤 재개
+   */
+  private resumeAutoScrollAfterDelay(delayMs: number): void {
+    if (this.userInteractionTimeout !== null) {
+      clearTimeout(this.userInteractionTimeout);
+    }
+
+    this.userInteractionTimeout = window.setTimeout(() => {
+      if (this.isIsoMode && this.autoScrollEnabled) {
+        this.startAutoScroll();
+      }
+    }, delayMs);
   }
 
   private setupIsoToggle(): void {
@@ -237,12 +325,20 @@ export class Dom2DLayer {
         // ISO 모드: 중간 세트로 시작 (무한 스크롤 대응)
         this.scrollY = this.cardSetHeight;
         this.baseScrollOffset = 0; // base도 리셋
-        console.log('✨ ISO 모드 활성화 (중간 세트로 시작)');
+        console.log('✨ ISO 모드 활성화 (자동 스크롤 시작)');
+
+        // 자동 스크롤 시작
+        if (this.autoScrollEnabled) {
+          this.startAutoScroll();
+        }
       } else {
         // 2D 모드: 처음으로 리셋
         this.scrollY = 0;
         this.baseScrollOffset = 0; // base도 리셋
-        console.log('📐 2D 모드로 전환 (처음으로 리셋)');
+        console.log('📐 2D 모드로 전환 (자동 스크롤 중지)');
+
+        // 자동 스크롤 중지
+        this.stopAutoScroll();
       }
 
       this.updateTransform();
@@ -329,8 +425,50 @@ export class Dom2DLayer {
     });
   }
 
+  /**
+   * 자동 스크롤 토글
+   */
+  public toggleAutoScroll(): void {
+    this.autoScrollEnabled = !this.autoScrollEnabled;
+
+    if (this.autoScrollEnabled && this.isIsoMode) {
+      this.startAutoScroll();
+      console.log('[AUTO SCROLL] 활성화');
+    } else {
+      this.stopAutoScroll();
+      console.log('[AUTO SCROLL] 비활성화');
+    }
+  }
+
+  /**
+   * 자동 스크롤 속도 설정
+   * @param speed 스크롤 속도 (px/frame, 기본값: 0.3)
+   */
+  public setAutoScrollSpeed(speed: number): void {
+    this.autoScrollSpeed = speed;
+    console.log(`[AUTO SCROLL] 속도 설정: ${speed} px/frame`);
+  }
+
+  /**
+   * 자동 스크롤 상태 확인
+   */
+  public getAutoScrollStatus(): { enabled: boolean; speed: number; isRunning: boolean } {
+    return {
+      enabled: this.autoScrollEnabled,
+      speed: this.autoScrollSpeed,
+      isRunning: this.autoScrollAnimationId !== null
+    };
+  }
+
   destroy(): void {
+    this.stopAutoScroll();
     this.cardSets = [[], [], []];
     this.container.innerHTML = '';
+
+    // 배경 타일 제거
+    const bgContainer = document.querySelector('.bg-tiles-container');
+    if (bgContainer) {
+      bgContainer.remove();
+    }
   }
 }
