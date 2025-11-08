@@ -193,7 +193,10 @@ export class Dom2DLayer {
 
       // 중간 세트 시작 위치로 초기화 (순환을 위해)
       this.scrollOffset = this.totalHeight;
-      this.updateTransform();
+
+      // 초기 위치 설정 (처음에만 적용)
+      grid.style.transform = `translateY(-${this.scrollOffset}px)`;
+      document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
 
       console.log('[DEBUG] 초기 scrollOffset:', this.scrollOffset, 'px (중간 세트 시작)');
     }, 100);
