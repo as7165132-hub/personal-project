@@ -57,15 +57,15 @@ export class Dom2DLayer {
     if (this.isIsoMode) {
       document.body.classList.add('iso-mode');
       toggleBtn?.classList.add('active');
-      // ISO 모드로 전환 시 스크롤 위치 리셋
-      this.scrollOffset = 0;
-      console.log('✨ ISO 뷰 활성화 (스크롤 리셋)');
+      // ISO 모드로 전환 시 스크롤 위치 리셋 (중간 세트)
+      this.scrollOffset = this.totalHeight;
+      console.log('✨ ISO 뷰 활성화 (중간 세트로 리셋)');
     } else {
       document.body.classList.remove('iso-mode');
       toggleBtn?.classList.remove('active');
-      // 2D 모드로 전환 시에도 스크롤 위치 리셋
-      this.scrollOffset = 0;
-      console.log('📐 2D 뷰로 전환 (스크롤 리셋)');
+      // 2D 모드로 전환 시에도 스크롤 위치 리셋 (중간 세트)
+      this.scrollOffset = this.totalHeight;
+      console.log('📐 2D 뷰로 전환 (중간 세트로 리셋)');
     }
 
     // 리셋된 스크롤 오프셋으로 transform 다시 적용
@@ -90,17 +90,17 @@ export class Dom2DLayer {
     const beforeOffset = this.scrollOffset;
     this.scrollOffset += e.deltaY * 0.5; // 스크롤 속도 조절
 
-    // 컨베이어 벨트: 1세트 높이 기준으로 순환
+    // 컨베이어 벨트: 중간 세트(2번째) 기준으로 순환
     if (this.totalHeight > 0) {
-      // 아래로 스크롤: 1세트 끝에 도달하면 처음으로
-      if (this.scrollOffset >= this.totalHeight) {
+      // 아래로 스크롤: 3번째 세트 끝에 도달하면 2번째 세트로
+      if (this.scrollOffset >= 2 * this.totalHeight) {
         this.scrollOffset -= this.totalHeight;
-        console.log('[WRAP] 아래 → 위:', beforeOffset, '→', this.scrollOffset);
+        console.log('[WRAP] 아래 → 중간:', beforeOffset.toFixed(0), '→', this.scrollOffset.toFixed(0));
       }
-      // 위로 스크롤: 0 미만이면 마지막 세트 끝으로
-      else if (this.scrollOffset < 0) {
+      // 위로 스크롤: 1번째 세트 시작 전이면 2번째 세트로
+      else if (this.scrollOffset < this.totalHeight) {
         this.scrollOffset += this.totalHeight;
-        console.log('[WRAP] 위 → 아래:', beforeOffset, '→', this.scrollOffset);
+        console.log('[WRAP] 위 → 중간:', beforeOffset.toFixed(0), '→', this.scrollOffset.toFixed(0));
       }
     }
 
@@ -118,15 +118,15 @@ export class Dom2DLayer {
     // ISO 모드 여부에 따라 다른 transform 적용
     if (this.isIsoMode) {
       // ISO 뷰: 기울기와 위치는 고정, 회전된 공간 안에서만 스크롤
-      // scrollOffset을 작은 범위로 정규화 (0~totalHeight → 0~2000)
+      // scrollOffset을 작은 범위로 정규화 (totalHeight~2*totalHeight → 0~2000)
       const isoScrollRange = 2000;
       const normalizedScroll = this.totalHeight > 0
-        ? (this.scrollOffset / this.totalHeight) * isoScrollRange
+        ? ((this.scrollOffset - this.totalHeight) / this.totalHeight) * isoScrollRange
         : 0;
       const offsetY = -100 - normalizedScroll;
       const transformStr = `rotateX(30deg) rotateZ(25deg) scale(1) translateX(-200px) translateY(${offsetY}px)`;
       grid.style.transform = transformStr;
-      console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset, 'normalized:', normalizedScroll.toFixed(0), 'offsetY:', offsetY.toFixed(0));
+      console.log('[ISO DEBUG] scrollOffset:', this.scrollOffset.toFixed(0), 'normalized:', normalizedScroll.toFixed(0), 'offsetY:', offsetY.toFixed(0));
     } else {
       // 2D 뷰: 단순 스크롤
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;
@@ -134,9 +134,9 @@ export class Dom2DLayer {
 
     // 배경도 정확히 동일한 속도로 이동 (CSS custom property 사용)
     if (this.isIsoMode && this.totalHeight > 0) {
-      // ISO 모드에서는 정규화된 값 사용
+      // ISO 모드에서는 정규화된 값 사용 (중간 세트 기준)
       const isoScrollRange = 2000;
-      const normalizedScroll = (this.scrollOffset / this.totalHeight) * isoScrollRange;
+      const normalizedScroll = ((this.scrollOffset - this.totalHeight) / this.totalHeight) * isoScrollRange;
       document.body.style.setProperty('--scroll-offset', `${normalizedScroll}px`);
     } else {
       document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
@@ -220,14 +220,14 @@ export class Dom2DLayer {
       console.log('[DEBUG] 1세트 높이:', this.totalHeight, 'px');
       console.log('[DEBUG] 전체 높이:', grid.scrollHeight, 'px');
 
-      // 첫 번째 세트에서 시작 (0부터)
-      this.scrollOffset = 0;
+      // 중간 세트(2번째)에서 시작 - 위아래로 스크롤 여유 확보
+      this.scrollOffset = this.totalHeight;
 
       // 초기 위치 설정
       grid.style.transform = `translateY(-${this.scrollOffset}px)`;
       document.body.style.setProperty('--scroll-offset', `${this.scrollOffset}px`);
 
-      console.log('[DEBUG] 초기 scrollOffset:', this.scrollOffset, 'px (첫 번째 세트)');
+      console.log('[DEBUG] 초기 scrollOffset:', this.scrollOffset, 'px (중간 세트)');
     }, 100);
   }
 

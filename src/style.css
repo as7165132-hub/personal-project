@@ -89,7 +89,7 @@ body::before {
   min-height: 100vh;
   align-content: start;
   /* Transform은 JavaScript에서 제어 */
-  transform-origin: 50% 80%; /* 하단 기준으로 회전 */
+  transform-origin: 50% 100%; /* 완전히 하단 기준으로 회전 */
   transition: transform 0.1s linear;
 }
 
@@ -167,7 +167,7 @@ body::before {
 body.iso-mode::before {
   /* 회전 먼저 → 회전된 공간에서 이동 */
   transform: rotateX(30deg) rotateZ(25deg) scale(1.05) translateX(-200px) translateY(calc(-100px - var(--scroll-offset) * 1px));
-  transform-origin: 50% 80%; /* 하단 기준으로 회전 */
+  transform-origin: 50% 100%; /* 완전히 하단 기준으로 회전 */
 }
 
 /* ==================== Accessibility ==================== */
