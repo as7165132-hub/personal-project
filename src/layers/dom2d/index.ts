@@ -447,10 +447,10 @@ export class Dom2DLayer {
       const card = pos.card;
       const innerBox = card.querySelector('.surface-card-inner') as HTMLElement;
 
-      // 초기 위치 (매우 높은 곳에서 시작 - 화면 밖)
+      // 초기 위치 (화면 밖에서 시작)
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
-      card.style.transform = `translate(0, -5000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+      card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
       card.style.transition = 'transform 1s ease-out';
 
       // 내부 박스에 투명도와 그림자 효과
