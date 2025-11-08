@@ -215,7 +215,9 @@ export class Dom2DLayer {
         this.pauseAutoScroll();
       }
 
-      this.scrollY += e.deltaY * 0.5;
+      // ISO 모드에서는 스크롤 방향 반대로
+      const scrollDelta = this.isIsoMode ? -e.deltaY * 0.5 : e.deltaY * 0.5;
+      this.scrollY += scrollDelta;
 
       // ISO 모드: 컨베이어 벨트 방식 무한 스크롤
       if (this.isIsoMode && this.cardSetHeight > 0) {
@@ -258,8 +260,8 @@ export class Dom2DLayer {
         return;
       }
 
-      // 천천히 스크롤
-      this.scrollY += this.autoScrollSpeed;
+      // 천천히 스크롤 (ISO 모드에서는 위로)
+      this.scrollY -= this.autoScrollSpeed;
 
       // 무한 스크롤 로직 적용
       if (this.cardSetHeight > 0) {
@@ -375,25 +377,33 @@ export class Dom2DLayer {
     const allCards = this.grid.querySelectorAll('.surface-card') as NodeListOf<HTMLElement>;
     const containerWidth = this.grid.offsetWidth || 1920;
     const cardWidth = 300; // 카드 너비
+    const cardsPerRow = 3; // 한 줄에 3개씩 배치
+    const rowHeight = 600; // 줄 간격
 
     allCards.forEach((card, index) => {
       card.style.position = 'absolute';
       card.style.width = `${cardWidth}px`;
 
-      // 랜덤 위치 계산
-      const randomX = Math.random() * (containerWidth - cardWidth);
-      const randomY = (index * 500) + (Math.random() * 200 - 100); // 세로로는 순서대로, 약간의 랜덤
+      // 그리드 기반 위치 계산 (한 줄에 여러 개)
+      const rowIndex = Math.floor(index / cardsPerRow);
+      const colIndex = index % cardsPerRow;
+
+      // 기본 그리드 위치에 랜덤 오프셋 추가
+      const baseX = (containerWidth / cardsPerRow) * colIndex;
+      const randomX = baseX + (Math.random() * 300 - 150); // ±150px 랜덤
+      const baseY = rowIndex * rowHeight;
+      const randomY = baseY + (Math.random() * 250 - 125); // ±125px 랜덤
 
       // 랜덤 회전 및 크기
       const randomRotation = Math.random() * 120 - 60; // -60도 ~ 60도
       const randomScale = Math.random() * 0.7 + 0.8; // 0.8 ~ 1.5
 
-      card.style.left = `${randomX}px`;
+      card.style.left = `${Math.max(0, Math.min(containerWidth - cardWidth, randomX))}px`;
       card.style.top = `${randomY}px`;
       card.style.transform = `rotate(${randomRotation}deg) scale(${randomScale})`; // 회전 + 크기
     });
 
-    console.log(`[ISO] ${allCards.length} cards randomly positioned`);
+    console.log(`[ISO] ${allCards.length} cards randomly positioned (${cardsPerRow} per row)`);
   }
 
   /**
