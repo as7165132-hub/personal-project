@@ -22,10 +22,9 @@ export class GL3DLayer {
   private activeCardMesh: THREE.Mesh | null = null; // 임시 정리용 (제거 시 사용)
   private bubbleAnimation: { scale: number; targetScale: number; time: number } | null = null;
 
-  // 스크롤 관련
-  private isActive: boolean = false;
-  private scrollContainer: HTMLElement | null = null;
-  private initialCameraPosition: THREE.Vector3 = new THREE.Vector3(0, 10, 20);
+  // 카메라 고정 위치 (ISO 모드에서 스크롤 무관)
+  private initialCameraPosition: THREE.Vector3 = new THREE.Vector3(0, 8, 18);
+  private lookAtTarget: THREE.Vector3 = new THREE.Vector3(0, 1, 0); // 화면 중앙에 위치
 
   constructor(canvasId: string = 'gl-canvas') {
     let canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -38,7 +37,6 @@ export class GL3DLayer {
     }
 
     this.canvas = canvas;
-    this.scrollContainer = document.getElementById('app');
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(
       50,
@@ -84,10 +82,10 @@ export class GL3DLayer {
     // 카메라를 위에서 내려다보는 각도로 고정 (CSS rotateX(45deg)와 매치)
     // 2점 투시: 수직선은 평행, 수평 방향으로만 소실점
     this.camera.position.copy(this.initialCameraPosition);
-    this.camera.lookAt(0, 0, 0);
+    this.camera.lookAt(this.lookAtTarget);
 
     console.log('Camera position:', this.camera.position);
-    console.log('Camera looking at:', 0, 0, 0);
+    console.log('Camera looking at:', this.lookAtTarget);
   }
 
   /**
@@ -181,16 +179,15 @@ export class GL3DLayer {
    * 활성화
    */
   private activate(): void {
-    this.isActive = true;
-
     // 캔버스 표시
     this.canvas.style.opacity = '1';
     console.log('GL3D Layer: Canvas opacity set to 1');
 
-    // 카메라 위치 초기화 (고정된 위치로 리셋)
+    // 카메라 위치 초기화 (고정된 위치로 리셋 - 스크롤 무관)
     this.camera.position.copy(this.initialCameraPosition);
-    this.camera.lookAt(0, 0, 0);
+    this.camera.lookAt(this.lookAtTarget);
     console.log('Camera position reset:', this.camera.position);
+    console.log('Camera looking at:', this.lookAtTarget);
 
     // 씬은 원점에 고정
     this.scene.position.set(0, 0, 0);
@@ -219,10 +216,7 @@ export class GL3DLayer {
       bubble.visible = false;
     });
 
-    // 스크롤 이벤트 리스너 추가
-    if (this.scrollContainer) {
-      this.scrollContainer.addEventListener('scroll', this.handleScroll);
-    }
+    // ISO 모드에서는 스크롤 이벤트 리스너 불필요 (고정 위치 렌더링)
 
     this.startRenderLoop();
     console.log('GL3D Layer activated, render loop started');
@@ -232,14 +226,12 @@ export class GL3DLayer {
    * 비활성화
    */
   private deactivate(): void {
-    this.isActive = false;
-
     // 캔버스 숨김
     this.canvas.style.opacity = '0';
 
     // 카메라 위치 초기화
     this.camera.position.copy(this.initialCameraPosition);
-    this.camera.lookAt(0, 0, 0);
+    this.camera.lookAt(this.lookAtTarget);
 
     // 씬 위치 완전히 초기화 (이미 고정되어 있지만 명시적으로)
     this.scene.position.set(0, 0, 0);
@@ -253,27 +245,10 @@ export class GL3DLayer {
       bubble.visible = false;
     });
 
-    // 스크롤 이벤트 리스너 제거
-    if (this.scrollContainer) {
-      this.scrollContainer.removeEventListener('scroll', this.handleScroll);
-    }
+    // ISO 모드에서는 스크롤 이벤트 리스너 사용 안 함
 
     this.stopRenderLoop();
   }
-
-  /**
-   * 스크롤 핸들러 (화살표 함수로 this 바인딩)
-   */
-  private handleScroll = (): void => {
-    if (!this.scrollContainer || !this.isActive) return;
-
-    const scrollY = this.scrollContainer.scrollTop;
-
-    // 스크롤 양에 비례하여 카메라를 Y축으로 이동 (씬은 고정)
-    const cameraOffset = scrollY * 0.01; // 스크롤 민감도
-    this.camera.position.y = this.initialCameraPosition.y + cameraOffset;
-    this.camera.lookAt(0, cameraOffset, 0); // 카메라가 항상 같은 상대 위치를 바라보도록
-  };
 
   /**
    * 렌더 루프 시작
