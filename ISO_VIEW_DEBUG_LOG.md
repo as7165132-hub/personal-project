@@ -245,7 +245,19 @@ console.log('Computed style:', window.getComputedStyle(grid).transform);
 | 2024-11-08 | 1000 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
 | 2024-11-08 | 2000 | ❌ 변화 없음 | 사용자가 변화를 못 느낌 |
 | 2024-11-08 | 0 (scale:1) | ❌ 보이지 않음 | perspective 추가했으나 여전히 안 보임 |
-| 2024-11-08 | 0 (scale:2) | 🔄 테스트 중 | Scale 2배 증가 |
+| 2024-11-08 | 0 (scale:2) | ❌ 보이지 않음 | Scale 증가해도 안 보임 |
+| 2024-11-08 | 0 (scale:0.5) | 🔄 테스트 중 | 리팩토링: perspective 제거, 단순화 |
+
+## 리팩토링 (2024-11-08) - 단순화 접근
+
+### 변경 사항
+1. **Perspective 제거**: parallel projection으로 돌아감
+2. **Scale 0.5로 축소**: 전체 화면에서 카드 위치 확인 가능
+3. **Transform 단순화**: `rotateX(45deg)만 사용, rotateZ 제거
+4. **Transform-origin 중앙**: `50% 100%` → `50% 50%`
+
+### 목적
+복잡한 3D transform 대신 단순한 parallel projection으로 먼저 카드가 어디에 있는지 확인
 
 ## 근본 원인 수정 사항 (2024-11-08)
 
