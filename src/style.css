@@ -1,26 +1,18 @@
 /**
- * SURFACE DEBUT - Styles
- * 드라이·간결·차분한 급진성
+ * SURFACE DEBUT - Styles (v51 - 50 cards with ISO view)
+ * 8개 카드 성공 → 50개로 스케일업
  */
 
-/* ==================== CSS Variables ==================== */
+/* ==================== Variables ==================== */
 :root {
-  /* Surface Colors */
   --surface-bg: #fafafa;
   --surface-fg: #121212;
   --surface-gray: #8a8a8a;
   --surface-accent: #e8e8e8;
-
-  /* Typography */
   --surface-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --surface-font-mono: 'SF Mono', Monaco, 'Courier New', monospace;
-
-  /* Spacing */
   --surface-gap: 2rem;
-
-  /* Motion */
-  --surface-easing: cubic-bezier(0.22, 0.8, 0.26, 1);
-  --surface-duration: 1100ms;
+  --scroll-offset: 0px;
 }
 
 /* ==================== Reset ==================== */
@@ -36,7 +28,7 @@ html,
 body {
   width: 100%;
   min-height: 100%;
-  overflow: hidden; /* 스크롤 비활성화 */
+  overflow: hidden;
 }
 
 body {
@@ -46,51 +38,65 @@ body {
   color: var(--surface-fg);
   background: var(--surface-bg);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* 배경 래퍼 - 그리드와 완전히 동일한 속도로 스크롤 */
+/* ==================== Background ==================== */
 body::before {
   content: '';
   position: fixed;
-  top: -100%;
-  left: -100%;
+  inset: -100%;
   width: 300%;
   height: 300%;
   background-image: url('/bg-gradient.svg');
-  background-size: 3840px 2160px; /* 타일 크기 - 큰 타일로 반복 최소화 */
-  background-repeat: repeat; /* 타일링 */
+  background-size: 3840px 2160px;
+  background-repeat: repeat;
   background-position: center;
   z-index: 0;
-  /* 그리드와 동일한 스크롤 오프셋 적용 */
-  transform: translateY(calc(var(--scroll-offset) * -1));
-  transition: none; /* 즉시 반응 */
+  transform: translateY(calc(var(--scroll-offset) * -1px));
+  transition: transform 1100ms cubic-bezier(0.22, 0.8, 0.26, 1);
 }
 
-/* ==================== Container ==================== */
-.surface-container {
+/* ISO 모드: 배경도 회전 */
+body.iso-mode::before {
+  transform: rotateX(45deg) rotateZ(45deg) scale(0.8) translateY(calc(var(--scroll-offset) * -1px));
+}
+
+/* ==================== Stage (참조: perspective container) ==================== */
+.surface-stage {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  overflow: visible;
-  z-index: 10; /* 배경 이미지보다 앞에 */
-  /* perspective 제거 - ISO view는 parallel projection */
+  overflow: hidden;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+  z-index: 10;
 }
 
-/* ==================== Grid ==================== */
+/* ==================== Camera (참조: transform wrapper) ==================== */
+.surface-camera {
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: 100vh;
+  transform-style: preserve-3d;
+  transition: transform 1100ms cubic-bezier(0.22, 0.8, 0.26, 1);
+  transform: none; /* 초기값 명시 */
+}
+
+/* ==================== Grid (참조: world) ==================== */
 .surface-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--surface-gap);
   padding: 4rem 2rem;
-  width: 80%; /* 너비 줄임 */
+  width: 80%;
   max-width: 1400px;
-  margin: 0 auto; /* 중앙 정렬 */
+  margin: 0 auto;
   min-height: 100vh;
   align-content: start;
-  /* Transform은 JavaScript에서 제어 */
-  transform-origin: 50% 50%; /* 중앙 기준으로 회전 - 단순화 */
-  transition: transform 0.1s linear;
+  transform-origin: 50% 50%;
+  transition: opacity 500ms ease;
+  transform: translateY(0); /* 초기값 명시 */
 }
 
 /* ==================== Cards ==================== */
@@ -103,7 +109,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: box-shadow 300ms var(--surface-easing);
+  transition: box-shadow 300ms cubic-bezier(0.22, 0.8, 0.26, 1);
 }
 
 .surface-card:hover {
@@ -134,7 +140,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.3s var(--surface-easing);
+  transition: all 0.3s cubic-bezier(0.22, 0.8, 0.26, 1);
   user-select: none;
 }
 
@@ -146,7 +152,7 @@ body::before {
 
 .iso-toggle-btn .toggle-icon {
   font-size: 1rem;
-  transition: transform 0.3s var(--surface-easing);
+  transition: transform 0.3s cubic-bezier(0.22, 0.8, 0.26, 1);
 }
 
 .iso-toggle-btn.active {
@@ -156,25 +162,6 @@ body::before {
 
 .iso-toggle-btn.active .toggle-icon {
   transform: rotateZ(45deg);
-}
-
-/* ==================== ISO Mode ==================== */
-:root {
-  --scroll-offset: 0px;
-}
-
-/* ISO 모드: 배경만 회전 (Grid는 JavaScript로 제어) */
-body.iso-mode::before {
-  /* Parallel projection - perspective 없이 단순 회전 */
-  transform: rotateX(45deg) rotateY(0deg) rotateZ(0deg) scale(0.5) translateY(calc(0px - var(--scroll-offset) * 1px));
-  transform-origin: 50% 50%; /* 중앙 기준 */
-}
-
-/* ==================== Accessibility ==================== */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition-duration: 0.01ms !important;
-  }
 }
 
 /* ==================== Responsive ==================== */
@@ -194,10 +181,16 @@ body.iso-mode::before {
     min-height: 300px;
   }
 
-  .surface-status-label {
+  .iso-toggle-btn {
     top: 1rem;
     right: 1rem;
     font-size: 0.7rem;
   }
 }
 
+/* ==================== Accessibility ==================== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
