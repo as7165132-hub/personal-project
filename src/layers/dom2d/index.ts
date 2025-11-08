@@ -407,9 +407,9 @@ export class Dom2DLayer {
       do {
         randomColumn = Math.floor(Math.random() * columns);
         attempts++;
-        // 같은 칼럼이나 인접 칼럼이 이미 사용되었으면 재시도
-        const isTooClose = usedColumnsInRow.some(usedCol => Math.abs(usedCol - randomColumn) <= 1);
-        if (!isTooClose || attempts > 10) break; // 10번 시도 후에는 포기
+        // 같은 칼럼이 이미 사용되었으면 재시도 (인접 칼럼 체크 제거)
+        const isUsed = usedColumnsInRow.includes(randomColumn);
+        if (!isUsed || attempts > 20) break; // 20번 시도 후에는 포기
       } while (true);
 
       usedColumnsInRow.push(randomColumn);
@@ -446,15 +446,17 @@ export class Dom2DLayer {
     cardPositions.forEach((pos, index) => {
       const card = pos.card;
 
-      // 초기 위치 (위쪽 먼 곳에서 시작)
+      // 초기 위치 (매우 높은 곳에서 시작 - 화면 밖)
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
-      card.style.transform = `translate(0, -2000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
-      card.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'; // 바운스 효과
+      card.style.transform = `translate(0, -5000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+      card.style.transition = 'transform 1s ease-out, box-shadow 1s ease-out'; // 부드러운 떨어짐
+      card.style.boxShadow = '0 50px 100px rgba(0, 0, 0, 0.5)'; // 떨어지는 중 그림자
 
       // 하단 카드부터 순차적으로 떨어지는 애니메이션
       setTimeout(() => {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+        card.style.boxShadow = 'none'; // 착지 후 그림자 제거
       }, index * 50); // 50ms 간격으로 순차 시작
     });
 
@@ -463,7 +465,7 @@ export class Dom2DLayer {
       cardPositions.forEach(pos => {
         pos.card.style.transition = '';
       });
-    }, cardPositions.length * 50 + 1000);
+    }, cardPositions.length * 50 + 1200);
 
     console.log(`[ISO] ${allCards.length} cards randomly positioned (max ${maxCardsPerRow} per row, ${columns} columns)`);
   }
