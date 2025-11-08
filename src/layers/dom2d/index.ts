@@ -45,29 +45,29 @@ export class Dom2DLayer {
     this.grid = document.createElement('div');
     this.grid.className = 'surface-grid';
 
-    // 카드 생성
+    // 카드 생성 (8개만 - 테스트)
     const cardTexts = [
       i18n.t('PROLOGUE'),
       i18n.t('LAYERS'),
       i18n.t('THRESHOLD'),
       i18n.t('DEBUT'),
       i18n.t('EPILOGUE'),
-      ...Array.from({ length: 211 }, (_, i) => `CARD ${String(i + 6).padStart(3, '0')}`)
+      'CARD 06',
+      'CARD 07',
+      'CARD 08'
     ];
 
-    // 3세트 생성 (무한 스크롤)
-    for (let set = 0; set < 3; set++) {
-      cardTexts.forEach(text => {
-        const card = document.createElement('div');
-        card.className = 'surface-card';
-        const p = document.createElement('p');
-        p.className = 'surface-card-text';
-        p.textContent = text;
-        card.appendChild(p);
-        this.grid.appendChild(card);
-        this.cards.push(card);
-      });
-    }
+    // 단일 세트만 생성 (복제 없음)
+    cardTexts.forEach(text => {
+      const card = document.createElement('div');
+      card.className = 'surface-card';
+      const p = document.createElement('p');
+      p.className = 'surface-card-text';
+      p.textContent = text;
+      card.appendChild(p);
+      this.grid.appendChild(card);
+      this.cards.push(card);
+    });
 
     this.camera.appendChild(this.grid);
     this.container.appendChild(this.camera);
@@ -77,8 +77,8 @@ export class Dom2DLayer {
     this.grid.style.transform = 'translateY(0px)';
 
     setTimeout(() => {
-      this.cardSetHeight = this.grid.scrollHeight / 3;
-      console.log('[INIT] Card set height:', this.cardSetHeight, 'px');
+      this.cardSetHeight = this.grid.scrollHeight;
+      console.log('[INIT] Total height:', this.cardSetHeight, 'px (8 cards only)');
       this.updateTransform();
     }, 100);
   }
@@ -88,12 +88,8 @@ export class Dom2DLayer {
       e.preventDefault();
       this.scrollY += e.deltaY * 0.5;
 
-      // 무한 스크롤
-      if (this.cardSetHeight > 0) {
-        const total = this.cardSetHeight * 3;
-        while (this.scrollY < 0) this.scrollY += this.cardSetHeight;
-        while (this.scrollY >= total) this.scrollY -= this.cardSetHeight;
-      }
+      // 단순 스크롤 (음수 방지만)
+      if (this.scrollY < 0) this.scrollY = 0;
 
       this.updateTransform();
     }, { passive: false });
