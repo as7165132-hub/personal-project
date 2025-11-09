@@ -209,7 +209,8 @@ body.iso-mode .bg-tiles-container {
   filter: url(#pointLight);
 }
 
-.sticker-container:hover .sticker-main,
+/* hover와 active 효과 비활성화 - 클릭 시에만 벗겨짐 */
+/* .sticker-container:hover .sticker-main,
 .sticker-container.touch-active .sticker-main {
   clip-path: polygon(
     var(--sticker-start) var(--sticker-peelback-hover),
@@ -226,7 +227,7 @@ body.iso-mode .bg-tiles-container {
     var(--sticker-end) var(--sticker-end),
     var(--sticker-start) var(--sticker-end)
   );
-}
+} */
 
 .sticker-image {
   transform: rotate(var(--sticker-rotate));
@@ -255,7 +256,8 @@ body.iso-mode .bg-tiles-container {
   transform: rotate(calc(-1 * var(--peel-direction)));
 }
 
-.sticker-container:hover .flap,
+/* hover와 active 효과 비활성화 - 클릭 시에만 벗겨짐 */
+/* .sticker-container:hover .flap,
 .sticker-container.touch-active .flap {
   clip-path: polygon(
     var(--sticker-start) var(--sticker-start),
@@ -274,7 +276,7 @@ body.iso-mode .bg-tiles-container {
     var(--sticker-start) var(--sticker-peelback-active)
   );
   top: calc(-100% + 2 * var(--sticker-peelback-active) - 1px);
-}
+} */
 
 .flap-lighting {
   filter: url(#pointLightFlipped);
