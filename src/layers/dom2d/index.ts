@@ -138,6 +138,7 @@ export class Dom2DLayer {
     // 스티커 컨테이너 생성
     const stickerContainer = document.createElement('div');
     stickerContainer.className = 'sticker-container';
+    stickerContainer.dataset.imageSrc = imageSrc;
 
     // 메인 스티커
     const stickerMain = document.createElement('div');
@@ -175,6 +176,100 @@ export class Dom2DLayer {
     stickerContainer.appendChild(stickerMain);
     stickerContainer.appendChild(flap);
     card.appendChild(stickerContainer);
+
+    // 클릭 이벤트: 스티커 벗기고 디테일 뷰 열기
+    stickerContainer.addEventListener('click', () => {
+      this.openDetailView(imageSrc, stickerContainer);
+    });
+  }
+
+  /**
+   * 디테일 뷰 열기
+   */
+  private openDetailView(imageSrc: string, stickerContainer: HTMLElement): void {
+    // 스티커 완전히 벗기기
+    stickerContainer.classList.add('peeling-off');
+
+    // 1초 후 디테일 모달 열기
+    setTimeout(() => {
+      this.showDetailModal(imageSrc);
+
+      // 스티커를 뷰포트 밖으로 날리기
+      setTimeout(() => {
+        stickerContainer.classList.add('fly-away');
+      }, 100);
+    }, 600);
+  }
+
+  /**
+   * 디테일 모달 표시
+   */
+  private showDetailModal(imageSrc: string): void {
+    // 배경 블러 오버레이
+    const overlay = document.createElement('div');
+    overlay.className = 'detail-overlay';
+
+    // 모달 컨테이너
+    const modal = document.createElement('div');
+    modal.className = 'detail-modal';
+
+    // 좌측 이미지
+    const imageContainer = document.createElement('div');
+    imageContainer.className = 'detail-image-container';
+
+    const image = document.createElement('img');
+    image.src = imageSrc;
+    image.className = 'detail-image';
+    image.alt = '';
+
+    imageContainer.appendChild(image);
+
+    // 우측 설명 패널
+    const infoPanel = document.createElement('div');
+    infoPanel.className = 'detail-info-panel';
+
+    const textBox = document.createElement('div');
+    textBox.className = 'detail-text-box';
+    textBox.textContent = 'Description area';
+
+    infoPanel.appendChild(textBox);
+
+    // 조립
+    modal.appendChild(imageContainer);
+    modal.appendChild(infoPanel);
+
+    const detailContainer = document.createElement('div');
+    detailContainer.className = 'detail-container';
+    detailContainer.appendChild(overlay);
+    detailContainer.appendChild(modal);
+
+    document.body.appendChild(detailContainer);
+
+    // 오버레이 클릭 시 닫기
+    overlay.addEventListener('click', () => {
+      this.closeDetailModal(detailContainer);
+    });
+
+    // 애니메이션 시작
+    requestAnimationFrame(() => {
+      overlay.classList.add('active');
+      modal.classList.add('active');
+    });
+  }
+
+  /**
+   * 디테일 모달 닫기
+   */
+  private closeDetailModal(detailContainer: HTMLElement): void {
+    const overlay = detailContainer.querySelector('.detail-overlay');
+    const modal = detailContainer.querySelector('.detail-modal');
+
+    overlay?.classList.remove('active');
+    modal?.classList.remove('active');
+
+    setTimeout(() => {
+      detailContainer.remove();
+    }, 400);
   }
 
   /**
