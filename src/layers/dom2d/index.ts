@@ -176,7 +176,7 @@ export class Dom2DLayer {
     stickerContainer.appendChild(flap);
     card.appendChild(stickerContainer);
 
-    // 클릭 이벤트: 스티커 완전히 벗겨지고 뷰포트 밖으로 이동 후 화면 하단에서 중간으로 이동
+    // 클릭 이벤트: 스티커 완전히 벗겨지고 상세 페이지 표시
     let isAnimating = false;
     stickerContainer.addEventListener('click', (e) => {
       if (isAnimating) return;
@@ -191,18 +191,113 @@ export class Dom2DLayer {
         stickerContainer.classList.add('flying-away');
 
         setTimeout(() => {
-          // 3단계: 화면 하단에 재배치하고 중간으로 이동하는 애니메이션
+          // 3단계: 상품 상세 페이지 모달 표시
+          this.showProductDetailModal(imageSrc, index);
+
+          // 클린업
           stickerContainer.classList.remove('peeling-off', 'flying-away');
-          stickerContainer.classList.add('collected-sticker');
-
-          // z-index를 높여서 최상단에 표시
-          card.style.zIndex = '1000';
-
-          setTimeout(() => {
-            isAnimating = false;
-          }, 1500);
+          isAnimating = false;
         }, 800);
       }, 600);
+    });
+  }
+
+  /**
+   * 상품 상세 페이지 모달 표시
+   */
+  private showProductDetailModal(imageSrc: string, index: number): void {
+    // 배경 블러 오버레이
+    const overlay = document.createElement('div');
+    overlay.className = 'product-detail-overlay';
+
+    // 상세 페이지 컨테이너
+    const detailContainer = document.createElement('div');
+    detailContainer.className = 'product-detail-container';
+
+    // 왼쪽: 스티커 이미지
+    const imageSection = document.createElement('div');
+    imageSection.className = 'product-detail-image';
+
+    const img = document.createElement('img');
+    img.src = imageSrc;
+    img.alt = 'Product Image';
+    imageSection.appendChild(img);
+
+    // 오른쪽: 상품 설명 패널
+    const infoSection = document.createElement('div');
+    infoSection.className = 'product-detail-info';
+
+    // 상품명
+    const productName = document.createElement('div');
+    productName.className = 'product-info-box';
+    productName.innerHTML = `<h2>${index % 2 === 0 ? 'White T-Shirt' : 'Black Cargo Pants'}</h2>`;
+
+    // 상품 설명
+    const productDesc = document.createElement('div');
+    productDesc.className = 'product-info-box';
+    productDesc.innerHTML = `<p>${index % 2 === 0 ?
+      'Premium cotton t-shirt with modern fit. Perfect for everyday wear.' :
+      'Comfortable cargo pants with multiple pockets. Durable and stylish.'}</p>`;
+
+    // 가격
+    const productPrice = document.createElement('div');
+    productPrice.className = 'product-info-box';
+    productPrice.innerHTML = `<h3>${index % 2 === 0 ? '$29.99' : '$59.99'}</h3>`;
+
+    // 사이즈 정보
+    const productSize = document.createElement('div');
+    productSize.className = 'product-info-box';
+    productSize.innerHTML = `<p>Available Sizes: S, M, L, XL</p>`;
+
+    // 닫기 버튼
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'product-detail-close';
+    closeBtn.innerHTML = '✕';
+    closeBtn.addEventListener('click', () => {
+      overlay.classList.add('closing');
+      setTimeout(() => {
+        overlay.remove();
+      }, 300);
+    });
+
+    infoSection.appendChild(productName);
+    infoSection.appendChild(productDesc);
+    infoSection.appendChild(productPrice);
+    infoSection.appendChild(productSize);
+
+    detailContainer.appendChild(imageSection);
+    detailContainer.appendChild(infoSection);
+    detailContainer.appendChild(closeBtn);
+
+    overlay.appendChild(detailContainer);
+    document.body.appendChild(overlay);
+
+    // 애니메이션 시작
+    requestAnimationFrame(() => {
+      overlay.classList.add('active');
+    });
+
+    // ESC 키로 닫기
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        overlay.classList.add('closing');
+        setTimeout(() => {
+          overlay.remove();
+        }, 300);
+        document.removeEventListener('keydown', handleEsc);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+
+    // 오버레이 클릭 시 닫기
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.classList.add('closing');
+        setTimeout(() => {
+          overlay.remove();
+        }, 300);
+        document.removeEventListener('keydown', handleEsc);
+      }
     });
   }
 

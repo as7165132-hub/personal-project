@@ -322,42 +322,171 @@ body.iso-mode .bg-tiles-container {
   transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.8s ease-out !important;
 }
 
-/* 3단계: 화면 하단에서 중간으로 이동 (수집된 스티커) */
-.sticker-container.collected-sticker {
-  position: fixed !important;
-  left: 50% !important;
-  bottom: -400px !important;
-  transform: translateX(-50%) rotate(0deg) !important;
-  opacity: 1 !important;
-  z-index: 10000 !important;
-  animation: collectSticker 1.5s cubic-bezier(0.22, 0.8, 0.26, 1) forwards;
-  border: 8px solid #fff !important;
-  box-shadow: 0 0 0 2px #000, 0 10px 40px rgba(0, 0, 0, 0.4) !important;
-  border-radius: 4px !important;
-  background: white !important;
+/* ==================== Product Detail Modal ==================== */
+.product-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.sticker-container.collected-sticker .sticker-main {
-  clip-path: polygon(
-    var(--sticker-start) var(--sticker-start),
-    var(--sticker-end) var(--sticker-start),
-    var(--sticker-end) var(--sticker-end),
-    var(--sticker-start) var(--sticker-end)
-  ) !important;
+.product-detail-overlay.active {
+  opacity: 1;
 }
 
-.sticker-container.collected-sticker .flap {
-  display: none !important;
+.product-detail-overlay.closing {
+  opacity: 0;
 }
 
-@keyframes collectSticker {
+.product-detail-container {
+  position: relative;
+  display: flex;
+  gap: 3rem;
+  background: white;
+  border-radius: 12px;
+  padding: 3rem;
+  max-width: 1000px;
+  width: 90%;
+  max-height: 80vh;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: translateY(100vh);
+  animation: slideUpModal 0.6s cubic-bezier(0.22, 0.8, 0.26, 1) forwards;
+  overflow: hidden;
+}
+
+@keyframes slideUpModal {
   0% {
-    bottom: -400px;
-    transform: translateX(-50%) rotate(0deg) scale(1);
+    transform: translateY(100vh);
   }
   100% {
-    bottom: 50%;
-    transform: translateX(-50%) translateY(50%) rotate(0deg) scale(1.2);
+    transform: translateY(0);
+  }
+}
+
+.product-detail-overlay.closing .product-detail-container {
+  animation: slideDownModal 0.3s cubic-bezier(0.22, 0.8, 0.26, 1) forwards;
+}
+
+@keyframes slideDownModal {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+/* 왼쪽: 스티커 이미지 */
+.product-detail-image {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 2rem;
+  border: 8px solid white;
+  box-shadow: 0 0 0 2px #000, 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.product-detail-image img {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  user-select: none;
+}
+
+/* 오른쪽: 상품 설명 패널 */
+.product-detail-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+  padding-right: 1rem;
+}
+
+/* 텍스트박스 회색 구분 */
+.product-info-box {
+  background: #f0f0f0;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.product-info-box h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--surface-fg);
+  font-weight: 600;
+}
+
+.product-info-box h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #e74c3c;
+  font-weight: 700;
+}
+
+.product-info-box p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #555;
+}
+
+/* 닫기 버튼 */
+.product-detail-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: var(--surface-fg);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.product-detail-close:hover {
+  background: #e74c3c;
+  transform: rotate(90deg);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .product-detail-container {
+    flex-direction: column;
+    padding: 2rem;
+    gap: 2rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .product-detail-image {
+    padding: 1rem;
+  }
+
+  .product-info-box h2 {
+    font-size: 1.5rem;
+  }
+
+  .product-info-box h3 {
+    font-size: 1.2rem;
   }
 }
 
