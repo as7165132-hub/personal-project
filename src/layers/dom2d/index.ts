@@ -678,6 +678,7 @@ export class Dom2DLayer {
       if (ghost) {
         ghost.style.transform = 'translate(-50%, -50%)';
         ghost.style.opacity = '0';
+        ghost.style.clipPath = 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'; // 전체 보임
         ghost.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
       }
 
@@ -690,7 +691,7 @@ export class Dom2DLayer {
           ghost.style.opacity = '1';
         }
 
-        // 2단계: 착지 후 ghost만 다시 수직으로 위로 올라가며 사라짐 (착지의 역방향)
+        // 2단계: 착지 후 ghost가 스티커처럼 벗겨지며 사라짐
         setTimeout(() => {
           // 착지 완료: 곱하기 블렌드 모드 활성화
           const stickerContainer = card.querySelector('.sticker-container') as HTMLElement;
@@ -699,12 +700,12 @@ export class Dom2DLayer {
           }
 
           if (ghost) {
-            // 착지 시 카드가 translate(0, -1000px) → translate(0, 0)으로 내려왔으므로
-            // 고스트는 역방향으로 translate(-50%, -50%) → translate(-50%, -50%) + translateY(-1000px)
-            ghost.style.transform = `translate(-50%, -50%) translateY(-1000px)`;
+            // 스티커 벗겨지는 효과: clip-path로 상단부터 사라짐
+            ghost.style.clipPath = 'polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)';
+            ghost.style.transition = 'clip-path 0.8s ease-out, opacity 0.8s ease-out';
             ghost.style.opacity = '0';
 
-            // 올라간 후 1초 뒤 ghost 완전히 제거
+            // 벗겨진 후 1초 뒤 ghost 완전히 제거
             setTimeout(() => {
               if (ghost && ghost.parentNode) {
                 ghost.remove();
