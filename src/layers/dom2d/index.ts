@@ -483,14 +483,12 @@ export class Dom2DLayer {
           ghost.style.opacity = '1';
         }
 
-        // 2단계: 착지 후 ghost만 다시 수직으로 위로 올라가며 사라짐
+        // 2단계: 착지 후 ghost만 다시 수직으로 위로 올라가며 사라짐 (착지의 역방향)
         setTimeout(() => {
           if (ghost) {
-            // 카드의 현재 위치에서 수직으로 위로 이동
-            ghost.style.position = 'absolute';
-            ghost.style.left = '50%';
-            ghost.style.top = '50%';
-            ghost.style.transform = `translate(-50%, -1050%)`;
+            // 착지 시 카드가 translate(0, -1000px) → translate(0, 0)으로 내려왔으므로
+            // 고스트는 역방향으로 translate(-50%, -50%) → translate(-50%, -50%) + translateY(-1000px)
+            ghost.style.transform = `translate(-50%, -50%) translateY(-1000px)`;
             ghost.style.opacity = '0';
 
             // 올라간 후 1초 뒤 ghost 완전히 제거
