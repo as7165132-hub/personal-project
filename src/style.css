@@ -170,7 +170,61 @@ body.iso-mode .bg-tiles-container {
   overflow: visible;
 }
 
-/* ISO 모드에서 착지한 카드에 스티커 효과 */
+/* ISO 모드에서 착지한 카드에 스티커 효과 - clip-path 방식 */
+.iso-mode .surface-card-inner {
+  --peel-amount: 0%;
+  clip-path: polygon(
+    0% var(--peel-amount),
+    100% var(--peel-amount),
+    100% 100%,
+    0% 100%
+  );
+  transition: clip-path 0.4s cubic-bezier(0.22, 0.8, 0.26, 1),
+              box-shadow 0.4s cubic-bezier(0.22, 0.8, 0.26, 1),
+              transform 0.4s cubic-bezier(0.22, 0.8, 0.26, 1);
+}
+
+/* 호버 시 peel */
+.iso-mode .surface-card:hover .surface-card-inner {
+  --peel-amount: 15%;
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* 벗겨진 부분 (flap) */
+.iso-mode .surface-card-inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(
+    180deg,
+    rgba(220, 220, 220, 0.95) 0%,
+    rgba(200, 200, 200, 0.9) 100%
+  );
+  border-radius: 8px 8px 0 0;
+  transform-origin: top center;
+  transform: scaleY(-1) translateY(0%);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 -2px 4px rgba(255, 255, 255, 0.5);
+  transition: all 0.4s cubic-bezier(0.22, 0.8, 0.26, 1);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 호버 시 flap 확장 */
+.iso-mode .surface-card:hover .surface-card-inner::before {
+  height: 15%;
+  transform: scaleY(-1) translateY(-100%);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.25),
+    inset 0 -2px 6px rgba(255, 255, 255, 0.6);
+}
+
+/* 오른쪽 상단 코너 peel 효과 */
 .iso-mode .surface-card-inner::after {
   content: '';
   position: absolute;
@@ -179,25 +233,20 @@ body.iso-mode .bg-tiles-container {
   width: 0;
   height: 0;
   border-style: solid;
-  border-width: 0 30px 30px 0;
-  border-color: transparent rgba(255, 255, 255, 0.9) transparent transparent;
-  box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s cubic-bezier(0.22, 0.8, 0.26, 1);
+  border-width: 0 0 0 0;
+  border-color: transparent rgba(240, 240, 240, 0.9) transparent transparent;
+  box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s cubic-bezier(0.22, 0.8, 0.26, 1);
   border-radius: 0 8px 0 0;
   transform-origin: top right;
   pointer-events: none;
+  filter: brightness(0.95);
 }
 
-/* 호버 시 스티커가 더 많이 들림 */
+/* 호버 시 코너 더 들림 */
 .iso-mode .surface-card:hover .surface-card-inner::after {
-  border-width: 0 60px 60px 0;
-  box-shadow: -4px 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-/* 호버 시 카드 전체 효과 */
-.iso-mode .surface-card:hover .surface-card-inner {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  border-width: 0 50px 50px 0;
+  box-shadow: -4px 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .surface-card:hover .surface-card-inner {
