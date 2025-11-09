@@ -70,9 +70,9 @@ body.iso-mode {
   background-position: center calc(var(--bg-offset) * 1px);
 }
 
-/* ISO 모드: 배경 타일 컨테이너도 회전 */
+/* ISO 모드: 배경 타일 컨테이너 숨기기 (ISO 배경 이미지를 보이게 함) */
 body.iso-mode .bg-tiles-container {
-  transform: rotateX(45deg) rotateZ(45deg) scale(0.8);
+  display: none;
 }
 
 /* ==================== Stage (참조: perspective container) ==================== */
@@ -273,14 +273,15 @@ body.iso-mode .bg-tiles-container {
 
 .flap-image {
   transform: rotate(var(--sticker-rotate));
-  filter: url(#expandAndFill) drop-shadow(0 0px 0px rgba(0, 0, 0, 0));
+  filter: url(#expandAndFill);
   width: 300px;
   height: auto;
   transition: filter 0.6s ease-out;
 }
 
-.sticker-container:hover .flap-image,
-.sticker-container.touch-active .flap-image {
+/* ISO 모드에서만 스티커 그림자 적용 */
+body.iso-mode .sticker-container:hover .flap-image,
+body.iso-mode .sticker-container.touch-active .flap-image {
   filter: url(#expandAndFill) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
 }
 
@@ -312,7 +313,8 @@ body.iso-mode .bg-tiles-container {
   transition: all 0.6s ease-out !important;
 }
 
-.sticker-container.peeling-off .flap-image {
+/* ISO 모드에서만 벗겨질 때 그림자 적용 */
+body.iso-mode .sticker-container.peeling-off .flap-image {
   filter: url(#expandAndFill) drop-shadow(0 12px 30px rgba(0, 0, 0, 0.6)) !important;
 }
 
