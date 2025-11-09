@@ -1,5 +1,5 @@
 /**
- * SURFACE DEBUT - 2D DOM Layer (v54 - True infinite scroll with DOM reordering)
+ * SURFACE DEBUT - 2D DOM Layer (v56 - Ghost-sticker alignment + diagonal corner peel)
  * 컨베이어 벨트 방식 무한 스크롤 (DOM 재배치)
  */
 
