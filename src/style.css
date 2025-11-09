@@ -136,11 +136,11 @@ body.iso-mode .bg-tile {
   display: none;
 }
 
-/* 외부 컨테이너 (반투명 파란색) */
+/* 외부 컨테이너 (반투명 파란색) - 스티커와 동일한 크기 */
 .surface-card-ghost {
   position: absolute;
-  width: 85%;
-  height: 75%;
+  width: 300px;  /* 스티커와 동일 */
+  height: 300px;
   background: rgba(100, 150, 255, 0.5);
   border-radius: 8px;
   z-index: 2;

@@ -667,26 +667,43 @@ export class Dom2DLayer {
       this.grid.insertBefore(landingSpot, card); // 카드 앞에 추가하여 카드 아래에 렌더링
 
       // 카드 초기 위치 (위쪽에서 시작, 투명)
+      // CRITICAL: 카드에는 transform 적용하지 않음 (블렌드 모드를 위해)
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
-      card.style.zIndex = '1'; // 착지 지점 원 위에 표시
-      card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+      card.style.zIndex = '1';
       card.style.opacity = '0';
-      card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
+      card.style.transition = 'opacity 1s ease-out';
 
-      // ghost 초기 위치 (카드와 함께 위쪽, 투명)
-      // 고스트는 카드 내부에 있으므로 카드의 rotation/scale을 자동 상속
-      // 스티커 이미지와 동일하게 30deg 추가 회전 적용 (CSS의 --sticker-rotate와 일치)
+      // Transform wrapper 생성 (블렌드 모드 호환)
+      const transformWrapper = document.createElement('div');
+      transformWrapper.className = 'card-transform-wrapper';
+      transformWrapper.style.position = 'absolute';
+      transformWrapper.style.inset = '0';
+      transformWrapper.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+      transformWrapper.style.transition = 'transform 1s ease-out';
+
+      // 카드 내용을 wrapper로 이동
+      while (card.firstChild) {
+        transformWrapper.appendChild(card.firstChild);
+      }
+      card.appendChild(transformWrapper);
+
+      // ghost 초기 위치 - 스티커와 동일한 크기/위치
       if (ghost) {
+        ghost.style.width = '300px';  // 스티커와 동일
+        ghost.style.height = '300px';
+        ghost.style.left = '50%';
+        ghost.style.top = '50%';
         ghost.style.transform = 'translate(-50%, -50%) rotate(30deg)';
         ghost.style.opacity = '0';
-        ghost.style.clipPath = 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'; // 전체 보임
+        ghost.style.clipPath = 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)';
         ghost.style.transition = 'transform 1s ease-out, opacity 1s ease-out, clip-path 0.8s ease-out';
       }
 
       // 1단계: 스티커와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기 (불투명해짐)
       setTimeout(() => {
-        card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+        // Transform wrapper 애니메이션
+        transformWrapper.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
         card.style.opacity = '1';
 
         if (ghost) {
@@ -702,10 +719,10 @@ export class Dom2DLayer {
           }
 
           if (ghost) {
-            // 스티커 벗겨지는 효과: 오른쪽 상단 모서리를 중심으로 대각선 방향으로 벗겨지며 사라짐
-            // 모든 꼭짓점이 오른쪽 상단 모서리(100% 0%)로 수축 = 대각선 벗겨짐 효과
-            ghost.style.clipPath = 'polygon(100% 0%, 100% 0%, 100% 0%, 100% 0%)';
-            ghost.style.transform = 'translate(-50%, -50%) rotate(30deg) scale(0.5)'; // 축소하며 사라짐
+            // 스티커 벗겨지는 효과: 오른쪽 모서리로 말려 올라가며 벗겨짐
+            // 왼쪽 변(0% 0%, 0% 100%)이 오른쪽 변(100% 0%, 100% 100%)으로 수축
+            ghost.style.clipPath = 'polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%)';
+            ghost.style.transform = 'translate(-50%, -50%) rotate(30deg) translateX(20px)'; // 오른쪽으로 이동하며 사라짐
             ghost.style.transition = 'clip-path 0.8s ease-out, opacity 0.8s ease-out, transform 0.8s ease-out';
             ghost.style.opacity = '0';
 
@@ -724,6 +741,10 @@ export class Dom2DLayer {
     setTimeout(() => {
       cardPositions.forEach((pos) => {
         pos.card.style.transition = '';
+        const transformWrapper = pos.card.querySelector('.card-transform-wrapper') as HTMLElement;
+        if (transformWrapper) {
+          transformWrapper.style.transition = '';
+        }
         const ghost = pos.card.querySelector('.surface-card-ghost') as HTMLElement;
         if (ghost) {
           ghost.style.transition = '';
@@ -753,6 +774,15 @@ export class Dom2DLayer {
       card.style.transform = '';
       card.style.opacity = '';
       card.style.transition = '';
+
+      // Transform wrapper 제거하고 내용을 카드로 되돌림
+      const transformWrapper = card.querySelector('.card-transform-wrapper');
+      if (transformWrapper) {
+        while (transformWrapper.firstChild) {
+          card.appendChild(transformWrapper.firstChild);
+        }
+        transformWrapper.remove();
+      }
 
       // 2D 모드에서는 ghost 제거
       const ghost = card.querySelector('.surface-card-ghost');
