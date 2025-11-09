@@ -36,10 +36,61 @@
         letter-spacing: 0.05em;
       }
     </style>
-    <script type="module" crossorigin src="/personal-project/assets/main-CVHuEf1K.js"></script>
-    <link rel="stylesheet" crossorigin href="/personal-project/assets/main-gUxlQNs-.css">
+    <script type="module" crossorigin src="/personal-project/assets/main-BSGpVqan.js"></script>
+    <link rel="stylesheet" crossorigin href="/personal-project/assets/main-wqk_LK0H.css">
   </head>
   <body>
+    <!-- SVG Filters for Sticker Peel Effect -->
+    <svg width="0" height="0" style="position: absolute;">
+      <defs>
+        <filter id="pointLight">
+          <feGaussianBlur stdDeviation="1" result="blur" />
+          <feSpecularLighting
+            result="spec"
+            in="blur"
+            specularExponent="100"
+            specularConstant="0.1"
+            lightingColor="white"
+          >
+            <fePointLight x="100" y="100" z="300" />
+          </feSpecularLighting>
+          <feComposite in="spec" in2="SourceGraphic" result="lit" />
+          <feComposite in="lit" in2="SourceAlpha" operator="in" />
+        </filter>
+
+        <filter id="pointLightFlipped">
+          <feGaussianBlur stdDeviation="10" result="blur" />
+          <feSpecularLighting
+            result="spec"
+            in="blur"
+            specularExponent="100"
+            specularConstant="0.7"
+            lightingColor="white"
+          >
+            <fePointLight x="100" y="100" z="300" />
+          </feSpecularLighting>
+          <feComposite in="spec" in2="SourceGraphic" result="lit" />
+          <feComposite in="lit" in2="SourceAlpha" operator="in" />
+        </filter>
+
+        <filter id="dropShadow">
+          <feDropShadow
+            dx="2"
+            dy="4"
+            stdDeviation="1.8"
+            floodColor="black"
+            floodOpacity="0.6"
+          />
+        </filter>
+
+        <filter id="expandAndFill">
+          <feOffset dx="0" dy="0" in="SourceAlpha" result="shape" />
+          <feFlood floodColor="rgb(179,179,179)" result="flood" />
+          <feComposite operator="in" in="flood" in2="shape" />
+        </filter>
+      </defs>
+    </svg>
+
     <!-- ISO View Toggle Button -->
     <button id="iso-toggle" class="iso-toggle-btn">
       <span class="toggle-icon">◧</span>
