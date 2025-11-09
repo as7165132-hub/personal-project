@@ -40,6 +40,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ISO 모드일 때 배경 이미지 적용 */
+body.iso-mode {
+  background-image: url('/iso-background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
 /* ==================== Background (8-tile system) ==================== */
 .bg-tiles-container {
   position: fixed;
