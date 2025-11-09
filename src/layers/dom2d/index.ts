@@ -187,15 +187,15 @@ export class Dom2DLayer {
       stickerContainer.classList.add('peeling-off');
 
       setTimeout(() => {
-        // 2단계: 벗겨진 방향(위쪽)으로 뷰포트 밖으로 이동
-        stickerContainer.classList.add('flying-away');
+        // 2단계: 천천히 투명하게 사라지기
+        stickerContainer.classList.add('fading-out');
 
         setTimeout(() => {
           // 3단계: 상품 상세 페이지 모달 표시
           this.showProductDetailModal(imageSrc, index);
 
           // 클린업
-          stickerContainer.classList.remove('peeling-off', 'flying-away');
+          stickerContainer.classList.remove('peeling-off', 'fading-out');
           isAnimating = false;
         }, 800);
       }, 600);
