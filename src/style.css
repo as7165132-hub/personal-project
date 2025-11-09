@@ -196,8 +196,8 @@ body.iso-mode .bg-tiles-container {
     var(--sticker-end) var(--sticker-end),
     var(--sticker-start) var(--sticker-end)
   );
-  transition: clip-path 0.6s ease-out;
-  filter: url(#dropShadow);
+  transition: clip-path 0.6s ease-out, filter 0.6s ease-out;
+  filter: url(#dropShadow) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
   will-change: clip-path, transform;
 }
 
@@ -285,6 +285,7 @@ body.iso-mode .bg-tiles-container {
     var(--sticker-start) var(--sticker-end)
   ) !important;
   transition: clip-path 0.6s ease-out !important;
+  filter: url(#dropShadow) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) !important;
 }
 
 .sticker-container.peeling-off .flap {
