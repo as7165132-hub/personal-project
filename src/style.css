@@ -69,10 +69,10 @@ body.iso-mode .bg-tiles-container {
 
 /* ISO 모드: 배경 타일에 iso-background 이미지 적용 */
 body.iso-mode .bg-tile {
-  background-image: url('/iso-background.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-image: url('/personal-project/iso-background.png') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
 }
 
 /* ==================== Stage (참조: perspective container) ==================== */
