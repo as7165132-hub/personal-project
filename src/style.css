@@ -234,8 +234,8 @@ body.iso-mode .bg-tile {
   height: auto;
 }
 
-/* ISO 모드에서 스티커 이미지에 곱하기 블렌드 모드 적용 */
-body.iso-mode .sticker-image {
+/* ISO 모드에서 스티커 이미지에 곱하기 블렌드 모드 적용 (착지 후에만) */
+body.iso-mode .sticker-container:not(.landing) .sticker-image {
   mix-blend-mode: multiply;
 }
 
@@ -284,8 +284,8 @@ body.iso-mode .sticker-image {
   transition: filter 0.6s ease-out;
 }
 
-/* ISO 모드에서 플랩 이미지에도 곱하기 블렌드 모드 적용 */
-body.iso-mode .flap-image {
+/* ISO 모드에서 플랩 이미지에도 곱하기 블렌드 모드 적용 (착지 후에만) */
+body.iso-mode .sticker-container:not(.landing) .flap-image {
   mix-blend-mode: multiply;
 }
 

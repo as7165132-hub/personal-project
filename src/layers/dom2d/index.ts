@@ -137,7 +137,7 @@ export class Dom2DLayer {
 
     // 스티커 컨테이너 생성
     const stickerContainer = document.createElement('div');
-    stickerContainer.className = 'sticker-container';
+    stickerContainer.className = 'sticker-container landing'; // 착지 중 클래스 추가
 
     // 메인 스티커
     const stickerMain = document.createElement('div');
@@ -692,6 +692,12 @@ export class Dom2DLayer {
 
         // 2단계: 착지 후 ghost만 다시 수직으로 위로 올라가며 사라짐 (착지의 역방향)
         setTimeout(() => {
+          // 착지 완료: 곱하기 블렌드 모드 활성화
+          const stickerContainer = card.querySelector('.sticker-container') as HTMLElement;
+          if (stickerContainer) {
+            stickerContainer.classList.remove('landing');
+          }
+
           if (ghost) {
             // 착지 시 카드가 translate(0, -1000px) → translate(0, 0)으로 내려왔으므로
             // 고스트는 역방향으로 translate(-50%, -50%) → translate(-50%, -50%) + translateY(-1000px)
