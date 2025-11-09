@@ -131,6 +131,8 @@ body.iso-mode .bg-tiles-container {
   border-radius: 50%;
   z-index: 0;
   pointer-events: none;
+  box-shadow: 0 0 40px 20px rgba(0, 0, 0, 0.5),
+              inset 0 0 40px rgba(0, 0, 0, 0.4);
 }
 
 /* 외부 컨테이너 (반투명 파란색) */

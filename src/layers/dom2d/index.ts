@@ -461,26 +461,34 @@ export class Dom2DLayer {
       landingSpot.style.top = `${pos.y + 250}px`; // 카드 중앙 지점
       this.grid.appendChild(landingSpot);
 
-      // 카드 초기 위치 (위쪽에서 시작)
+      // 카드 초기 위치 (위쪽에서 시작, 투명)
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
       card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
-      card.style.transition = 'transform 1s ease-out';
+      card.style.opacity = '0';
+      card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
-      // ghost 초기 위치 (카드와 함께 위쪽)
+      // ghost 초기 위치 (카드와 함께 위쪽, 투명)
       if (ghost) {
         ghost.style.transform = 'translate(-50%, -50%)';
-        ghost.style.transition = 'transform 1s ease-out';
+        ghost.style.opacity = '0';
+        ghost.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
       }
 
-      // 1단계: 카드와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기
+      // 1단계: 카드와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기 (불투명해짐)
       setTimeout(() => {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+        card.style.opacity = '1';
+
+        if (ghost) {
+          ghost.style.opacity = '1';
+        }
 
         // 2단계: 착지 후 ghost만 다시 위로 올라가며 사라짐
         setTimeout(() => {
           if (ghost) {
             ghost.style.transform = 'translate(-50%, -50%) translateY(-1000px)';
+            ghost.style.opacity = '0';
 
             // 올라간 후 1초 뒤 ghost 완전히 제거
             setTimeout(() => {
