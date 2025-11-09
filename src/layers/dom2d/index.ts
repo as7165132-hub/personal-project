@@ -676,8 +676,9 @@ export class Dom2DLayer {
 
       // ghost 초기 위치 (카드와 함께 위쪽, 투명)
       // 고스트는 카드 내부에 있으므로 카드의 rotation/scale을 자동 상속
+      // 스티커 이미지와 동일하게 30deg 추가 회전 적용 (CSS의 --sticker-rotate와 일치)
       if (ghost) {
-        ghost.style.transform = 'translate(-50%, -50%)';
+        ghost.style.transform = 'translate(-50%, -50%) rotate(30deg)';
         ghost.style.opacity = '0';
         ghost.style.clipPath = 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'; // 전체 보임
         ghost.style.transition = 'transform 1s ease-out, opacity 1s ease-out, clip-path 0.8s ease-out';
@@ -701,9 +702,11 @@ export class Dom2DLayer {
           }
 
           if (ghost) {
-            // 스티커 벗겨지는 효과: clip-path로 오른쪽 상단 모서리에서부터 벗겨지며 사라짐
+            // 스티커 벗겨지는 효과: 오른쪽 상단 모서리를 중심으로 대각선 방향으로 벗겨지며 사라짐
+            // 모든 꼭짓점이 오른쪽 상단 모서리(100% 0%)로 수축 = 대각선 벗겨짐 효과
             ghost.style.clipPath = 'polygon(100% 0%, 100% 0%, 100% 0%, 100% 0%)';
-            ghost.style.transition = 'clip-path 0.8s ease-out, opacity 0.8s ease-out';
+            ghost.style.transform = 'translate(-50%, -50%) rotate(30deg) scale(0.5)'; // 축소하며 사라짐
+            ghost.style.transition = 'clip-path 0.8s ease-out, opacity 0.8s ease-out, transform 0.8s ease-out';
             ghost.style.opacity = '0';
 
             // 벗겨진 후 1초 뒤 ghost 완전히 제거
