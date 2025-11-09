@@ -205,7 +205,6 @@ body.iso-mode .bg-tile {
     var(--sticker-start) var(--sticker-end)
   );
   transition: clip-path 0.6s ease-out;
-  filter: url(#dropShadow);
   will-change: clip-path, transform;
 }
 
@@ -215,6 +214,11 @@ body.iso-mode .bg-tile {
 
 .sticker-lighting {
   filter: url(#pointLight);
+}
+
+/* ISO 모드에서는 조명 효과 비활성화 (곱하기 블렌드 모드와 충돌 방지) */
+body.iso-mode .sticker-lighting {
+  filter: none;
 }
 
 /* hover 효과: 약간 벗겨지기 */
@@ -276,6 +280,11 @@ body.iso-mode .sticker-container:not(.landing) .sticker-image {
   filter: url(#pointLightFlipped);
 }
 
+/* ISO 모드에서는 플랩 조명 효과 비활성화 (곱하기 블렌드 모드와 충돌 방지) */
+body.iso-mode .flap-lighting {
+  filter: none;
+}
+
 .flap-image {
   transform: rotate(var(--sticker-rotate));
   filter: url(#expandAndFill);
@@ -284,15 +293,20 @@ body.iso-mode .sticker-container:not(.landing) .sticker-image {
   transition: filter 0.6s ease-out;
 }
 
+/* ISO 모드에서는 expandAndFill 필터 제거 (곱하기 블렌드 모드와 충돌 방지) */
+body.iso-mode .flap-image {
+  filter: none;
+}
+
 /* ISO 모드에서 플랩 이미지에도 곱하기 블렌드 모드 적용 (착지 후에만) */
 body.iso-mode .sticker-container:not(.landing) .flap-image {
   mix-blend-mode: multiply;
 }
 
-/* ISO 모드에서만 스티커 그림자 적용 */
+/* ISO 모드에서만 스티커 그림자 적용 (hover시) */
 body.iso-mode .sticker-container:hover .flap-image,
 body.iso-mode .sticker-container.touch-active .flap-image {
-  filter: url(#expandAndFill) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
 }
 
 /* 스티커 클릭 애니메이션 */
@@ -325,7 +339,7 @@ body.iso-mode .sticker-container.touch-active .flap-image {
 
 /* ISO 모드에서만 벗겨질 때 그림자 적용 */
 body.iso-mode .sticker-container.peeling-off .flap-image {
-  filter: url(#expandAndFill) drop-shadow(0 12px 30px rgba(0, 0, 0, 0.6)) !important;
+  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.6)) !important;
 }
 
 /* 2단계: 천천히 투명하게 사라지기 */
