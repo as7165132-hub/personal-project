@@ -1,5 +1,5 @@
 /**
- * SURFACE DEBUT - Styles (v53 - ISO sticker multiply blend mode)
+ * SURFACE DEBUT - Styles (v54 - ISO sticker multiply blend mode, no shadows)
  * 고정된 뷰포트에서 카드가 스크롤되는 방식
  */
 
@@ -238,8 +238,8 @@ body.iso-mode .sticker-lighting {
   height: auto;
 }
 
-/* ISO 모드에서 스티커 이미지에 곱하기 블렌드 모드 적용 (착지 후에만) */
-body.iso-mode .sticker-container:not(.landing) .sticker-image {
+/* ISO 모드에서 스티커 컨테이너에 곱하기 블렌드 모드 적용 (착지 후에만) */
+body.iso-mode .sticker-container:not(.landing) {
   mix-blend-mode: multiply;
 }
 
@@ -298,16 +298,9 @@ body.iso-mode .flap-image {
   filter: none;
 }
 
-/* ISO 모드에서 플랩 이미지에도 곱하기 블렌드 모드 적용 (착지 후에만) */
-body.iso-mode .sticker-container:not(.landing) .flap-image {
-  mix-blend-mode: multiply;
-}
+/* 곱하기 블렌드 모드는 .sticker-container 레벨에서 적용됨 */
 
-/* ISO 모드에서만 스티커 그림자 적용 (hover시) */
-body.iso-mode .sticker-container:hover .flap-image,
-body.iso-mode .sticker-container.touch-active .flap-image {
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
-}
+/* ISO 모드 hover시 그림자 제거 (부자연스러움) */
 
 /* 스티커 클릭 애니메이션 */
 .sticker-container {
@@ -337,10 +330,7 @@ body.iso-mode .sticker-container.touch-active .flap-image {
   transition: all 0.6s ease-out !important;
 }
 
-/* ISO 모드에서만 벗겨질 때 그림자 적용 */
-body.iso-mode .sticker-container.peeling-off .flap-image {
-  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.6)) !important;
-}
+/* ISO 모드 벗겨질 때 그림자 제거 (부자연스러움) */
 
 /* 2단계: 천천히 투명하게 사라지기 */
 .sticker-container.fading-out {
