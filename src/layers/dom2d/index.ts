@@ -126,10 +126,6 @@ export class Dom2DLayer {
     card.className = 'surface-card';
     card.dataset.cardIndex = String(index); // 카드 인덱스 저장
 
-    // 외부 컨테이너 (반투명 파란색 - 애니메이션용)
-    const ghost = document.createElement('div');
-    ghost.className = 'surface-card-ghost';
-
     // 중앙 사각형 컨테이너 (실제 카드)
     const innerBox = document.createElement('div');
     innerBox.className = 'surface-card-inner';
@@ -149,7 +145,6 @@ export class Dom2DLayer {
     p.textContent = cardData.text;
     innerBox.appendChild(p);
 
-    card.appendChild(ghost);
     card.appendChild(innerBox);
 
     return card;
@@ -452,7 +447,11 @@ export class Dom2DLayer {
     // 착지 애니메이션 (카드와 ghost 같이 내려오고, ghost만 올라감)
     cardPositions.forEach((pos, index) => {
       const card = pos.card;
-      const ghost = card.querySelector('.surface-card-ghost') as HTMLElement;
+
+      // ISO 모드 진입 시 ghost 생성
+      const ghost = document.createElement('div');
+      ghost.className = 'surface-card-ghost';
+      card.insertBefore(ghost, card.firstChild); // innerBox 앞에 삽입
 
       // 착지 지점에 큰 원 생성 (300px)
       const landingSpot = document.createElement('div');
@@ -484,10 +483,14 @@ export class Dom2DLayer {
           ghost.style.opacity = '1';
         }
 
-        // 2단계: 착지 후 ghost만 다시 위로 올라가며 사라짐
+        // 2단계: 착지 후 ghost만 다시 수직으로 위로 올라가며 사라짐
         setTimeout(() => {
           if (ghost) {
-            ghost.style.transform = 'translate(-50%, -50%) translateY(-1000px)';
+            // 카드의 현재 위치에서 수직으로 위로 이동
+            ghost.style.position = 'absolute';
+            ghost.style.left = '50%';
+            ghost.style.top = '50%';
+            ghost.style.transform = `translate(-50%, -1050%)`;
             ghost.style.opacity = '0';
 
             // 올라간 후 1초 뒤 ghost 완전히 제거
@@ -531,7 +534,19 @@ export class Dom2DLayer {
       card.style.left = '';
       card.style.top = '';
       card.style.transform = '';
+      card.style.opacity = '';
+      card.style.transition = '';
+
+      // 2D 모드에서는 ghost 제거
+      const ghost = card.querySelector('.surface-card-ghost');
+      if (ghost) {
+        ghost.remove();
+      }
     });
+
+    // 착지 지점 원들도 모두 제거
+    const landingSpots = this.grid.querySelectorAll('.landing-spot');
+    landingSpots.forEach(spot => spot.remove());
 
     console.log('[2D] Grid layout restored');
   }
