@@ -645,9 +645,21 @@ export class Dom2DLayer {
     // Y 위치 기준으로 정렬 (하단부터 = Y가 큰 것부터)
     cardPositions.sort((a, b) => b.y - a.y);
 
-    // 착지 애니메이션 전에 먼저 스티커로 변환
+    // 착지 애니메이션 전에 먼저 스티커로 변환하고 회전/필 방향 설정
     cardPositions.forEach((pos, idx) => {
       this.convertCardToSticker(pos.card, idx);
+
+      // 스티커별 회전 및 필 방향 설정 (카드 회전의 반대 방향으로 보정)
+      const stickerContainer = pos.card.querySelector('.sticker-container') as HTMLElement;
+      if (stickerContainer) {
+        // 스티커 이미지 회전 (카드 회전과 독립적으로 30도 회전)
+        const stickerRotation = 30;
+        // 필 방향은 오른쪽 상단 모서리로 향하도록 카드 회전 고려
+        const peelDirection = -pos.rotation;
+
+        stickerContainer.style.setProperty('--sticker-rotate', `${stickerRotation}deg`);
+        stickerContainer.style.setProperty('--peel-direction', `${peelDirection}deg`);
+      }
     });
 
     // 착지 애니메이션 (스티커와 ghost 같이 내려오고, ghost만 올라감)
@@ -688,13 +700,19 @@ export class Dom2DLayer {
       }
       card.appendChild(transformWrapper);
 
-      // ghost 초기 위치 - 스티커와 동일한 크기/위치
+      // ghost 초기 위치 - 스티커와 동일한 크기/위치 및 회전
       if (ghost) {
+        // 스티커 컨테이너의 회전/필 방향 가져오기
+        const stickerContainer = card.querySelector('.sticker-container') as HTMLElement;
+        const stickerRotate = stickerContainer?.style.getPropertyValue('--sticker-rotate') || '30deg';
+        const peelDirection = stickerContainer?.style.getPropertyValue('--peel-direction') || '0deg';
+
         ghost.style.width = '300px';  // 스티커와 동일
         ghost.style.height = '300px';
         ghost.style.left = '50%';
         ghost.style.top = '50%';
-        ghost.style.transform = 'translate(-50%, -50%) rotate(30deg)';
+        // ghost는 스티커와 동일한 회전 + 필 방향 적용
+        ghost.style.transform = `translate(-50%, -50%) rotate(calc(${peelDirection} + ${stickerRotate}))`;
         ghost.style.opacity = '0';
         ghost.style.clipPath = 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)';
         ghost.style.transition = 'transform 1s ease-out, opacity 1s ease-out, clip-path 0.8s ease-out';
@@ -719,10 +737,15 @@ export class Dom2DLayer {
           }
 
           if (ghost) {
-            // 스티커 벗겨지는 효과: 오른쪽 모서리로 말려 올라가며 벗겨짐
+            // 스티커 벗겨지는 효과: 오른쪽 상단 모서리로 말려 올라가며 벗겨짐
             // 왼쪽 변(0% 0%, 0% 100%)이 오른쪽 변(100% 0%, 100% 100%)으로 수축
+            const stickerContainer = card.querySelector('.sticker-container') as HTMLElement;
+            const stickerRotate = stickerContainer?.style.getPropertyValue('--sticker-rotate') || '30deg';
+            const peelDirection = stickerContainer?.style.getPropertyValue('--peel-direction') || '0deg';
+
             ghost.style.clipPath = 'polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%)';
-            ghost.style.transform = 'translate(-50%, -50%) rotate(30deg) translateX(20px)'; // 오른쪽으로 이동하며 사라짐
+            // 오른쪽 상단으로 이동하며 사라짐 (스티커와 동일한 회전 유지)
+            ghost.style.transform = `translate(-50%, -50%) rotate(calc(${peelDirection} + ${stickerRotate})) translateX(20px) translateY(-10px)`;
             ghost.style.transition = 'clip-path 0.8s ease-out, opacity 0.8s ease-out, transform 0.8s ease-out';
             ghost.style.opacity = '0';
 
