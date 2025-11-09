@@ -675,11 +675,12 @@ export class Dom2DLayer {
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
       // ghost 초기 위치 (카드와 함께 위쪽, 투명)
+      // 고스트는 카드 내부에 있으므로 카드의 rotation/scale을 자동 상속
       if (ghost) {
         ghost.style.transform = 'translate(-50%, -50%)';
         ghost.style.opacity = '0';
         ghost.style.clipPath = 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'; // 전체 보임
-        ghost.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
+        ghost.style.transition = 'transform 1s ease-out, opacity 1s ease-out, clip-path 0.8s ease-out';
       }
 
       // 1단계: 스티커와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기 (불투명해짐)
@@ -700,8 +701,8 @@ export class Dom2DLayer {
           }
 
           if (ghost) {
-            // 스티커 벗겨지는 효과: clip-path로 모서리에서부터 사라짐 (왼쪽 상단 모서리로 수축)
-            ghost.style.clipPath = 'polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%)';
+            // 스티커 벗겨지는 효과: clip-path로 오른쪽 상단 모서리에서부터 벗겨지며 사라짐
+            ghost.style.clipPath = 'polygon(100% 0%, 100% 0%, 100% 0%, 100% 0%)';
             ghost.style.transition = 'clip-path 0.8s ease-out, opacity 0.8s ease-out';
             ghost.style.opacity = '0';
 
