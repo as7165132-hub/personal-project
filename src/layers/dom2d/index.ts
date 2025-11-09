@@ -175,6 +175,35 @@ export class Dom2DLayer {
     stickerContainer.appendChild(stickerMain);
     stickerContainer.appendChild(flap);
     card.appendChild(stickerContainer);
+
+    // 클릭 이벤트: 스티커 완전히 벗겨지고 뷰포트 밖으로 이동 후 화면 하단에서 중간으로 이동
+    let isAnimating = false;
+    stickerContainer.addEventListener('click', (e) => {
+      if (isAnimating) return;
+      isAnimating = true;
+      e.stopPropagation();
+
+      // 1단계: 스티커 완전히 벗겨지는 애니메이션
+      stickerContainer.classList.add('peeling-off');
+
+      setTimeout(() => {
+        // 2단계: 벗겨진 방향(위쪽)으로 뷰포트 밖으로 이동
+        stickerContainer.classList.add('flying-away');
+
+        setTimeout(() => {
+          // 3단계: 화면 하단에 재배치하고 중간으로 이동하는 애니메이션
+          stickerContainer.classList.remove('peeling-off', 'flying-away');
+          stickerContainer.classList.add('collected-sticker');
+
+          // z-index를 높여서 최상단에 표시
+          card.style.zIndex = '1000';
+
+          setTimeout(() => {
+            isAnimating = false;
+          }, 1500);
+        }, 800);
+      }, 600);
+    });
   }
 
   /**
