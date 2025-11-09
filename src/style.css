@@ -205,8 +205,8 @@ body.iso-mode .bg-tiles-container {
     var(--sticker-end) var(--sticker-end),
     var(--sticker-start) var(--sticker-end)
   );
-  transition: clip-path 0.6s ease-out, filter 0.6s ease-out;
-  filter: url(#dropShadow) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+  transition: clip-path 0.6s ease-out;
+  filter: url(#dropShadow);
   will-change: clip-path, transform;
 }
 
@@ -250,6 +250,7 @@ body.iso-mode .bg-tiles-container {
   transform: scaleY(-1);
   transition: all 0.6s ease-out;
   will-change: clip-path, transform;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
 }
 
 .flap > * {
@@ -294,7 +295,6 @@ body.iso-mode .bg-tiles-container {
     var(--sticker-start) var(--sticker-end)
   ) !important;
   transition: clip-path 0.6s ease-out !important;
-  filter: url(#dropShadow) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) !important;
 }
 
 .sticker-container.peeling-off .flap {
@@ -306,6 +306,7 @@ body.iso-mode .bg-tiles-container {
   ) !important;
   top: calc(-100% + 200%) !important;
   transition: all 0.6s ease-out !important;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35)) !important;
 }
 
 /* 2단계: 천천히 투명하게 사라지기 */
