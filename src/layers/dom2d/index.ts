@@ -645,14 +645,19 @@ export class Dom2DLayer {
     // Y 위치 기준으로 정렬 (하단부터 = Y가 큰 것부터)
     cardPositions.sort((a, b) => b.y - a.y);
 
-    // 착지 애니메이션 (카드와 ghost 같이 내려오고, ghost만 올라감)
+    // 착지 애니메이션 전에 먼저 스티커로 변환
+    cardPositions.forEach((pos, idx) => {
+      this.convertCardToSticker(pos.card, idx);
+    });
+
+    // 착지 애니메이션 (스티커와 ghost 같이 내려오고, ghost만 올라감)
     cardPositions.forEach((pos, index) => {
       const card = pos.card;
 
       // ISO 모드 진입 시 ghost 생성
       const ghost = document.createElement('div');
       ghost.className = 'surface-card-ghost';
-      card.insertBefore(ghost, card.firstChild); // innerBox 앞에 삽입
+      card.insertBefore(ghost, card.firstChild); // 스티커 컨테이너 앞에 삽입
 
       // 착지 지점에 큰 원 생성 (300px) - 카드보다 먼저 DOM에 추가
       const landingSpot = document.createElement('div');
@@ -676,7 +681,7 @@ export class Dom2DLayer {
         ghost.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
       }
 
-      // 1단계: 카드와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기 (불투명해짐)
+      // 1단계: 스티커와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기 (불투명해짐)
       setTimeout(() => {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
         card.style.opacity = '1';
@@ -704,17 +709,14 @@ export class Dom2DLayer {
       }, index * 50); // 50ms 간격으로 순차 시작
     });
 
-    // 애니메이션 완료 후 transition 제거 및 스티커로 변환
+    // 애니메이션 완료 후 transition 제거
     setTimeout(() => {
-      cardPositions.forEach((pos, idx) => {
+      cardPositions.forEach((pos) => {
         pos.card.style.transition = '';
         const ghost = pos.card.querySelector('.surface-card-ghost') as HTMLElement;
         if (ghost) {
           ghost.style.transition = '';
         }
-
-        // 착지 완료 후 스티커로 변환
-        this.convertCardToSticker(pos.card, idx);
       });
     }, cardPositions.length * 50 + 2200);
 
