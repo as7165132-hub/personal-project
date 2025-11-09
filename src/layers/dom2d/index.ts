@@ -700,8 +700,8 @@ export class Dom2DLayer {
           }
 
           if (ghost) {
-            // 스티커 벗겨지는 효과: clip-path로 상단부터 사라짐
-            ghost.style.clipPath = 'polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)';
+            // 스티커 벗겨지는 효과: clip-path로 모서리에서부터 사라짐 (왼쪽 상단 모서리로 수축)
+            ghost.style.clipPath = 'polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%)';
             ghost.style.transition = 'clip-path 0.8s ease-out, opacity 0.8s ease-out';
             ghost.style.opacity = '0';
 
