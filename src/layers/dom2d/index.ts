@@ -438,26 +438,44 @@ export class Dom2DLayer {
     const cardWidth = 450; // 카드 너비 증가
     const columns = 6; // 6개 칼럼으로 증가
     const columnWidth = containerWidth / columns;
-    const minRowHeight = 800; // 최소 줄 간격 증가
-    const maxRowHeight = 1200; // 최대 줄 간격 증가
+    const minRowHeight = 400; // 최소 줄 간격 감소
+    const maxRowHeight = 600; // 최대 줄 간격 감소
 
     let currentY = 0;
     let cardsInCurrentRow = 0;
-    const maxCardsPerRow = 2; // 한 줄에 최대 2개로 감소
+    let maxCardsForCurrentRow = 0; // 현재 줄의 최대 카드 수 (0, 1, 2 중 하나)
     let usedColumnsInRow: number[] = []; // 현재 줄에 사용된 칼럼
 
     // 카드 위치 정보를 저장할 배열
     const cardPositions: Array<{card: HTMLElement; x: number; y: number; rotation: number; scale: number}> = [];
 
+    // 첫 번째 줄의 최대 카드 수 결정 (가중치: 0=40%, 1=40%, 2=20%)
+    const getRandomMaxCards = () => {
+      const rand = Math.random();
+      if (rand < 0.4) return 0;
+      else if (rand < 0.8) return 1;
+      else return 2;
+    };
+    maxCardsForCurrentRow = getRandomMaxCards();
+
     allCards.forEach((card) => {
       card.style.position = 'absolute';
       card.style.width = `${cardWidth}px`;
 
-      // 한 줄에 4개가 찼으면 다음 줄로
-      if (cardsInCurrentRow >= maxCardsPerRow) {
+      // 현재 줄의 최대 카드 수에 도달하면 다음 줄로
+      if (cardsInCurrentRow >= maxCardsForCurrentRow) {
         currentY += Math.random() * (maxRowHeight - minRowHeight) + minRowHeight;
         cardsInCurrentRow = 0;
         usedColumnsInRow = []; // 새 줄에서 칼럼 리셋
+        maxCardsForCurrentRow = getRandomMaxCards(); // 새 줄의 최대 카드 수 결정
+      }
+
+      // 현재 줄에 카드를 배치하지 않는 경우 (maxCardsForCurrentRow가 0)
+      if (maxCardsForCurrentRow === 0) {
+        currentY += Math.random() * (maxRowHeight - minRowHeight) + minRowHeight;
+        cardsInCurrentRow = 0;
+        usedColumnsInRow = [];
+        maxCardsForCurrentRow = getRandomMaxCards();
       }
 
       // 6개 칼럼 중 사용하지 않은 칼럼 선택 (인접 칼럼 포함 체크)
@@ -576,7 +594,7 @@ export class Dom2DLayer {
       });
     }, cardPositions.length * 50 + 2200);
 
-    console.log(`[ISO] ${allCards.length} cards randomly positioned (max ${maxCardsPerRow} per row, ${columns} columns)`);
+    console.log(`[ISO] ${allCards.length} cards randomly positioned (0-2 cards per row, ${columns} columns)`);
   }
 
   /**
