@@ -170,83 +170,130 @@ body.iso-mode .bg-tiles-container {
   overflow: visible;
 }
 
-/* ISO 모드에서 착지한 카드에 스티커 효과 - clip-path 방식 */
-.iso-mode .surface-card-inner {
-  --peel-amount: 0%;
+/* ==================== Sticker Peel Effect (react-bits style) ==================== */
+:root {
+  --sticker-rotate: 30deg;
+  --sticker-p: 10px;
+  --sticker-peelback-hover: 30%;
+  --sticker-peelback-active: 40%;
+  --sticker-start: calc(-1 * var(--sticker-p));
+  --sticker-end: calc(100% + var(--sticker-p));
+  --sticker-shadow-opacity: 0.6;
+  --sticker-lighting-constant: 0.1;
+  --peel-direction: 0deg;
+}
+
+.sticker-container {
+  position: relative;
+  transform: rotate(var(--peel-direction));
+  transform-origin: center;
+  width: 200px;
+  height: 200px;
+}
+
+.sticker-container * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sticker-main {
   clip-path: polygon(
-    0% var(--peel-amount),
-    100% var(--peel-amount),
-    100% 100%,
-    0% 100%
+    var(--sticker-start) var(--sticker-start),
+    var(--sticker-end) var(--sticker-start),
+    var(--sticker-end) var(--sticker-end),
+    var(--sticker-start) var(--sticker-end)
   );
-  transition: clip-path 0.4s cubic-bezier(0.22, 0.8, 0.26, 1),
-              box-shadow 0.4s cubic-bezier(0.22, 0.8, 0.26, 1),
-              transform 0.4s cubic-bezier(0.22, 0.8, 0.26, 1);
+  transition: clip-path 0.6s ease-out;
+  filter: url(#dropShadow);
+  will-change: clip-path, transform;
 }
 
-/* 호버 시 peel */
-.iso-mode .surface-card:hover .surface-card-inner {
-  --peel-amount: 15%;
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+.sticker-main > * {
+  transform: rotate(calc(-1 * var(--peel-direction)));
 }
 
-/* 벗겨진 부분 (flap) */
-.iso-mode .surface-card-inner::before {
-  content: '';
+.sticker-lighting {
+  filter: url(#pointLight);
+}
+
+.sticker-container:hover .sticker-main,
+.sticker-container.touch-active .sticker-main {
+  clip-path: polygon(
+    var(--sticker-start) var(--sticker-peelback-hover),
+    var(--sticker-end) var(--sticker-peelback-hover),
+    var(--sticker-end) var(--sticker-end),
+    var(--sticker-start) var(--sticker-end)
+  );
+}
+
+.sticker-container:active .sticker-main {
+  clip-path: polygon(
+    var(--sticker-start) var(--sticker-peelback-active),
+    var(--sticker-end) var(--sticker-peelback-active),
+    var(--sticker-end) var(--sticker-end),
+    var(--sticker-start) var(--sticker-end)
+  );
+}
+
+.sticker-image {
+  transform: rotate(var(--sticker-rotate));
+  width: 200px;
+  height: auto;
+}
+
+.flap {
   position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
-  height: 0%;
-  background: linear-gradient(
-    180deg,
-    rgba(220, 220, 220, 0.95) 0%,
-    rgba(200, 200, 200, 0.9) 100%
+  height: 100%;
+  left: 0;
+  top: calc(-100% - var(--sticker-p) - var(--sticker-p));
+  clip-path: polygon(
+    var(--sticker-start) var(--sticker-start),
+    var(--sticker-end) var(--sticker-start),
+    var(--sticker-end) var(--sticker-start),
+    var(--sticker-start) var(--sticker-start)
   );
-  border-radius: 8px 8px 0 0;
-  transform-origin: top center;
-  transform: scaleY(-1) translateY(0%);
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.15),
-    inset 0 -2px 4px rgba(255, 255, 255, 0.5);
-  transition: all 0.4s cubic-bezier(0.22, 0.8, 0.26, 1);
-  pointer-events: none;
-  z-index: -1;
+  transform: scaleY(-1);
+  transition: all 0.6s ease-out;
+  will-change: clip-path, transform;
 }
 
-/* 호버 시 flap 확장 */
-.iso-mode .surface-card:hover .surface-card-inner::before {
-  height: 15%;
-  transform: scaleY(-1) translateY(-100%);
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.25),
-    inset 0 -2px 6px rgba(255, 255, 255, 0.6);
+.flap > * {
+  transform: rotate(calc(-1 * var(--peel-direction)));
 }
 
-/* 오른쪽 상단 코너 peel 효과 */
-.iso-mode .surface-card-inner::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 0 0 0;
-  border-color: transparent rgba(240, 240, 240, 0.9) transparent transparent;
-  box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.2);
-  transition: all 0.4s cubic-bezier(0.22, 0.8, 0.26, 1);
-  border-radius: 0 8px 0 0;
-  transform-origin: top right;
-  pointer-events: none;
-  filter: brightness(0.95);
+.sticker-container:hover .flap,
+.sticker-container.touch-active .flap {
+  clip-path: polygon(
+    var(--sticker-start) var(--sticker-start),
+    var(--sticker-end) var(--sticker-start),
+    var(--sticker-end) var(--sticker-peelback-hover),
+    var(--sticker-start) var(--sticker-peelback-hover)
+  );
+  top: calc(-100% + 2 * var(--sticker-peelback-hover) - 1px);
 }
 
-/* 호버 시 코너 더 들림 */
-.iso-mode .surface-card:hover .surface-card-inner::after {
-  border-width: 0 50px 50px 0;
-  box-shadow: -4px 4px 10px rgba(0, 0, 0, 0.3);
+.sticker-container:active .flap {
+  clip-path: polygon(
+    var(--sticker-start) var(--sticker-start),
+    var(--sticker-end) var(--sticker-start),
+    var(--sticker-end) var(--sticker-peelback-active),
+    var(--sticker-start) var(--sticker-peelback-active)
+  );
+  top: calc(-100% + 2 * var(--sticker-peelback-active) - 1px);
+}
+
+.flap-lighting {
+  filter: url(#pointLightFlipped);
+}
+
+.flap-image {
+  transform: rotate(var(--sticker-rotate));
+  filter: url(#expandAndFill);
+  width: 200px;
+  height: auto;
 }
 
 .surface-card:hover .surface-card-inner {

@@ -119,6 +119,65 @@ export class Dom2DLayer {
   }
 
   /**
+   * ISO 모드에서 카드를 스티커로 변환
+   */
+  private convertCardToSticker(card: HTMLElement, index: number): void {
+    // 스티커 이미지 (2개의 PNG를 번갈아 사용)
+    const stickerImages = [
+      '/personal-project/pngtree-white-t-shirt-mockup-realistic-t-shirt-png-image_9906363.png',
+      '/personal-project/Black-Cargo-Pant-PNG-HD-Quality.png'
+    ];
+    const imageSrc = stickerImages[index % 2];
+
+    // 기존 innerBox를 숨김
+    const innerBox = card.querySelector('.surface-card-inner') as HTMLElement;
+    if (innerBox) {
+      innerBox.style.display = 'none';
+    }
+
+    // 스티커 컨테이너 생성
+    const stickerContainer = document.createElement('div');
+    stickerContainer.className = 'sticker-container';
+
+    // 메인 스티커
+    const stickerMain = document.createElement('div');
+    stickerMain.className = 'sticker-main';
+
+    const stickerLighting = document.createElement('div');
+    stickerLighting.className = 'sticker-lighting';
+
+    const stickerImage = document.createElement('img');
+    stickerImage.src = imageSrc;
+    stickerImage.className = 'sticker-image';
+    stickerImage.alt = '';
+    stickerImage.draggable = false;
+
+    stickerLighting.appendChild(stickerImage);
+    stickerMain.appendChild(stickerLighting);
+
+    // Flap (벗겨진 부분)
+    const flap = document.createElement('div');
+    flap.className = 'flap';
+
+    const flapLighting = document.createElement('div');
+    flapLighting.className = 'flap-lighting';
+
+    const flapImage = document.createElement('img');
+    flapImage.src = imageSrc;
+    flapImage.className = 'flap-image';
+    flapImage.alt = '';
+    flapImage.draggable = false;
+
+    flapLighting.appendChild(flapImage);
+    flap.appendChild(flapLighting);
+
+    // 조립
+    stickerContainer.appendChild(stickerMain);
+    stickerContainer.appendChild(flap);
+    card.appendChild(stickerContainer);
+  }
+
+  /**
    * 카드 생성 (텍스트 + 선택적 이미지)
    */
   private createCard(cardData: CardData, index: number): HTMLElement {
@@ -503,14 +562,17 @@ export class Dom2DLayer {
       }, index * 50); // 50ms 간격으로 순차 시작
     });
 
-    // 애니메이션 완료 후 transition 제거
+    // 애니메이션 완료 후 transition 제거 및 스티커로 변환
     setTimeout(() => {
-      cardPositions.forEach(pos => {
+      cardPositions.forEach((pos, idx) => {
         pos.card.style.transition = '';
         const ghost = pos.card.querySelector('.surface-card-ghost') as HTMLElement;
         if (ghost) {
           ghost.style.transition = '';
         }
+
+        // 착지 완료 후 스티커로 변환
+        this.convertCardToSticker(pos.card, idx);
       });
     }, cardPositions.length * 50 + 2200);
 
@@ -541,6 +603,17 @@ export class Dom2DLayer {
       const ghost = card.querySelector('.surface-card-ghost');
       if (ghost) {
         ghost.remove();
+      }
+
+      // 스티커 컨테이너 제거 및 innerBox 복원
+      const stickerContainer = card.querySelector('.sticker-container');
+      if (stickerContainer) {
+        stickerContainer.remove();
+      }
+
+      const innerBox = card.querySelector('.surface-card-inner') as HTMLElement;
+      if (innerBox) {
+        innerBox.style.display = '';
       }
     });
 
