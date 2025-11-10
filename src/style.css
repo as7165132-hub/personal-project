@@ -172,13 +172,13 @@ body.iso-mode .bg-tile {
   border-radius: 8px;
 }
 
-/* Ghost 벗겨지기 애니메이션 - 구석(오른쪽 상단)으로 수축 */
+/* Ghost 벗겨지기 애니메이션 - 스티커처럼 아래에서 위로 벗겨짐 */
 .ghost-container.peeling-off .ghost-main {
   clip-path: polygon(
-    100% 0%,
-    100% 0%,
-    100% 0%,
-    100% 0%
+    calc(-1 * 10px) 100%,
+    calc(100% + 10px) 100%,
+    calc(100% + 10px) calc(100% + 10px),
+    calc(-1 * 10px) calc(100% + 10px)
   ) !important;
   transition: clip-path 0.6s ease-out !important;
 }
