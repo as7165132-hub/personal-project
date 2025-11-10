@@ -186,6 +186,47 @@ body.iso-mode .bg-tile {
   border-radius: 8px;
 }
 
+/* Ghost Flap - 벗겨진 부분 */
+.ghost-flap {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: calc(-100% - 10px - 10px);
+  clip-path: polygon(
+    calc(-1 * 10px) calc(-1 * 10px),
+    calc(100% + 10px) calc(-1 * 10px),
+    calc(100% + 10px) calc(-1 * 10px),
+    calc(-1 * 10px) calc(-1 * 10px)
+  );
+  transform: scaleY(-1);
+  transition: all 0.6s ease-out;
+  will-change: clip-path, transform;
+}
+
+/* Ghost Flap 배경 - 뒤집힌 그리드 무늬 */
+.ghost-flap-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(100, 150, 255, 0.5),
+      rgba(100, 150, 255, 0.5) 10px,
+      rgba(80, 130, 235, 0.6) 10px,
+      rgba(80, 130, 235, 0.6) 20px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 10px,
+      rgba(120, 170, 255, 0.3) 10px,
+      rgba(120, 170, 255, 0.3) 20px
+    );
+  border-radius: 8px;
+}
+
 /* Ghost 벗겨지기 애니메이션 - 스티커처럼 아래에서 위로 벗겨짐 */
 .ghost-container.peeling-off .ghost-main {
   clip-path: polygon(
@@ -195,6 +236,17 @@ body.iso-mode .bg-tile {
     calc(-1 * 10px) calc(100% + 10px)
   ) !important;
   transition: clip-path 0.6s ease-out !important;
+}
+
+.ghost-container.peeling-off .ghost-flap {
+  clip-path: polygon(
+    calc(-1 * 10px) calc(-1 * 10px),
+    calc(100% + 10px) calc(-1 * 10px),
+    calc(100% + 10px) 100%,
+    calc(-1 * 10px) 100%
+  ) !important;
+  top: calc(-100% + 200%) !important;
+  transition: all 0.6s ease-out !important;
 }
 
 /* 중앙 사각형 */

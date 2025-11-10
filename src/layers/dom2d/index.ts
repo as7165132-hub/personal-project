@@ -654,19 +654,31 @@ export class Dom2DLayer {
     cardPositions.forEach((pos, index) => {
       const card = pos.card;
 
-      // ISO 모드 진입 시 ghost 생성 (스티커 구조와 동일)
+      // ISO 모드 진입 시 ghost 생성 (스티커 구조와 동일하게 main과 flap 포함)
       const ghostContainer = document.createElement('div');
       ghostContainer.className = 'ghost-container';
 
+      // Main ghost
       const ghostMain = document.createElement('div');
       ghostMain.className = 'ghost-main';
 
-      // ghost 내부에 배경을 담을 요소 생성 (역회전 적용 대상)
       const ghostBackground = document.createElement('div');
       ghostBackground.className = 'ghost-background';
 
       ghostMain.appendChild(ghostBackground);
+
+      // Flap ghost (벗겨진 부분)
+      const ghostFlap = document.createElement('div');
+      ghostFlap.className = 'ghost-flap';
+
+      const ghostFlapBackground = document.createElement('div');
+      ghostFlapBackground.className = 'ghost-flap-background';
+
+      ghostFlap.appendChild(ghostFlapBackground);
+
+      // 조립
       ghostContainer.appendChild(ghostMain);
+      ghostContainer.appendChild(ghostFlap);
       card.insertBefore(ghostContainer, card.firstChild); // 스티커 컨테이너 앞에 삽입
 
       // 착지 지점에 큰 원 생성 (300px) - 카드보다 먼저 DOM에 추가
