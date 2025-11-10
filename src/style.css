@@ -136,18 +136,44 @@ body.iso-mode .bg-tile {
   display: none;
 }
 
-/* 외부 컨테이너 (반투명 파란색) */
-.surface-card-ghost {
+/* Ghost - 스티커 구조와 동일하게 */
+.ghost-container {
   position: absolute;
-  width: 85%;
-  height: 75%;
-  background: rgba(100, 150, 255, 0.5);
-  border-radius: 8px;
-  z-index: 2;
-  pointer-events: none;
+  width: 300px;
+  height: 300px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ghost-main {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  background: rgba(100, 150, 255, 0.5);
+  border-radius: 8px;
+  clip-path: polygon(
+    calc(-1 * 10px) calc(-1 * 10px),
+    calc(100% + 10px) calc(-1 * 10px),
+    calc(100% + 10px) calc(100% + 10px),
+    calc(-1 * 10px) calc(100% + 10px)
+  );
+  transition: clip-path 0.6s ease-out;
+}
+
+/* Ghost 벗겨지기 애니메이션 - 구석(오른쪽 상단)으로 수축 */
+.ghost-container.peeling-off .ghost-main {
+  clip-path: polygon(
+    100% 0%,
+    100% 0%,
+    100% 0%,
+    100% 0%
+  ) !important;
+  transition: clip-path 0.6s ease-out !important;
 }
 
 /* 중앙 사각형 */

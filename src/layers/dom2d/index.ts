@@ -654,10 +654,15 @@ export class Dom2DLayer {
     cardPositions.forEach((pos, index) => {
       const card = pos.card;
 
-      // ISO 모드 진입 시 ghost 생성
-      const ghost = document.createElement('div');
-      ghost.className = 'surface-card-ghost';
-      card.insertBefore(ghost, card.firstChild); // 스티커 컨테이너 앞에 삽입
+      // ISO 모드 진입 시 ghost 생성 (스티커 구조와 동일)
+      const ghostContainer = document.createElement('div');
+      ghostContainer.className = 'ghost-container';
+
+      const ghostMain = document.createElement('div');
+      ghostMain.className = 'ghost-main';
+
+      ghostContainer.appendChild(ghostMain);
+      card.insertBefore(ghostContainer, card.firstChild); // 스티커 컨테이너 앞에 삽입
 
       // 착지 지점에 큰 원 생성 (300px) - 카드보다 먼저 DOM에 추가
       const landingSpot = document.createElement('div');
@@ -674,37 +679,33 @@ export class Dom2DLayer {
       card.style.opacity = '0';
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
-      // ghost 초기 위치 (카드와 함께 위쪽, 투명)
-      if (ghost) {
-        ghost.style.transform = 'translate(-50%, -50%)';
-        ghost.style.opacity = '0';
-        ghost.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
-      }
+      // ghost 초기 상태 (투명)
+      ghostContainer.style.opacity = '0';
+      ghostContainer.style.transition = 'opacity 1s ease-out';
 
       // 1단계: 스티커와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기 (불투명해짐)
       setTimeout(() => {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
         card.style.opacity = '1';
+        ghostContainer.style.opacity = '1';
 
-        if (ghost) {
-          ghost.style.opacity = '1';
-        }
-
-        // 2단계: 착지 후 ghost만 다시 수직으로 위로 올라가며 사라짐 (착지의 역방향)
+        // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐
         setTimeout(() => {
-          if (ghost) {
-            // 착지 시 카드가 translate(0, -1000px) → translate(0, 0)으로 내려왔으므로
-            // 고스트는 역방향으로 translate(-50%, -50%) → translate(-50%, -50%) + translateY(-1000px)
-            ghost.style.transform = `translate(-50%, -50%) translateY(-1000px)`;
-            ghost.style.opacity = '0';
+          // 스티커와 동일한 벗겨지기 애니메이션
+          ghostContainer.classList.add('peeling-off');
 
-            // 올라간 후 1초 뒤 ghost 완전히 제거
+          setTimeout(() => {
+            // 벗겨진 후 투명하게
+            ghostContainer.style.transition = 'opacity 0.4s ease-out';
+            ghostContainer.style.opacity = '0';
+
+            // 완전히 제거
             setTimeout(() => {
-              if (ghost && ghost.parentNode) {
-                ghost.remove();
+              if (ghostContainer && ghostContainer.parentNode) {
+                ghostContainer.remove();
               }
-            }, 1000);
-          }
+            }, 400);
+          }, 600); // clipPath 애니메이션 완료 후
         }, 1000); // 착지 1초 후
       }, index * 50); // 50ms 간격으로 순차 시작
     });
@@ -713,9 +714,9 @@ export class Dom2DLayer {
     setTimeout(() => {
       cardPositions.forEach((pos) => {
         pos.card.style.transition = '';
-        const ghost = pos.card.querySelector('.surface-card-ghost') as HTMLElement;
-        if (ghost) {
-          ghost.style.transition = '';
+        const ghostContainer = pos.card.querySelector('.ghost-container') as HTMLElement;
+        if (ghostContainer) {
+          ghostContainer.style.transition = '';
         }
       });
     }, cardPositions.length * 50 + 2200);
@@ -744,9 +745,9 @@ export class Dom2DLayer {
       card.style.transition = '';
 
       // 2D 모드에서는 ghost 제거
-      const ghost = card.querySelector('.surface-card-ghost');
-      if (ghost) {
-        ghost.remove();
+      const ghostContainer = card.querySelector('.ghost-container');
+      if (ghostContainer) {
+        ghostContainer.remove();
       }
 
       // 스티커 컨테이너 제거 및 innerBox 복원
