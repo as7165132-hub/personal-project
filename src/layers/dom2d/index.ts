@@ -657,8 +657,6 @@ export class Dom2DLayer {
       // ISO 모드 진입 시 ghost 생성 (스티커 구조와 동일)
       const ghostContainer = document.createElement('div');
       ghostContainer.className = 'ghost-container';
-      // 회전 값을 CSS 변수로 설정 (역회전을 위해)
-      ghostContainer.style.setProperty('--ghost-rotation', `${pos.rotation}deg`);
 
       const ghostMain = document.createElement('div');
       ghostMain.className = 'ghost-main';
@@ -682,7 +680,7 @@ export class Dom2DLayer {
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
       card.style.zIndex = '1'; // 착지 지점 원 위에 표시
-      card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+      card.style.transform = `translate(0, -1000px) scale(${pos.scale})`;
       card.style.opacity = '0';
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
@@ -692,7 +690,7 @@ export class Dom2DLayer {
 
       // 1단계: 스티커와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기 (불투명해짐)
       setTimeout(() => {
-        card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
+        card.style.transform = `translate(0, 0) scale(${pos.scale})`;
         card.style.opacity = '1';
         ghostContainer.style.opacity = '1';
 

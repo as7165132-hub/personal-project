@@ -143,8 +143,7 @@ body.iso-mode .bg-tile {
   height: 300px;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(calc(-1 * var(--ghost-rotation, 0deg)));
-  transform-origin: center;
+  transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 2;
 }
