@@ -43,15 +43,15 @@ body {
 
 /* ==================== Background (8-tile system) ==================== */
 .bg-tiles-container {
-  position: fixed;
+  position: absolute; /* camera 안에서 absolute positioning */
   inset: -100%;
   width: 300%;
   height: 300%;
   z-index: 0;
   display: grid;
   grid-template-columns: repeat(8, 1fr); /* 가로 8칸 */
-  transform: none;
-  transition: transform 1100ms cubic-bezier(0.22, 0.8, 0.26, 1);
+  pointer-events: none;
+  /* transform 제거: camera의 transform을 공유 */
 }
 
 .bg-tile {
@@ -62,10 +62,10 @@ body {
   background-position: center calc(var(--bg-offset) * 1px);
 }
 
-/* ISO 모드: 배경 타일 컨테이너도 회전 */
-body.iso-mode .bg-tiles-container {
-  transform: rotateX(45deg) rotateZ(45deg) scale(0.8);
-}
+/* ISO 모드: 배경의 별도 transform 제거 (camera transform 공유) */
+/* body.iso-mode .bg-tiles-container {
+  transform 제거: camera와 같은 context에서 자동으로 회전됨
+} */
 
 /* ISO 모드: 배경 타일에 iso-background 이미지 적용 */
 body.iso-mode .bg-tile {

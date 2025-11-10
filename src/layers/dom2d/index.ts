@@ -75,10 +75,12 @@ export class Dom2DLayer {
       bgContainer.appendChild(tile);
     }
 
-    // body 맨 앞에 추가 (모든 요소 뒤에 배경으로)
-    document.body.insertBefore(bgContainer, document.body.firstChild);
+    // CRITICAL: camera 안에 추가하여 같은 stacking context 공유
+    if (this.camera) {
+      this.camera.insertBefore(bgContainer, this.camera.firstChild);
+    }
 
-    console.log('[BG] 8-tile background created');
+    console.log('[BG] 8-tile background created and added to camera');
   }
 
   /**
@@ -90,6 +92,9 @@ export class Dom2DLayer {
     // Camera wrapper (transform을 담당)
     this.camera = document.createElement('div');
     this.camera.className = 'surface-camera';
+
+    // CRITICAL: 배경을 camera 안에 생성 (같은 stacking context 공유)
+    this.buildBackgroundTiles();
 
     // Grid (world)
     this.grid = document.createElement('div');
