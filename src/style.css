@@ -204,7 +204,7 @@ body.iso-mode .bg-tile {
 
 /* ==================== Sticker Peel Effect (react-bits style) ==================== */
 :root {
-  --sticker-rotate: 30deg;
+  --sticker-rotate: 0deg;
   --sticker-p: 10px;
   --sticker-peelback-hover: 30%;
   --sticker-peelback-active: 40%;
