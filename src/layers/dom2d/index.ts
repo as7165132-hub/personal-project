@@ -75,12 +75,14 @@ export class Dom2DLayer {
       bgContainer.appendChild(tile);
     }
 
-    // CRITICAL: camera 안에 추가하여 같은 stacking context 공유
-    if (this.camera) {
-      this.camera.insertBefore(bgContainer, this.camera.firstChild);
+    // CRITICAL: body에 직접 추가 (stage보다 먼저)
+    // this.container는 이미 stage element이므로 직접 사용
+    if (this.container && this.container.parentNode) {
+      this.container.parentNode.insertBefore(bgContainer, this.container);
+      console.log('[BG] 8-tile background created and added to body before stage');
+    } else {
+      console.error('[BG] Failed to insert background: container or parent not found');
     }
-
-    console.log('[BG] 8-tile background created and added to camera');
   }
 
   /**
