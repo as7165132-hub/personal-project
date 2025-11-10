@@ -238,8 +238,8 @@ body.iso-mode .sticker-lighting {
   height: auto;
 }
 
-/* ISO 모드에서 스티커 컨테이너에 곱하기 블렌드 모드 적용 (착지 후에만) */
-body.iso-mode .sticker-container:not(.landing) {
+/* CRITICAL: 카드 레벨에 blend mode 적용 (transformWrapper가 context 분리하므로) */
+body.iso-mode .surface-card:has(.sticker-container:not(.landing)) {
   mix-blend-mode: multiply;
 }
 
