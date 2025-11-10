@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="SURFACE DEBUT — 26SS: 아키타입 해체·겹의 자아 발현" />
+
+    <title>SURFACE DEBUT</title>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+    <style>
+      /* Critical CSS for initial load */
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fafafa;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+
+      #app {
+        width: 100vw;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+
+      /* Loading state */
+      .loading {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.875rem;
+        color: #8a8a8a;
+        letter-spacing: 0.05em;
+      }
+    </style>
+    <script type="module" crossorigin src="/personal-project/assets/main-Dfl8vu2i.js"></script>
+    <link rel="stylesheet" crossorigin href="/personal-project/assets/main-DjQ9efdj.css">
+  </head>
+  <body>
+    <!-- SVG Filters for Sticker Peel Effect -->
+    <svg width="0" height="0" style="position: absolute;">
+      <defs>
+        <filter id="pointLight">
+          <feGaussianBlur stdDeviation="1" result="blur" />
+          <feSpecularLighting
+            result="spec"
+            in="blur"
+            specularExponent="100"
+            specularConstant="0.1"
+            lightingColor="white"
+          >
+            <fePointLight x="100" y="100" z="300" />
+          </feSpecularLighting>
+          <feComposite in="spec" in2="SourceGraphic" result="lit" />
+          <feComposite in="lit" in2="SourceAlpha" operator="in" />
+        </filter>
+
+        <filter id="pointLightFlipped">
+          <feGaussianBlur stdDeviation="10" result="blur" />
+          <feSpecularLighting
+            result="spec"
+            in="blur"
+            specularExponent="100"
+            specularConstant="0.25"
+            lightingColor="white"
+          >
+            <fePointLight x="100" y="100" z="300" />
+          </feSpecularLighting>
+          <feComposite in="spec" in2="SourceGraphic" result="lit" />
+          <feComposite in="lit" in2="SourceAlpha" operator="in" />
+        </filter>
+
+        <filter id="dropShadow">
+          <feDropShadow
+            dx="2"
+            dy="4"
+            stdDeviation="1.8"
+            floodColor="black"
+            floodOpacity="0.6"
+          />
+        </filter>
+
+        <filter id="expandAndFill">
+          <feOffset dx="0" dy="0" in="SourceAlpha" result="shape" />
+          <feFlood floodColor="rgb(179,179,179)" result="flood" />
+          <feComposite operator="in" in="flood" in2="shape" />
+        </filter>
+      </defs>
+    </svg>
+
+    <!-- ISO View Toggle Button -->
+    <button id="iso-toggle" class="iso-toggle-btn">
+      <span class="toggle-icon">◧</span>
+      <span class="toggle-text">ISO VIEW</span>
+    </button>
+
+    <!-- Main Container -->
+    <div id="app">
+      <div class="loading">Loading…</div>
+    </div>
+
+    <!-- Version Display -->
+    <div class="version-display">v1.5.2 - Tiled ISO Background with Scroll</div>
+
+    <!-- WebGL Canvas (injected by GL3DLayer) -->
+
+    <!-- Main Script -->
+  </body>
+</html>
