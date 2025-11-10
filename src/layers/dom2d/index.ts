@@ -657,10 +657,17 @@ export class Dom2DLayer {
       // ISO 모드 진입 시 ghost 생성 (스티커 구조와 동일)
       const ghostContainer = document.createElement('div');
       ghostContainer.className = 'ghost-container';
+      // 회전 값을 CSS 변수로 설정 (역회전을 위해)
+      ghostContainer.style.setProperty('--ghost-rotation', `${pos.rotation}deg`);
 
       const ghostMain = document.createElement('div');
       ghostMain.className = 'ghost-main';
 
+      // ghost 내부에 배경을 담을 요소 생성 (역회전 적용 대상)
+      const ghostBackground = document.createElement('div');
+      ghostBackground.className = 'ghost-background';
+
+      ghostMain.appendChild(ghostBackground);
       ghostContainer.appendChild(ghostMain);
       card.insertBefore(ghostContainer, card.firstChild); // 스티커 컨테이너 앞에 삽입
 

@@ -154,8 +154,6 @@ body.iso-mode .bg-tile {
   height: 100%;
   left: 0;
   top: 0;
-  background: rgba(100, 150, 255, 0.5);
-  border-radius: 8px;
   clip-path: polygon(
     calc(-1 * 10px) calc(-1 * 10px),
     calc(100% + 10px) calc(-1 * 10px),
@@ -163,6 +161,17 @@ body.iso-mode .bg-tile {
     calc(-1 * 10px) calc(100% + 10px)
   );
   transition: clip-path 0.6s ease-out;
+}
+
+/* Ghost 배경 - 역회전 적용하여 똑바로 유지 */
+.ghost-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(100, 150, 255, 0.5);
+  border-radius: 8px;
+  transform: rotate(calc(-1 * var(--ghost-rotation, 0deg)));
+  transform-origin: center;
 }
 
 /* Ghost 벗겨지기 애니메이션 - 구석(오른쪽 상단)으로 수축 */
