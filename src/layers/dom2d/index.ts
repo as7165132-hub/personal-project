@@ -683,8 +683,8 @@ export class Dom2DLayer {
       ];
       const stickerImageSrc = stickerImages[index % 2];
 
-      // 방법 #2: Blur + Threshold로 균일하게 확장
-      const expandedMaskUrl = this.createBlurThresholdMask(stickerImageSrc, 20);
+      // 방법 #2: Blur + Threshold로 균일하게 확장 (보수적인 값으로 조정)
+      const expandedMaskUrl = this.createBlurThresholdMask(stickerImageSrc, 5);
 
       // ghost-main과 ghost-flap에 마스크 적용
       const maskStyle = `
