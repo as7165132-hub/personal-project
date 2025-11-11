@@ -32,9 +32,6 @@ export class Dom2DLayer {
   private autoScrollAnimationId: number | null = null;
   private userInteractionTimeout: number | null = null;
 
-  // 침식된 마스크 이미지 캐시
-  private erodedMaskCache: Map<string, string> = new Map();
-
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -42,36 +39,6 @@ export class Dom2DLayer {
     }
     this.container = container;
     this.init();
-  }
-
-  /**
-   * SVG filter를 사용하여 이미지에 erosion 적용
-   * @param imageSrc 원본 이미지 경로
-   * @param erosionRadius erosion 반경 (픽셀)
-   * @returns SVG data URI
-   */
-  private createErodedMaskSVG(imageSrc: string, erosionRadius: number): string {
-    const cacheKey = `${imageSrc}_${erosionRadius}`;
-    if (this.erodedMaskCache.has(cacheKey)) {
-      return this.erodedMaskCache.get(cacheKey)!;
-    }
-
-    // SVG 필터를 사용하여 erosion 적용
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="800">
-        <defs>
-          <filter id="erode-filter">
-            <feMorphology operator="erode" radius="${erosionRadius}" />
-          </filter>
-        </defs>
-        <image href="${imageSrc}" width="100%" height="100%" filter="url(#erode-filter)" />
-      </svg>
-    `;
-
-    const dataUri = `data:image/svg+xml;base64,${btoa(svg)}`;
-    this.erodedMaskCache.set(cacheKey, dataUri);
-
-    return dataUri;
   }
 
   private init(): void {
@@ -709,25 +676,23 @@ export class Dom2DLayer {
 
       ghostFlap.appendChild(ghostFlapBackground);
 
-      // 스티커 이미지로 마스크 생성 (구멍 뚫기 - SVG erosion 적용)
+      // 스티커 이미지로 마스크 생성 (구멍 뚫기 - ghost가 크므로 마스크를 작게)
       const stickerImages = [
         '/personal-project/pngtree-white-t-shirt-mockup-realistic-t-shirt-png-image_9906363.png',
         '/personal-project/Black-Cargo-Pant-PNG-HD-Quality.png'
       ];
       const stickerImageSrc = stickerImages[index % 2];
 
-      // SVG filter로 erosion 적용 (35px)
-      const erodedImageUri = this.createErodedMaskSVG(stickerImageSrc, 35);
-
-      // ghost-main과 ghost-flap에 erosion된 마스크 적용
+      // ghost-main과 ghost-flap에 마스크 적용
+      // ghost가 550px이고 마스크를 55%로 하면 구멍이 크게 뚫림
       const maskStyle = `
         radial-gradient(circle, white 100%, white 100%),
-        url('${erodedImageUri}')
+        url('${stickerImageSrc}')
       `;
       ghostMain.style.maskImage = maskStyle;
       ghostMain.style.webkitMaskImage = maskStyle;
-      ghostMain.style.maskSize = 'cover, contain';
-      ghostMain.style.webkitMaskSize = 'cover, contain';
+      ghostMain.style.maskSize = 'cover, 55% 55%';
+      ghostMain.style.webkitMaskSize = 'cover, 55% 55%';
       ghostMain.style.maskPosition = 'center, center';
       ghostMain.style.webkitMaskPosition = 'center, center';
       ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
@@ -737,8 +702,8 @@ export class Dom2DLayer {
 
       ghostFlap.style.maskImage = maskStyle;
       ghostFlap.style.webkitMaskImage = maskStyle;
-      ghostFlap.style.maskSize = 'cover, contain';
-      ghostFlap.style.webkitMaskSize = 'cover, contain';
+      ghostFlap.style.maskSize = 'cover, 55% 55%';
+      ghostFlap.style.webkitMaskSize = 'cover, 55% 55%';
       ghostFlap.style.maskPosition = 'center, center';
       ghostFlap.style.webkitMaskPosition = 'center, center';
       ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
