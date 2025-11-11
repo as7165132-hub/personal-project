@@ -702,6 +702,14 @@ export class Dom2DLayer {
       // 스티커 이미지로 마스크 생성 (구멍 뚫기 - 미리 캐시된 dilate 마스크 사용)
       const stickerImageSrc = stickerImages[index % 2];
       const expandedMaskUrl = this.dilatedMaskCache.get(stickerImageSrc) || stickerImageSrc;
+      const usingDilatedMask = this.dilatedMaskCache.has(stickerImageSrc);
+
+      console.log('[MASK] Card', index, 'using', usingDilatedMask ? 'DILATED' : 'ORIGINAL', 'mask');
+      console.log('[MASK] URL type:', expandedMaskUrl.substring(0, 50));
+
+      // 확장된 마스크의 경우 더 큰 크기로 적용 (15px * 2 / 550px ≈ 5.5% 증가)
+      // 원래 75% → 80.5%로 증가
+      const maskSize = usingDilatedMask ? '80.5% 80.5%' : '75% 75%';
 
       // ghost-main과 ghost-flap에 마스크 적용
       const maskStyle = `
@@ -710,8 +718,8 @@ export class Dom2DLayer {
       `;
       ghostMain.style.maskImage = maskStyle;
       ghostMain.style.webkitMaskImage = maskStyle;
-      ghostMain.style.maskSize = 'cover, 75% 75%';
-      ghostMain.style.webkitMaskSize = 'cover, 75% 75%';
+      ghostMain.style.maskSize = `cover, ${maskSize}`;
+      ghostMain.style.webkitMaskSize = `cover, ${maskSize}`;
       ghostMain.style.maskPosition = 'center, center';
       ghostMain.style.webkitMaskPosition = 'center, center';
       ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
@@ -721,8 +729,8 @@ export class Dom2DLayer {
 
       ghostFlap.style.maskImage = maskStyle;
       ghostFlap.style.webkitMaskImage = maskStyle;
-      ghostFlap.style.maskSize = 'cover, 75% 75%';
-      ghostFlap.style.webkitMaskSize = 'cover, 75% 75%';
+      ghostFlap.style.maskSize = `cover, ${maskSize}`;
+      ghostFlap.style.webkitMaskSize = `cover, ${maskSize}`;
       ghostFlap.style.maskPosition = 'center, center';
       ghostFlap.style.webkitMaskPosition = 'center, center';
       ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
@@ -971,6 +979,8 @@ export class Dom2DLayer {
       img.crossOrigin = 'anonymous';
 
       img.onload = () => {
+        console.log('[DILATE] Processing image:', imageSrc, 'size:', img.width, 'x', img.height, 'expand:', expandPx);
+
         // 1단계: 이미지를 Canvas로 로드해서 인라인 data URL로 변환
         const tempCanvas = document.createElement('canvas');
         const tempCtx = tempCanvas.getContext('2d');
@@ -1000,6 +1010,7 @@ export class Dom2DLayer {
 
         // 3단계: SVG를 base64 data URL로 변환
         const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+        console.log('[DILATE] Generated SVG data URL (first 200 chars):', svgDataUrl.substring(0, 200));
         resolve(svgDataUrl);
       };
 
