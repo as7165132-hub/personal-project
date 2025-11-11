@@ -619,8 +619,8 @@ export class Dom2DLayer {
 
       const baseX = randomColumn * columnWidth + (columnWidth / 2) - (cardWidth / 2);
 
-      // 칼럼 내에서 약간의 랜덤 오프셋
-      const randomX = baseX + (Math.random() * 100 - 50); // ±50px 랜덤
+      // 칼럼 내에서 약간의 랜덤 오프셋 (좌우로 더 넓게)
+      const randomX = baseX + (Math.random() * 300 - 150); // ±150px 랜덤 (넓게)
       const randomY = currentY + (Math.random() * 150 - 75); // ±75px 랜덤
 
       // 랜덤 회전 및 크기

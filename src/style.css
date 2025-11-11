@@ -67,6 +67,22 @@ body.iso-mode .bg-tiles-container {
   transform: rotateX(45deg) rotateZ(45deg) scale(0.8);
 }
 
+/* ISO 모드: 광원 효과 (좌측 상단에서 우측 하단으로) */
+body.iso-mode::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: radial-gradient(
+    ellipse 150% 150% at 0% 0%,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.15) 30%,
+    transparent 60%
+  );
+  mix-blend-mode: overlay;
+}
+
 /* ISO 모드: 배경 타일에 iso-background 이미지 적용 */
 body.iso-mode .bg-tile {
   background-image: url('/personal-project/iso-background.png') !important;
