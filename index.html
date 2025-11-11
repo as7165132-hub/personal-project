@@ -36,8 +36,8 @@
         letter-spacing: 0.05em;
       }
     </style>
-    <script type="module" crossorigin src="/personal-project/assets/main-BINld4UV.js"></script>
-    <link rel="stylesheet" crossorigin href="/personal-project/assets/main-9qwTyfEo.css">
+    <script type="module" crossorigin src="/personal-project/assets/main-CxtADAAT.js"></script>
+    <link rel="stylesheet" crossorigin href="/personal-project/assets/main-BJL70NPH.css">
   </head>
   <body>
     <!-- SVG Filters for Sticker Peel Effect -->
@@ -88,6 +88,22 @@
           <feFlood floodColor="rgb(179,179,179)" result="flood" />
           <feComposite operator="in" in="flood" in2="shape" />
         </filter>
+
+        <!-- White outline border filter for stickers -->
+        <filter id="whiteBorder" x="-50%" y="-50%" width="200%" height="200%">
+          <!-- Get alpha channel -->
+          <feColorMatrix in="SourceAlpha" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" result="alpha"/>
+          <!-- Dilate to create border -->
+          <feMorphology operator="dilate" radius="4" in="alpha" result="dilated"/>
+          <!-- Fill dilated area with white -->
+          <feFlood flood-color="white" result="white"/>
+          <feComposite in="white" in2="dilated" operator="in" result="border"/>
+          <!-- Merge border and original image -->
+          <feMerge>
+            <feMergeNode in="border"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
       </defs>
     </svg>
 
@@ -103,7 +119,7 @@
     </div>
 
     <!-- Version Display -->
-    <div class="version-display">v1.6.1 - Sticker with Thick Border</div>
+    <div class="version-display">v1.6.2 - Sticker with Outline Border</div>
 
     <!-- WebGL Canvas (injected by GL3DLayer) -->
 

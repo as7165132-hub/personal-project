@@ -331,9 +331,7 @@ body.iso-mode .bg-tile {
   transform: rotate(var(--sticker-rotate));
   width: 300px;
   height: auto;
-  border: 8px solid white;
-  box-sizing: border-box;
-  border-radius: 4px;
+  filter: url(#whiteBorder);
 }
 
 .flap {
@@ -375,19 +373,16 @@ body.iso-mode .bg-tile {
 
 .flap-image {
   transform: rotate(var(--sticker-rotate));
-  filter: url(#expandAndFill);
+  filter: url(#expandAndFill) url(#whiteBorder);
   width: 300px;
   height: auto;
   transition: filter 0.6s ease-out;
-  border: 8px solid white;
-  box-sizing: border-box;
-  border-radius: 4px;
 }
 
 /* ISO 모드에서만 스티커 그림자 적용 */
 body.iso-mode .sticker-container:hover .flap-image,
 body.iso-mode .sticker-container.touch-active .flap-image {
-  filter: url(#expandAndFill) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+  filter: url(#expandAndFill) url(#whiteBorder) drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
 }
 
 /* 스티커 클릭 애니메이션 */
@@ -420,7 +415,7 @@ body.iso-mode .sticker-container.touch-active .flap-image {
 
 /* ISO 모드에서만 벗겨질 때 그림자 적용 */
 body.iso-mode .sticker-container.peeling-off .flap-image {
-  filter: url(#expandAndFill) drop-shadow(0 12px 30px rgba(0, 0, 0, 0.6)) !important;
+  filter: url(#expandAndFill) url(#whiteBorder) drop-shadow(0 12px 30px rgba(0, 0, 0, 0.6)) !important;
 }
 
 /* 2단계: 천천히 투명하게 사라지기 */
