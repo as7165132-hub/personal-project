@@ -32,6 +32,9 @@ export class Dom2DLayer {
   private autoScrollAnimationId: number | null = null;
   private userInteractionTimeout: number | null = null;
 
+  // 침식된 마스크 이미지 캐시
+  private erodedMaskCache: Map<string, string> = new Map();
+
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -39,6 +42,110 @@ export class Dom2DLayer {
     }
     this.container = container;
     this.init();
+  }
+
+  /**
+   * 이미지에 erosion을 적용하여 축소된 마스크 생성
+   * @param imageSrc 원본 이미지 경로
+   * @param radius erosion 반경 (픽셀)
+   * @returns erosion이 적용된 이미지의 data URI
+   */
+  private async applyErosionToImage(imageSrc: string, radius: number): Promise<string> {
+    // 캐시 확인
+    const cacheKey = `${imageSrc}_${radius}`;
+    if (this.erodedMaskCache.has(cacheKey)) {
+      return this.erodedMaskCache.get(cacheKey)!;
+    }
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // 원본 이미지 그리기
+        ctx.drawImage(img, 0, 0);
+
+        // ImageData 가져오기
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // Erosion 알고리즘 적용 (알파 채널만)
+        const erodedData = new Uint8ClampedArray(data);
+
+        for (let iteration = 0; iteration < radius; iteration++) {
+          for (let y = 0; y < canvas.height; y++) {
+            for (let x = 0; x < canvas.width; x++) {
+              const idx = (y * canvas.width + x) * 4;
+
+              // 현재 픽셀이 불투명하면 이웃 확인
+              if (data[idx + 3] > 128) {
+                let hasTransparentNeighbor = false;
+
+                // 8방향 이웃 확인
+                for (let dy = -1; dy <= 1; dy++) {
+                  for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+
+                    const nx = x + dx;
+                    const ny = y + dy;
+
+                    if (nx >= 0 && nx < canvas.width && ny >= 0 && ny < canvas.height) {
+                      const nIdx = (ny * canvas.width + nx) * 4;
+                      if (data[nIdx + 3] <= 128) {
+                        hasTransparentNeighbor = true;
+                        break;
+                      }
+                    } else {
+                      // 경계 밖은 투명으로 간주
+                      hasTransparentNeighbor = true;
+                      break;
+                    }
+                  }
+                  if (hasTransparentNeighbor) break;
+                }
+
+                // 이웃 중 하나라도 투명하면 현재 픽셀도 투명하게
+                if (hasTransparentNeighbor) {
+                  erodedData[idx + 3] = 0;
+                }
+              }
+            }
+          }
+
+          // 다음 iteration을 위해 데이터 업데이트
+          for (let i = 0; i < data.length; i++) {
+            data[i] = erodedData[i];
+          }
+        }
+
+        // 결과를 canvas에 다시 그리기
+        ctx.putImageData(new ImageData(erodedData, canvas.width, canvas.height), 0, 0);
+
+        // Data URI로 변환
+        const dataUri = canvas.toDataURL('image/png');
+
+        // 캐시에 저장
+        this.erodedMaskCache.set(cacheKey, dataUri);
+
+        resolve(dataUri);
+      };
+
+      img.onerror = () => {
+        reject(new Error(`Failed to load image: ${imageSrc}`));
+      };
+
+      img.src = imageSrc;
+    });
   }
 
   private init(): void {
@@ -676,39 +783,70 @@ export class Dom2DLayer {
 
       ghostFlap.appendChild(ghostFlapBackground);
 
-      // 스티커 이미지로 마스크 생성 (구멍 뚫기)
+      // 스티커 이미지로 마스크 생성 (구멍 뚫기 - erosion 적용)
       const stickerImages = [
         '/personal-project/pngtree-white-t-shirt-mockup-realistic-t-shirt-png-image_9906363.png',
         '/personal-project/Black-Cargo-Pant-PNG-HD-Quality.png'
       ];
       const stickerImageSrc = stickerImages[index % 2];
 
-      // ghost-main과 ghost-flap에 마스크 적용
-      const maskStyle = `
-        radial-gradient(circle, white 100%, white 100%),
-        url('${stickerImageSrc}')
-      `;
-      ghostMain.style.maskImage = maskStyle;
-      ghostMain.style.webkitMaskImage = maskStyle;
-      ghostMain.style.maskSize = 'cover, 75% 75%';
-      ghostMain.style.webkitMaskSize = 'cover, 75% 75%';
-      ghostMain.style.maskPosition = 'center, center';
-      ghostMain.style.webkitMaskPosition = 'center, center';
-      ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
-      ghostMain.style.webkitMaskRepeat = 'no-repeat, no-repeat';
-      ghostMain.style.maskComposite = 'exclude';
-      ghostMain.style.webkitMaskComposite = 'source-out';
+      // Erosion을 적용한 마스크 이미지를 비동기로 생성하고 적용
+      this.applyErosionToImage(stickerImageSrc, 35).then((erodedImageUri) => {
+        // ghost-main과 ghost-flap에 erosion된 마스크 적용
+        const maskStyle = `
+          radial-gradient(circle, white 100%, white 100%),
+          url('${erodedImageUri}')
+        `;
+        ghostMain.style.maskImage = maskStyle;
+        ghostMain.style.webkitMaskImage = maskStyle;
+        ghostMain.style.maskSize = 'cover, 100% 100%';
+        ghostMain.style.webkitMaskSize = 'cover, 100% 100%';
+        ghostMain.style.maskPosition = 'center, center';
+        ghostMain.style.webkitMaskPosition = 'center, center';
+        ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
+        ghostMain.style.webkitMaskRepeat = 'no-repeat, no-repeat';
+        ghostMain.style.maskComposite = 'exclude';
+        ghostMain.style.webkitMaskComposite = 'source-out';
 
-      ghostFlap.style.maskImage = maskStyle;
-      ghostFlap.style.webkitMaskImage = maskStyle;
-      ghostFlap.style.maskSize = 'cover, 75% 75%';
-      ghostFlap.style.webkitMaskSize = 'cover, 75% 75%';
-      ghostFlap.style.maskPosition = 'center, center';
-      ghostFlap.style.webkitMaskPosition = 'center, center';
-      ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
-      ghostFlap.style.webkitMaskRepeat = 'no-repeat, no-repeat';
-      ghostFlap.style.maskComposite = 'exclude';
-      ghostFlap.style.webkitMaskComposite = 'source-out';
+        ghostFlap.style.maskImage = maskStyle;
+        ghostFlap.style.webkitMaskImage = maskStyle;
+        ghostFlap.style.maskSize = 'cover, 100% 100%';
+        ghostFlap.style.webkitMaskSize = 'cover, 100% 100%';
+        ghostFlap.style.maskPosition = 'center, center';
+        ghostFlap.style.webkitMaskPosition = 'center, center';
+        ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
+        ghostFlap.style.webkitMaskRepeat = 'no-repeat, no-repeat';
+        ghostFlap.style.maskComposite = 'exclude';
+        ghostFlap.style.webkitMaskComposite = 'source-out';
+      }).catch((error) => {
+        console.error('Failed to apply erosion to mask:', error);
+        // Fallback: 원본 이미지 사용 (축소 버전)
+        const fallbackMaskStyle = `
+          radial-gradient(circle, white 100%, white 100%),
+          url('${stickerImageSrc}')
+        `;
+        ghostMain.style.maskImage = fallbackMaskStyle;
+        ghostMain.style.webkitMaskImage = fallbackMaskStyle;
+        ghostMain.style.maskSize = 'cover, 60% 60%';
+        ghostMain.style.webkitMaskSize = 'cover, 60% 60%';
+        ghostMain.style.maskPosition = 'center, center';
+        ghostMain.style.webkitMaskPosition = 'center, center';
+        ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
+        ghostMain.style.webkitMaskRepeat = 'no-repeat, no-repeat';
+        ghostMain.style.maskComposite = 'exclude';
+        ghostMain.style.webkitMaskComposite = 'source-out';
+
+        ghostFlap.style.maskImage = fallbackMaskStyle;
+        ghostFlap.style.webkitMaskImage = fallbackMaskStyle;
+        ghostFlap.style.maskSize = 'cover, 60% 60%';
+        ghostFlap.style.webkitMaskSize = 'cover, 60% 60%';
+        ghostFlap.style.maskPosition = 'center, center';
+        ghostFlap.style.webkitMaskPosition = 'center, center';
+        ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
+        ghostFlap.style.webkitMaskRepeat = 'no-repeat, no-repeat';
+        ghostFlap.style.maskComposite = 'exclude';
+        ghostFlap.style.webkitMaskComposite = 'source-out';
+      });
 
       // 조립
       ghostContainer.appendChild(ghostMain);

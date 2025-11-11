@@ -139,8 +139,8 @@ body.iso-mode .bg-tile {
 /* Ghost - 스티커보다 크게 */
 .ghost-container {
   position: absolute;
-  width: 400px;
-  height: 400px;
+  width: 550px;
+  height: 550px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
