@@ -331,6 +331,9 @@ body.iso-mode .bg-tile {
   transform: rotate(var(--sticker-rotate));
   width: 300px;
   height: auto;
+  border: 8px solid white;
+  box-sizing: border-box;
+  border-radius: 4px;
 }
 
 .flap {
@@ -376,6 +379,9 @@ body.iso-mode .bg-tile {
   width: 300px;
   height: auto;
   transition: filter 0.6s ease-out;
+  border: 8px solid white;
+  box-sizing: border-box;
+  border-radius: 4px;
 }
 
 /* ISO 모드에서만 스티커 그림자 적용 */
