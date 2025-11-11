@@ -677,16 +677,14 @@ export class Dom2DLayer {
       ghostFlap.appendChild(ghostFlapBackground);
 
       // 조립 (구멍 없이 전체 이미지로 표시)
-      ghostContainer.appendChild(ghostMain);
-      ghostContainer.appendChild(ghostFlap);
-      card.insertBefore(ghostContainer, card.firstChild); // 스티커 컨테이너 앞에 삽입
-
-      // 착지 지점에 큰 원 생성 (300px) - 카드보다 먼저 DOM에 추가
+      // 착지 지점에 큰 원 생성 (300px) - 카드 내부에 추가 (CSS로 중앙 정렬)
       const landingSpot = document.createElement('div');
       landingSpot.className = 'landing-spot';
-      landingSpot.style.left = `${pos.x + cardWidth / 2 - 150}px`; // 중앙 정렬 (300px 원)
-      landingSpot.style.top = `${pos.y + 250}px`; // 카드 중앙 지점
-      this.grid.insertBefore(landingSpot, card); // 카드 앞에 추가하여 카드 아래에 렌더링
+      card.appendChild(landingSpot); // 카드 첫 번째 자식으로 추가 (z-index: 0)
+
+      ghostContainer.appendChild(ghostMain);
+      ghostContainer.appendChild(ghostFlap);
+      card.appendChild(ghostContainer); // 카드 두 번째 자식으로 추가 (z-index: 2)
 
       // 카드 초기 위치 (위쪽에서 시작, 투명)
       card.style.left = `${pos.x}px`;
