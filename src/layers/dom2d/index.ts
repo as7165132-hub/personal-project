@@ -1043,7 +1043,15 @@ export class Dom2DLayer {
         const imageData = ctx.getImageData(0, 0, expandedWidth, expandedHeight);
         const data = imageData.data;
 
-        // Dilate 알고리즘: 각 픽셀의 8방향 이웃 중 하나라도 불투명하면 현재 픽셀도 불투명하게
+        // Step 1: 원본 이미지의 반투명 픽셀을 완전 불투명하게 (antialiasing 제거)
+        for (let i = 3; i < data.length; i += 4) {
+          if (data[i] > 0) {
+            data[i] = 255;  // 모든 불투명/반투명 픽셀을 완전 불투명하게
+          }
+        }
+
+        // Step 2: Dilate 알고리즘으로 테두리 확장
+        // 각 픽셀의 8방향 이웃 중 하나라도 불투명하면 현재 픽셀도 불투명하게
         // expandPx번 반복하여 expandPx 픽셀만큼 확장
         console.log('[DILATE] Starting dilation iterations:', expandPx);
 
@@ -1086,11 +1094,12 @@ export class Dom2DLayer {
               }
 
               // 이웃 중 불투명한 픽셀이 있으면 현재 픽셀을 그 색으로
+              // 중요: alpha는 255로 강제해서 완전 불투명한 테두리 생성
               if (maxAlpha > 0) {
                 newData[idx] = maxR;
                 newData[idx + 1] = maxG;
                 newData[idx + 2] = maxB;
-                newData[idx + 3] = maxAlpha;
+                newData[idx + 3] = 255;  // 완전 불투명하게!
               }
             }
           }
