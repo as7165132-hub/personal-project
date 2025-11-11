@@ -707,6 +707,18 @@ export class Dom2DLayer {
       console.log('[MASK] Card', index, 'using', usingDilatedMask ? 'DILATED' : 'ORIGINAL', 'mask');
       console.log('[MASK] URL type:', expandedMaskUrl.substring(0, 50));
 
+      // 디버깅: mask를 별도 이미지로 렌더링해서 확인
+      if (index === 0 && usingDilatedMask) {
+        const testImg = new Image();
+        testImg.onload = () => {
+          console.log('[MASK DEBUG] Dilated mask loaded successfully, size:', testImg.width, 'x', testImg.height);
+        };
+        testImg.onerror = () => {
+          console.error('[MASK DEBUG] Failed to load dilated mask as image');
+        };
+        testImg.src = expandedMaskUrl;
+      }
+
       // 확장된 마스크의 경우 더 큰 크기로 적용 (15px * 2 / 550px ≈ 5.5% 증가)
       // 원래 75% → 80.5%로 증가
       const maskSize = usingDilatedMask ? '80.5% 80.5%' : '75% 75%';
@@ -995,12 +1007,15 @@ export class Dom2DLayer {
         const inlineImageData = tempCanvas.toDataURL('image/png');
 
         // 2단계: 인라인 이미지를 사용한 SVG 필터 적용
+        // feMorphology로 알파 채널을 확장한 후, 원본 이미지와 합성
         const svg = `
           <svg xmlns="http://www.w3.org/2000/svg" width="${img.width}" height="${img.height}" viewBox="0 0 ${img.width} ${img.height}">
             <defs>
               <filter id="expand" x="-50%" y="-50%" width="200%" height="200%">
-                <!-- feMorphology dilate로 테두리 따라 확장 -->
-                <feMorphology operator="dilate" radius="${expandPx}" in="SourceAlpha"/>
+                <!-- Step 1: 원본 알파 채널을 dilate로 확장 -->
+                <feMorphology operator="dilate" radius="${expandPx}" in="SourceAlpha" result="expandedAlpha"/>
+                <!-- Step 2: 확장된 알파를 원본 이미지로 채움 -->
+                <feComposite operator="in" in="SourceGraphic" in2="expandedAlpha" result="expanded"/>
               </filter>
             </defs>
             <image href="${inlineImageData}" x="0" y="0" width="${img.width}" height="${img.height}"
@@ -1008,9 +1023,10 @@ export class Dom2DLayer {
           </svg>
         `;
 
-        // 3단계: SVG를 base64 data URL로 변환
+        // 3단계: SVG를 base64 data URL로 변환하고 디버그 출력
         const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
-        console.log('[DILATE] Generated SVG data URL (first 200 chars):', svgDataUrl.substring(0, 200));
+        console.log('[DILATE] SVG Filter applied with radius:', expandPx);
+        console.log('[DILATE] Raw SVG (first 500 chars):', svg.substring(0, 500));
         resolve(svgDataUrl);
       };
 
