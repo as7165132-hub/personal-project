@@ -33,7 +33,7 @@ export class Dom2DLayer {
   private userInteractionTimeout: number | null = null;
 
   // Dilate 마스크 캐시 (같은 이미지 재사용)
-  private dilatedMaskCache: Map<string, string> = new Map();
+  private dilatedMaskCache: Map<string, {dataUrl: string, originalSize: {width: number, height: number}, expandedSize: {width: number, height: number}}> = new Map();
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -701,32 +701,57 @@ export class Dom2DLayer {
 
       // 스티커 이미지로 마스크 생성 (구멍 뚫기 - 미리 캐시된 dilate 마스크 사용)
       const stickerImageSrc = stickerImages[index % 2];
-      const expandedMaskUrl = this.dilatedMaskCache.get(stickerImageSrc) || stickerImageSrc;
-      const usingDilatedMask = this.dilatedMaskCache.has(stickerImageSrc);
+      const dilatedMask = this.dilatedMaskCache.get(stickerImageSrc);
 
-      console.log('[MASK] Card', index, 'using', usingDilatedMask ? 'DILATED' : 'ORIGINAL', 'mask');
-      console.log('[MASK] URL type:', expandedMaskUrl.substring(0, 50));
+      let maskUrl: string;
+      let maskSize: string;
 
-      // 디버깅: mask를 별도 이미지로 렌더링해서 확인
-      if (index === 0 && usingDilatedMask) {
-        const testImg = new Image();
-        testImg.onload = () => {
-          console.log('[MASK DEBUG] Dilated mask loaded successfully, size:', testImg.width, 'x', testImg.height);
-        };
-        testImg.onerror = () => {
-          console.error('[MASK DEBUG] Failed to load dilated mask as image');
-        };
-        testImg.src = expandedMaskUrl;
+      if (dilatedMask) {
+        // Dilate된 마스크 사용
+        maskUrl = dilatedMask.dataUrl;
+
+        // Ghost 크기 550px 기준, 원래 75% = 412.5px
+        // 확장된 이미지는 원본보다 30px 더 큼 (15px * 2)
+        // 원본 이미지 크기 대비 확장 비율을 계산하여 mask-size 조정
+        const originalSize = dilatedMask.originalSize;
+        const expandedSize = dilatedMask.expandedSize;
+
+        // 원본 대비 확장 비율
+        const expansionRatio = expandedSize.width / originalSize.width;
+
+        // 원래 75%에 확장 비율을 곱함
+        const newSizePercent = 75 * expansionRatio;
+
+        maskSize = `${newSizePercent.toFixed(2)}% ${newSizePercent.toFixed(2)}%`;
+
+        console.log('[MASK] Card', index, 'using DILATED mask');
+        console.log('[MASK] Original size:', originalSize.width, 'x', originalSize.height);
+        console.log('[MASK] Expanded size:', expandedSize.width, 'x', expandedSize.height);
+        console.log('[MASK] Expansion ratio:', expansionRatio.toFixed(4));
+        console.log('[MASK] Mask size:', maskSize);
+
+        // 첫 번째 카드에서만 mask 이미지 테스트
+        if (index === 0) {
+          const testImg = new Image();
+          testImg.onload = () => {
+            console.log('[MASK DEBUG] Dilated mask image loaded, actual size:', testImg.width, 'x', testImg.height);
+          };
+          testImg.onerror = () => {
+            console.error('[MASK DEBUG] Failed to load dilated mask image');
+          };
+          testImg.src = maskUrl;
+        }
+      } else {
+        // 원본 이미지 사용
+        maskUrl = stickerImageSrc;
+        maskSize = '75% 75%';
+        console.log('[MASK] Card', index, 'using ORIGINAL mask');
       }
-
-      // 확장된 마스크의 경우 더 큰 크기로 적용 (15px * 2 / 550px ≈ 5.5% 증가)
-      // 원래 75% → 80.5%로 증가
-      const maskSize = usingDilatedMask ? '80.5% 80.5%' : '75% 75%';
 
       // ghost-main과 ghost-flap에 마스크 적용
       const maskStyle = `
         radial-gradient(circle, white 100%, white 100%),
-        url('${expandedMaskUrl}')
+        url('${maskUrl}')
       `;
       ghostMain.style.maskImage = maskStyle;
       ghostMain.style.webkitMaskImage = maskStyle;
@@ -979,55 +1004,113 @@ export class Dom2DLayer {
   }
 
   /**
-   * SVG feMorphology를 사용한 테두리 스트로크 방식 확장
-   * 이미지를 먼저 Canvas로 인라인화한 후 SVG 필터 적용
+   * Canvas로 진짜 morphological dilation 수행
+   * 이미지 크기 자체를 expandPx*2만큼 키워서 진짜 offset 효과 생성
    * @param imageSrc 원본 이미지 경로
-   * @param expandPx 확장할 픽셀 수 (테두리 두께)
-   * @returns SVG 필터가 적용된 data URL
+   * @param expandPx 확장할 픽셀 수
+   * @returns {dataUrl: string, originalSize: {width, height}, expandedSize: {width, height}}
    */
-  private createDilatedMask(imageSrc: string, expandPx: number): Promise<string> {
+  private createDilatedMask(imageSrc: string, expandPx: number): Promise<{dataUrl: string, originalSize: {width: number, height: number}, expandedSize: {width: number, height: number}}> {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
 
       img.onload = () => {
-        console.log('[DILATE] Processing image:', imageSrc, 'size:', img.width, 'x', img.height, 'expand:', expandPx);
+        console.log('[DILATE] Processing image:', imageSrc, 'original size:', img.width, 'x', img.height, 'expand:', expandPx);
 
-        // 1단계: 이미지를 Canvas로 로드해서 인라인 data URL로 변환
-        const tempCanvas = document.createElement('canvas');
-        const tempCtx = tempCanvas.getContext('2d');
-        if (!tempCtx) {
+        const originalWidth = img.width;
+        const originalHeight = img.height;
+
+        // 확장된 Canvas 크기 (양쪽으로 expandPx씩)
+        const expandedWidth = originalWidth + expandPx * 2;
+        const expandedHeight = originalHeight + expandPx * 2;
+
+        // Canvas 준비
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) {
           reject(new Error('Canvas context not available'));
           return;
         }
 
-        tempCanvas.width = img.width;
-        tempCanvas.height = img.height;
-        tempCtx.drawImage(img, 0, 0);
-        const inlineImageData = tempCanvas.toDataURL('image/png');
+        canvas.width = expandedWidth;
+        canvas.height = expandedHeight;
 
-        // 2단계: 인라인 이미지를 사용한 SVG 필터 적용
-        // feMorphology로 알파 채널을 확장한 후, 원본 이미지와 합성
-        const svg = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="${img.width}" height="${img.height}" viewBox="0 0 ${img.width} ${img.height}">
-            <defs>
-              <filter id="expand" x="-50%" y="-50%" width="200%" height="200%">
-                <!-- Step 1: 원본 알파 채널을 dilate로 확장 -->
-                <feMorphology operator="dilate" radius="${expandPx}" in="SourceAlpha" result="expandedAlpha"/>
-                <!-- Step 2: 확장된 알파를 원본 이미지로 채움 -->
-                <feComposite operator="in" in="SourceGraphic" in2="expandedAlpha" result="expanded"/>
-              </filter>
-            </defs>
-            <image href="${inlineImageData}" x="0" y="0" width="${img.width}" height="${img.height}"
-                   filter="url(#expand)" preserveAspectRatio="xMidYMid meet"/>
-          </svg>
-        `;
+        // 원본 이미지를 중앙에 그리기 (expandPx만큼 오프셋)
+        ctx.drawImage(img, expandPx, expandPx);
 
-        // 3단계: SVG를 base64 data URL로 변환하고 디버그 출력
-        const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
-        console.log('[DILATE] SVG Filter applied with radius:', expandPx);
-        console.log('[DILATE] Raw SVG (first 500 chars):', svg.substring(0, 500));
-        resolve(svgDataUrl);
+        // ImageData 가져오기
+        const imageData = ctx.getImageData(0, 0, expandedWidth, expandedHeight);
+        const data = imageData.data;
+
+        // Dilate 알고리즘: 각 픽셀의 8방향 이웃 중 하나라도 불투명하면 현재 픽셀도 불투명하게
+        // expandPx번 반복하여 expandPx 픽셀만큼 확장
+        console.log('[DILATE] Starting dilation iterations:', expandPx);
+
+        for (let iter = 0; iter < expandPx; iter++) {
+          const newData = new Uint8ClampedArray(data.length);
+          newData.set(data);
+
+          for (let y = 0; y < expandedHeight; y++) {
+            for (let x = 0; x < expandedWidth; x++) {
+              const idx = (y * expandedWidth + x) * 4;
+
+              // 이미 불투명한 픽셀은 그대로
+              if (data[idx + 3] > 0) {
+                continue;
+              }
+
+              // 8방향 확인
+              let maxAlpha = 0;
+              let maxR = 0, maxG = 0, maxB = 0;
+
+              for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                  if (dx === 0 && dy === 0) continue;
+
+                  const nx = x + dx;
+                  const ny = y + dy;
+
+                  if (nx >= 0 && nx < expandedWidth && ny >= 0 && ny < expandedHeight) {
+                    const nidx = (ny * expandedWidth + nx) * 4;
+                    const alpha = data[nidx + 3];
+
+                    if (alpha > maxAlpha) {
+                      maxAlpha = alpha;
+                      maxR = data[nidx];
+                      maxG = data[nidx + 1];
+                      maxB = data[nidx + 2];
+                    }
+                  }
+                }
+              }
+
+              // 이웃 중 불투명한 픽셀이 있으면 현재 픽셀을 그 색으로
+              if (maxAlpha > 0) {
+                newData[idx] = maxR;
+                newData[idx + 1] = maxG;
+                newData[idx + 2] = maxB;
+                newData[idx + 3] = maxAlpha;
+              }
+            }
+          }
+
+          // 다음 iteration을 위해 data 업데이트
+          data.set(newData);
+        }
+
+        // 최종 결과를 Canvas에 그리기
+        imageData.data.set(data);
+        ctx.putImageData(imageData, 0, 0);
+
+        const dataUrl = canvas.toDataURL('image/png');
+        console.log('[DILATE] Completed. Expanded size:', expandedWidth, 'x', expandedHeight);
+
+        resolve({
+          dataUrl,
+          originalSize: { width: originalWidth, height: originalHeight },
+          expandedSize: { width: expandedWidth, height: expandedHeight }
+        });
       };
 
       img.onerror = () => {
