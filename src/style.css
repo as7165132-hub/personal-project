@@ -163,13 +163,18 @@ body.iso-mode .bg-tile {
   transition: clip-path 0.6s ease-out;
 }
 
-/* Ghost 배경 - 흰색 반투명 */
+/* Ghost 배경 - 이미지 (90도 회전, 반투명) */
 .ghost-background {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.85);
+  background-image: url('/personal-project/face-motif-collection-campaign-1.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   border-radius: 20px;
+  transform: rotate(90deg);
+  opacity: 0.85;
 }
 
 /* Ghost Flap - 벗겨진 부분 */
@@ -190,13 +195,18 @@ body.iso-mode .bg-tile {
   will-change: clip-path, transform;
 }
 
-/* Ghost Flap 배경 - 흰색 반투명 */
+/* Ghost Flap 배경 - 이미지 (90도 회전, 반투명) */
 .ghost-flap-background {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.85);
+  background-image: url('/personal-project/face-motif-collection-campaign-1.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   border-radius: 20px;
+  transform: rotate(90deg);
+  opacity: 0.85;
 }
 
 /* Ghost 벗겨지기 애니메이션 - 스티커처럼 아래에서 위로 벗겨짐 */

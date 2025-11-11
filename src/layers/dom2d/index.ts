@@ -676,41 +676,7 @@ export class Dom2DLayer {
 
       ghostFlap.appendChild(ghostFlapBackground);
 
-      // 스티커 이미지로 마스크 생성 (구멍 뚫기)
-      const stickerImages = [
-        '/personal-project/pngtree-white-t-shirt-mockup-realistic-t-shirt-png-image_9906363.png',
-        '/personal-project/Black-Cargo-Pant-PNG-HD-Quality.png'
-      ];
-      const stickerImageSrc = stickerImages[index % 2];
-
-      // ghost-main과 ghost-flap에 마스크 적용
-      const maskStyle = `
-        radial-gradient(circle, white 100%, white 100%),
-        url('${stickerImageSrc}')
-      `;
-      ghostMain.style.maskImage = maskStyle;
-      ghostMain.style.webkitMaskImage = maskStyle;
-      ghostMain.style.maskSize = 'cover, 85% 95%';
-      ghostMain.style.webkitMaskSize = 'cover, 85% 95%';
-      ghostMain.style.maskPosition = 'center, center';
-      ghostMain.style.webkitMaskPosition = 'center, center';
-      ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
-      ghostMain.style.webkitMaskRepeat = 'no-repeat, no-repeat';
-      ghostMain.style.maskComposite = 'exclude';
-      ghostMain.style.webkitMaskComposite = 'source-out';
-
-      ghostFlap.style.maskImage = maskStyle;
-      ghostFlap.style.webkitMaskImage = maskStyle;
-      ghostFlap.style.maskSize = 'cover, 85% 95%';
-      ghostFlap.style.webkitMaskSize = 'cover, 85% 95%';
-      ghostFlap.style.maskPosition = 'center, center';
-      ghostFlap.style.webkitMaskPosition = 'center, center';
-      ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
-      ghostFlap.style.webkitMaskRepeat = 'no-repeat, no-repeat';
-      ghostFlap.style.maskComposite = 'exclude';
-      ghostFlap.style.webkitMaskComposite = 'source-out';
-
-      // 조립
+      // 조립 (구멍 없이 전체 이미지로 표시)
       ghostContainer.appendChild(ghostMain);
       ghostContainer.appendChild(ghostFlap);
       card.insertBefore(ghostContainer, card.firstChild); // 스티커 컨테이너 앞에 삽입
