@@ -159,7 +159,7 @@ body.iso-mode .bg-tile {
     rgba(255, 50, 50, 0.6) 50%,
     rgba(255, 50, 50, 0.3) 100%
   );
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -296,7 +296,7 @@ body.iso-mode .bg-tile {
   transform-origin: center;
   width: 300px;
   height: 300px;
-  z-index: 1;
+  z-index: 2;
 }
 
 .sticker-container * {

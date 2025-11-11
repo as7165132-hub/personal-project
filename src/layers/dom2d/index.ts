@@ -691,7 +691,7 @@ export class Dom2DLayer {
       // 카드 초기 위치 (위쪽에서 시작, 투명)
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
-      card.style.zIndex = '1'; // 착지 지점 원 위에 표시
+      card.style.zIndex = '2'; // 착지 지점 원 위에 표시
       card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
       card.style.opacity = '0';
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
