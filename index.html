@@ -36,7 +36,7 @@
         letter-spacing: 0.05em;
       }
     </style>
-    <script type="module" crossorigin src="/personal-project/assets/main-DpdG6L4n.js"></script>
+    <script type="module" crossorigin src="/personal-project/assets/main-CiLSE8tj.js"></script>
     <link rel="stylesheet" crossorigin href="/personal-project/assets/main-2rA8Dq-G.css">
   </head>
   <body>
@@ -89,18 +89,25 @@
           <feComposite operator="in" in="flood" in2="shape" />
         </filter>
 
-        <!-- White outline border filter for stickers -->
+        <!-- Double border filter for stickers (dark gray inner + white outer) -->
         <filter id="whiteBorder" x="-50%" y="-50%" width="200%" height="200%">
           <!-- Get alpha channel -->
           <feColorMatrix in="SourceAlpha" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" result="alpha"/>
-          <!-- Dilate to create border -->
-          <feMorphology operator="dilate" radius="4" in="alpha" result="dilated"/>
-          <!-- Fill dilated area with white -->
+
+          <!-- Create outer white border (larger dilate) -->
+          <feMorphology operator="dilate" radius="6" in="alpha" result="dilatedOuter"/>
           <feFlood flood-color="white" result="white"/>
-          <feComposite in="white" in2="dilated" operator="in" result="border"/>
-          <!-- Merge border and original image -->
+          <feComposite in="white" in2="dilatedOuter" operator="in" result="whiteBorder"/>
+
+          <!-- Create inner dark gray border (smaller dilate) -->
+          <feMorphology operator="dilate" radius="2" in="alpha" result="dilatedInner"/>
+          <feFlood flood-color="#555555" result="darkGray"/>
+          <feComposite in="darkGray" in2="dilatedInner" operator="in" result="grayBorder"/>
+
+          <!-- Merge layers: white (bottom) -> gray (middle) -> original (top) -->
           <feMerge>
-            <feMergeNode in="border"/>
+            <feMergeNode in="whiteBorder"/>
+            <feMergeNode in="grayBorder"/>
             <feMergeNode in="SourceGraphic"/>
           </feMerge>
         </filter>
@@ -119,7 +126,7 @@
     </div>
 
     <!-- Version Display -->
-    <div class="version-display">v1.6.3 - White Rounded Ghost with Narrow Cutout</div>
+    <div class="version-display">v1.6.4 - Double Border & Enlarged Ghost Cutout</div>
 
     <!-- WebGL Canvas (injected by GL3DLayer) -->
 

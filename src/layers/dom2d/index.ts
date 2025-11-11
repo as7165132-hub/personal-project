@@ -690,8 +690,8 @@ export class Dom2DLayer {
       `;
       ghostMain.style.maskImage = maskStyle;
       ghostMain.style.webkitMaskImage = maskStyle;
-      ghostMain.style.maskSize = 'cover, 55% 75%';
-      ghostMain.style.webkitMaskSize = 'cover, 55% 75%';
+      ghostMain.style.maskSize = 'cover, 85% 95%';
+      ghostMain.style.webkitMaskSize = 'cover, 85% 95%';
       ghostMain.style.maskPosition = 'center, center';
       ghostMain.style.webkitMaskPosition = 'center, center';
       ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
@@ -701,8 +701,8 @@ export class Dom2DLayer {
 
       ghostFlap.style.maskImage = maskStyle;
       ghostFlap.style.webkitMaskImage = maskStyle;
-      ghostFlap.style.maskSize = 'cover, 55% 75%';
-      ghostFlap.style.webkitMaskSize = 'cover, 55% 75%';
+      ghostFlap.style.maskSize = 'cover, 85% 95%';
+      ghostFlap.style.webkitMaskSize = 'cover, 85% 95%';
       ghostFlap.style.maskPosition = 'center, center';
       ghostFlap.style.webkitMaskPosition = 'center, center';
       ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
