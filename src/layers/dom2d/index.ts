@@ -748,24 +748,24 @@ export class Dom2DLayer {
         card.style.opacity = '1';
         ghostContainer.style.opacity = '1';
 
-        // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐
-        setTimeout(() => {
-          // 스티커와 동일한 벗겨지기 애니메이션
-          ghostContainer.classList.add('peeling-off');
-
-          setTimeout(() => {
-            // 벗겨진 후 투명하게
-            ghostContainer.style.transition = 'opacity 0.4s ease-out';
-            ghostContainer.style.opacity = '0';
-
-            // 완전히 제거
-            setTimeout(() => {
-              if (ghostContainer && ghostContainer.parentNode) {
-                ghostContainer.remove();
-              }
-            }, 400);
-          }, 600); // clipPath 애니메이션 완료 후
-        }, 1000); // 착지 1초 후
+        // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐 (임시 비활성화 - 확인용)
+        // setTimeout(() => {
+        //   // 스티커와 동일한 벗겨지기 애니메이션
+        //   ghostContainer.classList.add('peeling-off');
+        //
+        //   setTimeout(() => {
+        //     // 벗겨진 후 투명하게
+        //     ghostContainer.style.transition = 'opacity 0.4s ease-out';
+        //     ghostContainer.style.opacity = '0';
+        //
+        //     // 완전히 제거
+        //     setTimeout(() => {
+        //       if (ghostContainer && ghostContainer.parentNode) {
+        //         ghostContainer.remove();
+        //       }
+        //     }, 400);
+        //   }, 600); // clipPath 애니메이션 완료 후
+        // }, 1000); // 착지 1초 후
       }, index * 50); // 50ms 간격으로 순차 시작
     }
 
