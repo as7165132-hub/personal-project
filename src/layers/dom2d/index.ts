@@ -713,6 +713,7 @@ export class Dom2DLayer {
             // 벗겨진 후 투명하게
             ghostContainer.style.transition = 'opacity 0.4s ease-out';
             ghostContainer.style.opacity = '0';
+            ghostContainer.style.display = 'none'; // 즉시 숨겨서 빨간색 원이 보이도록
 
             // 완전히 제거
             setTimeout(() => {
