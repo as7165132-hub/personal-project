@@ -174,7 +174,7 @@ body.iso-mode .bg-tile {
   background-repeat: no-repeat;
   border-radius: 20px;
   transform: rotate(90deg);
-  opacity: 0.85;
+  opacity: 0.6;
 }
 
 /* Ghost Flap - 벗겨진 부분 */
@@ -206,7 +206,7 @@ body.iso-mode .bg-tile {
   background-repeat: no-repeat;
   border-radius: 20px;
   transform: rotate(90deg);
-  opacity: 0.85;
+  opacity: 0.6;
 }
 
 /* Ghost 벗겨지기 애니메이션 - 스티커처럼 아래에서 위로 벗겨짐 */

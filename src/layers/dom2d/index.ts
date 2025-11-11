@@ -625,7 +625,7 @@ export class Dom2DLayer {
 
       // 랜덤 회전 및 크기
       const randomRotation = Math.random() * 120 - 60; // -60도 ~ 60도
-      const randomScale = Math.random() * 1.4 + 0.6; // 0.6 ~ 2.0 (범위 확대)
+      const randomScale = Math.random() * 0.8 + 1.0; // 1.0 ~ 1.8
 
       const finalX = Math.max(0, Math.min(containerWidth - cardWidth, randomX));
       const finalY = randomY;
