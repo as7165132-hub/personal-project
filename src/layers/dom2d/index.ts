@@ -688,8 +688,8 @@ export class Dom2DLayer {
       ];
       const stickerImageSrc = stickerImages[index % 2];
 
-      // Canvas를 사용한 균일한 offset 확장 (morphological dilation)
-      const expandedMaskUrl = await this.createOffsetExpandedMask(stickerImageSrc, 15);
+      // SVG filter를 사용한 진짜 offset 확장 (drop-shadow 다중 적용)
+      const expandedMaskUrl = this.createDropShadowExpandedMask(stickerImageSrc, 15);
 
       // ghost-main과 ghost-flap에 마스크 적용
       const maskStyle = `
@@ -947,51 +947,56 @@ export class Dom2DLayer {
   }
 
   /**
-   * Canvas를 사용한 균일한 offset 확장 (morphological dilation)
-   * 이미지를 여러 방향으로 조금씩 offset해서 그려 모든 모서리에서 균일하게 확장
+   * SVG drop-shadow 필터를 사용한 진짜 offset 확장
+   * 여러 방향으로 drop-shadow를 겹쳐서 균일한 확장 효과
    * @param imageSrc 원본 이미지 경로
    * @param expandPx 확장할 픽셀 수 (모든 방향으로 균일)
-   * @returns 확장된 이미지의 data URL
+   * @returns SVG filter가 적용된 data URL
    */
-  private createOffsetExpandedMask(imageSrc: string, expandPx: number): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
+  private createDropShadowExpandedMask(imageSrc: string, expandPx: number): string {
+    // 8방향으로 drop-shadow 적용 (상하좌우 + 대각선)
+    const directions = [
+      { x: 0, y: -1 },   // 상
+      { x: 1, y: -1 },   // 우상
+      { x: 1, y: 0 },    // 우
+      { x: 1, y: 1 },    // 우하
+      { x: 0, y: 1 },    // 하
+      { x: -1, y: 1 },   // 좌하
+      { x: -1, y: 0 },   // 좌
+      { x: -1, y: -1 }   // 좌상
+    ];
 
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Canvas context not available'));
-          return;
-        }
+    // 각 방향으로 여러 레이어의 그림자 생성
+    const shadowLayers: string[] = [];
+    for (let layer = 1; layer <= expandPx / 2; layer++) {
+      directions.forEach(dir => {
+        const offsetX = dir.x * layer * 2;
+        const offsetY = dir.y * layer * 2;
+        shadowLayers.push(`drop-shadow(${offsetX}px ${offsetY}px 0 white)`);
+      });
+    }
 
-        // 확장을 위한 여유 공간 추가
-        canvas.width = img.width + expandPx * 2;
-        canvas.height = img.height + expandPx * 2;
+    const filterValue = shadowLayers.join(' ');
 
-        // 여러 방향으로 이미지를 그려서 균일한 확장 효과
-        // 원형 패턴으로 그려서 모든 방향으로 동일한 확장
-        const step = 2; // 성능을 위해 2픽셀 간격
-        for (let dy = -expandPx; dy <= expandPx; dy += step) {
-          for (let dx = -expandPx; dx <= expandPx; dx += step) {
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            // 원형 범위 내에서만 그리기
-            if (dist <= expandPx) {
-              ctx.drawImage(img, expandPx + dx, expandPx + dy);
-            }
-          }
-        }
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+        <defs>
+          <filter id="expandFilter" x="-50%" y="-50%" width="200%" height="200%">
+            <feColorMatrix in="SourceGraphic" type="matrix"
+              values="0 0 0 0 1
+                      0 0 0 0 1
+                      0 0 0 0 1
+                      0 0 0 1 0"/>
+            <feGaussianBlur stdDeviation="0"/>
+          </filter>
+        </defs>
+        <image href="${imageSrc}" x="100" y="100" width="1000" height="1000"
+               preserveAspectRatio="xMidYMid meet"
+               style="filter: ${filterValue};" />
+      </svg>
+    `;
 
-        resolve(canvas.toDataURL('image/png'));
-      };
-
-      img.onerror = () => {
-        reject(new Error(`Failed to load image: ${imageSrc}`));
-      };
-
-      img.src = imageSrc;
-    });
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
   }
 
   destroy(): void {
