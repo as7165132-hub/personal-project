@@ -947,52 +947,22 @@ export class Dom2DLayer {
   }
 
   /**
-   * SVG drop-shadow 필터를 사용한 진짜 offset 확장
-   * 여러 방향으로 drop-shadow를 겹쳐서 균일한 확장 효과
+   * SVG feMorphology dilate를 사용한 진짜 offset 확장
    * @param imageSrc 원본 이미지 경로
    * @param expandPx 확장할 픽셀 수 (모든 방향으로 균일)
    * @returns SVG filter가 적용된 data URL
    */
   private createDropShadowExpandedMask(imageSrc: string, expandPx: number): string {
-    // 8방향으로 drop-shadow 적용 (상하좌우 + 대각선)
-    const directions = [
-      { x: 0, y: -1 },   // 상
-      { x: 1, y: -1 },   // 우상
-      { x: 1, y: 0 },    // 우
-      { x: 1, y: 1 },    // 우하
-      { x: 0, y: 1 },    // 하
-      { x: -1, y: 1 },   // 좌하
-      { x: -1, y: 0 },   // 좌
-      { x: -1, y: -1 }   // 좌상
-    ];
-
-    // 각 방향으로 여러 레이어의 그림자 생성
-    const shadowLayers: string[] = [];
-    for (let layer = 1; layer <= expandPx / 2; layer++) {
-      directions.forEach(dir => {
-        const offsetX = dir.x * layer * 2;
-        const offsetY = dir.y * layer * 2;
-        shadowLayers.push(`drop-shadow(${offsetX}px ${offsetY}px 0 white)`);
-      });
-    }
-
-    const filterValue = shadowLayers.join(' ');
-
     const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+      <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
         <defs>
-          <filter id="expandFilter" x="-50%" y="-50%" width="200%" height="200%">
-            <feColorMatrix in="SourceGraphic" type="matrix"
-              values="0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 0 1
-                      0 0 0 1 0"/>
-            <feGaussianBlur stdDeviation="0"/>
+          <filter id="dilateFilter" x="-20%" y="-20%" width="140%" height="140%">
+            <!-- 알파 채널만 추출하여 dilate 적용 -->
+            <feMorphology operator="dilate" radius="${expandPx}" in="SourceAlpha"/>
           </filter>
         </defs>
-        <image href="${imageSrc}" x="100" y="100" width="1000" height="1000"
-               preserveAspectRatio="xMidYMid meet"
-               style="filter: ${filterValue};" />
+        <image href="${imageSrc}" x="0" y="0" width="1000" height="1000"
+               preserveAspectRatio="xMidYMid meet" filter="url(#dilateFilter)" />
       </svg>
     `;
 
