@@ -32,6 +32,9 @@ export class Dom2DLayer {
   private autoScrollAnimationId: number | null = null;
   private userInteractionTimeout: number | null = null;
 
+  // Dilate 마스크 캐시 (같은 이미지 재사용)
+  private dilatedMaskCache: Map<string, string> = new Map();
+
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -560,6 +563,21 @@ export class Dom2DLayer {
     this.grid.style.display = 'block';
     this.grid.style.height = `${this.grid.scrollHeight}px`; // 기존 높이 유지
 
+    // 스티커 이미지 2개를 미리 dilate 처리 (캐시)
+    const stickerImages = [
+      '/personal-project/pngtree-white-t-shirt-mockup-realistic-t-shirt-png-image_9906363.png',
+      '/personal-project/Black-Cargo-Pant-PNG-HD-Quality.png'
+    ];
+
+    console.log('[DILATE] Pre-processing sticker masks...');
+    for (const imageSrc of stickerImages) {
+      if (!this.dilatedMaskCache.has(imageSrc)) {
+        const dilated = await this.createDilatedMask(imageSrc, 15);
+        this.dilatedMaskCache.set(imageSrc, dilated);
+      }
+    }
+    console.log('[DILATE] Mask cache ready');
+
     // 모든 카드에 랜덤 위치 적용
     const allCards = this.grid.querySelectorAll('.surface-card') as NodeListOf<HTMLElement>;
     const containerWidth = this.grid.offsetWidth || 1920;
@@ -681,15 +699,9 @@ export class Dom2DLayer {
 
       ghostFlap.appendChild(ghostFlapBackground);
 
-      // 스티커 이미지로 마스크 생성 (구멍 뚫기 - ghost가 크므로 마스크를 작게)
-      const stickerImages = [
-        '/personal-project/pngtree-white-t-shirt-mockup-realistic-t-shirt-png-image_9906363.png',
-        '/personal-project/Black-Cargo-Pant-PNG-HD-Quality.png'
-      ];
+      // 스티커 이미지로 마스크 생성 (구멍 뚫기 - 미리 캐시된 dilate 마스크 사용)
       const stickerImageSrc = stickerImages[index % 2];
-
-      // Canvas를 사용한 진짜 offset 확장 (효율적인 알고리즘)
-      const expandedMaskUrl = await this.createDilatedMask(stickerImageSrc, 15);
+      const expandedMaskUrl = this.dilatedMaskCache.get(stickerImageSrc) || stickerImageSrc;
 
       // ghost-main과 ghost-flap에 마스크 적용
       const maskStyle = `
@@ -960,7 +972,7 @@ export class Dom2DLayer {
 
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) {
           reject(new Error('Canvas context not available'));
           return;
