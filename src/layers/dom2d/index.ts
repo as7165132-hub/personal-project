@@ -677,14 +677,16 @@ export class Dom2DLayer {
       ghostFlap.appendChild(ghostFlapBackground);
 
       // 조립 (구멍 없이 전체 이미지로 표시)
-      // 착지 지점에 큰 원 생성 (300px) - 카드 내부에 추가 (CSS로 중앙 정렬)
-      const landingSpot = document.createElement('div');
-      landingSpot.className = 'landing-spot';
-      card.appendChild(landingSpot); // 카드 첫 번째 자식으로 추가 (z-index: 0)
-
       ghostContainer.appendChild(ghostMain);
       ghostContainer.appendChild(ghostFlap);
-      card.appendChild(ghostContainer); // 카드 두 번째 자식으로 추가 (z-index: 2)
+      card.appendChild(ghostContainer);
+
+      // 착지 지점에 큰 원 생성 (300px) - grid에 미리 배치 (바닥 레이어)
+      const landingSpot = document.createElement('div');
+      landingSpot.className = 'landing-spot';
+      landingSpot.style.left = `${pos.x + cardWidth / 2 - 150}px`; // 중앙 정렬 (300px 원)
+      landingSpot.style.top = `${pos.y + 250}px`; // 카드 중앙 지점
+      this.grid.insertBefore(landingSpot, card); // 카드 앞에 추가하여 바닥에 미리 배치
 
       // 카드 초기 위치 (위쪽에서 시작, 투명)
       card.style.left = `${pos.x}px`;
