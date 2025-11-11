@@ -683,15 +683,18 @@ export class Dom2DLayer {
       ];
       const stickerImageSrc = stickerImages[index % 2];
 
+      // 방법 #2: Blur + Threshold로 균일하게 확장
+      const expandedMaskUrl = this.createBlurThresholdMask(stickerImageSrc, 20);
+
       // ghost-main과 ghost-flap에 마스크 적용
       const maskStyle = `
         radial-gradient(circle, white 100%, white 100%),
-        url('${stickerImageSrc}')
+        url('${expandedMaskUrl}')
       `;
       ghostMain.style.maskImage = maskStyle;
       ghostMain.style.webkitMaskImage = maskStyle;
-      ghostMain.style.maskSize = 'cover, 75% 75%';
-      ghostMain.style.webkitMaskSize = 'cover, 75% 75%';
+      ghostMain.style.maskSize = 'cover, cover';
+      ghostMain.style.webkitMaskSize = 'cover, cover';
       ghostMain.style.maskPosition = 'center, center';
       ghostMain.style.webkitMaskPosition = 'center, center';
       ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
@@ -701,8 +704,8 @@ export class Dom2DLayer {
 
       ghostFlap.style.maskImage = maskStyle;
       ghostFlap.style.webkitMaskImage = maskStyle;
-      ghostFlap.style.maskSize = 'cover, 75% 75%';
-      ghostFlap.style.webkitMaskSize = 'cover, 75% 75%';
+      ghostFlap.style.maskSize = 'cover, cover';
+      ghostFlap.style.webkitMaskSize = 'cover, cover';
       ghostFlap.style.maskPosition = 'center, center';
       ghostFlap.style.webkitMaskPosition = 'center, center';
       ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
@@ -936,6 +939,33 @@ export class Dom2DLayer {
       speed: this.autoScrollSpeed,
       isRunning: this.autoScrollAnimationId !== null
     };
+  }
+
+  /**
+   * Blur + Threshold를 사용한 균일한 확장 (방법 #2)
+   * @param imageSrc 원본 이미지 경로
+   * @param blurAmount blur 강도 (확장량)
+   * @returns blur+threshold가 적용된 SVG data URL
+   */
+  private createBlurThresholdMask(imageSrc: string, blurAmount: number): string {
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+        <defs>
+          <filter id="blurThreshold" x="-50%" y="-50%" width="200%" height="200%">
+            <!-- Blur로 확장 -->
+            <feGaussianBlur in="SourceAlpha" stdDeviation="${blurAmount}" result="blurred"/>
+            <!-- Threshold로 경계 선명하게 -->
+            <feComponentTransfer in="blurred" result="thresh">
+              <feFuncA type="table" tableValues="0 0 0 1 1"/>
+            </feComponentTransfer>
+          </filter>
+        </defs>
+        <image href="${imageSrc}" x="0" y="0" width="1000" height="1000"
+               preserveAspectRatio="xMidYMid meet" filter="url(#blurThreshold)" />
+      </svg>
+    `;
+
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
   }
 
   destroy(): void {
