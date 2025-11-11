@@ -44,9 +44,12 @@ export class Dom2DLayer {
   private init(): void {
     this.container.className = 'surface-stage';
     this.buildBackgroundTiles();
-    this.buildStructure();
-    this.setupScrolling();
-    this.setupIsoToggle();
+
+    // 비동기 초기화
+    this.buildStructure().then(() => {
+      this.setupScrolling();
+      this.setupIsoToggle();
+    });
   }
 
   /**
@@ -84,7 +87,7 @@ export class Dom2DLayer {
   /**
    * 참조 코드 구조: stage > camera > grid
    */
-  private buildStructure(): void {
+  private async buildStructure(): Promise<void> {
     this.container.innerHTML = '';
 
     // Camera wrapper (transform을 담당)
@@ -109,10 +112,11 @@ export class Dom2DLayer {
 
     // 3세트 생성 및 세트별로 분리 저장
     for (let set = 0; set < 3; set++) {
-      this.cardDataList.forEach((cardData, index) => {
-        const card = this.createCard(cardData, index);
+      for (let index = 0; index < this.cardDataList.length; index++) {
+        const cardData = this.cardDataList[index];
+        const card = await this.createCard(cardData, index);
         this.cardSets[set].push(card); // 세트별로 저장
-      });
+      }
     }
 
     this.completeStructureSetup();
@@ -304,7 +308,7 @@ export class Dom2DLayer {
   /**
    * 카드 생성 (텍스트 + 선택적 이미지)
    */
-  private createCard(cardData: CardData, index: number): HTMLElement {
+  private async createCard(cardData: CardData, index: number): Promise<HTMLElement> {
     const card = document.createElement('div');
     card.className = 'surface-card';
     card.dataset.cardIndex = String(index); // 카드 인덱스 저장
@@ -506,7 +510,7 @@ export class Dom2DLayer {
     const btn = document.getElementById('iso-toggle');
     if (!btn) return;
 
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       this.isIsoMode = !this.isIsoMode;
       document.body.classList.toggle('iso-mode', this.isIsoMode);
       btn.classList.toggle('active', this.isIsoMode);
@@ -518,7 +522,7 @@ export class Dom2DLayer {
         console.log('✨ ISO 모드 활성화 (랜덤 배치)');
 
         // 그리드를 absolute positioning으로 변경하고 카드들을 랜덤 배치
-        this.applyRandomLayout();
+        await this.applyRandomLayout();
 
         // 자동 스크롤 시작
         if (this.autoScrollEnabled) {
@@ -551,7 +555,7 @@ export class Dom2DLayer {
   /**
    * ISO 모드: 카드들을 랜덤하게 배치
    */
-  private applyRandomLayout(): void {
+  private async applyRandomLayout(): Promise<void> {
     this.grid.style.position = 'relative';
     this.grid.style.display = 'block';
     this.grid.style.height = `${this.grid.scrollHeight}px`; // 기존 높이 유지
@@ -646,12 +650,13 @@ export class Dom2DLayer {
     cardPositions.sort((a, b) => b.y - a.y);
 
     // 착지 애니메이션 전에 먼저 스티커로 변환
-    cardPositions.forEach((pos, idx) => {
-      this.convertCardToSticker(pos.card, idx);
-    });
+    for (let idx = 0; idx < cardPositions.length; idx++) {
+      this.convertCardToSticker(cardPositions[idx].card, idx);
+    }
 
     // 착지 애니메이션 (스티커와 ghost 같이 내려오고, ghost만 올라감)
-    cardPositions.forEach((pos, index) => {
+    for (let index = 0; index < cardPositions.length; index++) {
+      const pos = cardPositions[index];
       const card = pos.card;
 
       // ISO 모드 진입 시 ghost 생성 (스티커 구조와 동일하게 main과 flap 포함)
@@ -683,16 +688,18 @@ export class Dom2DLayer {
       ];
       const stickerImageSrc = stickerImages[index % 2];
 
+      // Canvas를 사용한 균일한 offset 확장 (morphological dilation)
+      const expandedMaskUrl = await this.createOffsetExpandedMask(stickerImageSrc, 15);
+
       // ghost-main과 ghost-flap에 마스크 적용
-      // ghost가 550px이고 마스크를 40%로 하면 구멍이 훨씬 더 크게 뚫림
       const maskStyle = `
         radial-gradient(circle, white 100%, white 100%),
-        url('${stickerImageSrc}')
+        url('${expandedMaskUrl}')
       `;
       ghostMain.style.maskImage = maskStyle;
       ghostMain.style.webkitMaskImage = maskStyle;
-      ghostMain.style.maskSize = 'cover, 40% 40%';
-      ghostMain.style.webkitMaskSize = 'cover, 40% 40%';
+      ghostMain.style.maskSize = 'cover, 75% 75%';
+      ghostMain.style.webkitMaskSize = 'cover, 75% 75%';
       ghostMain.style.maskPosition = 'center, center';
       ghostMain.style.webkitMaskPosition = 'center, center';
       ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
@@ -702,8 +709,8 @@ export class Dom2DLayer {
 
       ghostFlap.style.maskImage = maskStyle;
       ghostFlap.style.webkitMaskImage = maskStyle;
-      ghostFlap.style.maskSize = 'cover, 40% 40%';
-      ghostFlap.style.webkitMaskSize = 'cover, 40% 40%';
+      ghostFlap.style.maskSize = 'cover, 75% 75%';
+      ghostFlap.style.webkitMaskSize = 'cover, 75% 75%';
       ghostFlap.style.maskPosition = 'center, center';
       ghostFlap.style.webkitMaskPosition = 'center, center';
       ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
@@ -760,7 +767,7 @@ export class Dom2DLayer {
           }, 600); // clipPath 애니메이션 완료 후
         }, 1000); // 착지 1초 후
       }, index * 50); // 50ms 간격으로 순차 시작
-    });
+    }
 
     // 애니메이션 완료 후 transition 제거
     setTimeout(() => {
@@ -937,6 +944,54 @@ export class Dom2DLayer {
       speed: this.autoScrollSpeed,
       isRunning: this.autoScrollAnimationId !== null
     };
+  }
+
+  /**
+   * Canvas를 사용한 균일한 offset 확장 (morphological dilation)
+   * 이미지를 여러 방향으로 조금씩 offset해서 그려 모든 모서리에서 균일하게 확장
+   * @param imageSrc 원본 이미지 경로
+   * @param expandPx 확장할 픽셀 수 (모든 방향으로 균일)
+   * @returns 확장된 이미지의 data URL
+   */
+  private createOffsetExpandedMask(imageSrc: string, expandPx: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+
+        // 확장을 위한 여유 공간 추가
+        canvas.width = img.width + expandPx * 2;
+        canvas.height = img.height + expandPx * 2;
+
+        // 여러 방향으로 이미지를 그려서 균일한 확장 효과
+        // 원형 패턴으로 그려서 모든 방향으로 동일한 확장
+        const step = 2; // 성능을 위해 2픽셀 간격
+        for (let dy = -expandPx; dy <= expandPx; dy += step) {
+          for (let dx = -expandPx; dx <= expandPx; dx += step) {
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            // 원형 범위 내에서만 그리기
+            if (dist <= expandPx) {
+              ctx.drawImage(img, expandPx + dx, expandPx + dy);
+            }
+          }
+        }
+
+        resolve(canvas.toDataURL('image/png'));
+      };
+
+      img.onerror = () => {
+        reject(new Error(`Failed to load image: ${imageSrc}`));
+      };
+
+      img.src = imageSrc;
+    });
   }
 
   destroy(): void {
