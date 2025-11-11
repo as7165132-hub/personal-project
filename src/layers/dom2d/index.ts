@@ -688,8 +688,8 @@ export class Dom2DLayer {
       ];
       const stickerImageSrc = stickerImages[index % 2];
 
-      // SVG filter를 사용한 진짜 offset 확장 (drop-shadow 다중 적용)
-      const expandedMaskUrl = this.createDropShadowExpandedMask(stickerImageSrc, 15);
+      // Canvas를 사용한 진짜 offset 확장 (효율적인 알고리즘)
+      const expandedMaskUrl = await this.createDilatedMask(stickerImageSrc, 15);
 
       // ghost-main과 ghost-flap에 마스크 적용
       const maskStyle = `
@@ -947,26 +947,82 @@ export class Dom2DLayer {
   }
 
   /**
-   * SVG feMorphology dilate를 사용한 진짜 offset 확장
+   * Canvas를 사용한 효율적인 dilate (알파 채널 확장)
+   * 8방향 shift & max 방식으로 빠르게 처리
    * @param imageSrc 원본 이미지 경로
-   * @param expandPx 확장할 픽셀 수 (모든 방향으로 균일)
-   * @returns SVG filter가 적용된 data URL
+   * @param expandPx 확장할 픽셀 수
+   * @returns 확장된 이미지의 data URL
    */
-  private createDropShadowExpandedMask(imageSrc: string, expandPx: number): string {
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
-        <defs>
-          <filter id="dilateFilter" x="-20%" y="-20%" width="140%" height="140%">
-            <!-- 알파 채널만 추출하여 dilate 적용 -->
-            <feMorphology operator="dilate" radius="${expandPx}" in="SourceAlpha"/>
-          </filter>
-        </defs>
-        <image href="${imageSrc}" x="0" y="0" width="1000" height="1000"
-               preserveAspectRatio="xMidYMid meet" filter="url(#dilateFilter)" />
-      </svg>
-    `;
+  private createDilatedMask(imageSrc: string, expandPx: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
 
-    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // 원본 이미지 그리기
+        ctx.drawImage(img, 0, 0);
+        const original = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        // dilate 연산: 각 방향으로 반복 적용
+        const directions = [
+          [0, -1], [1, -1], [1, 0], [1, 1],
+          [0, 1], [-1, 1], [-1, 0], [-1, -1]
+        ];
+
+        // expandPx만큼 반복
+        for (let r = 0; r < expandPx; r++) {
+          const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const result = new ImageData(canvas.width, canvas.height);
+
+          // 각 픽셀에 대해
+          for (let y = 0; y < canvas.height; y++) {
+            for (let x = 0; x < canvas.width; x++) {
+              const idx = (y * canvas.width + x) * 4;
+
+              // 현재 픽셀의 알파값
+              let maxAlpha = current.data[idx + 3];
+
+              // 8방향 확인
+              for (const [dx, dy] of directions) {
+                const nx = x + dx;
+                const ny = y + dy;
+
+                if (nx >= 0 && nx < canvas.width && ny >= 0 && ny < canvas.height) {
+                  const nidx = (ny * canvas.width + nx) * 4;
+                  maxAlpha = Math.max(maxAlpha, current.data[nidx + 3]);
+                }
+              }
+
+              // RGB는 유지, 알파만 확장
+              result.data[idx] = original.data[idx];
+              result.data[idx + 1] = original.data[idx + 1];
+              result.data[idx + 2] = original.data[idx + 2];
+              result.data[idx + 3] = maxAlpha;
+            }
+          }
+
+          ctx.putImageData(result, 0, 0);
+        }
+
+        resolve(canvas.toDataURL('image/png'));
+      };
+
+      img.onerror = () => {
+        reject(new Error(`Failed to load image: ${imageSrc}`));
+      };
+
+      img.src = imageSrc;
+    });
   }
 
   destroy(): void {
