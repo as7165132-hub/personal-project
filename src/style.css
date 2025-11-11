@@ -147,9 +147,20 @@ body.iso-mode .bg-tile {
   transform: translateY(-4px);
 }
 
-/* 착지 지점 표시 원 */
+/* 착지 지점 표시 원 - 빨간색 원 (스티커 아래) */
 .landing-spot {
-  display: none;
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 50, 50, 0.8) 0%,
+    rgba(255, 50, 50, 0.6) 50%,
+    rgba(255, 50, 50, 0.3) 100%
+  );
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* Ghost - 스티커보다 크게 */
