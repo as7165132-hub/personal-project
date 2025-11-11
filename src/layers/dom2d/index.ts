@@ -959,11 +959,11 @@ export class Dom2DLayer {
   }
 
   /**
-   * Canvas를 사용한 효율적인 dilate (알파 채널 확장)
-   * 8방향 shift & max 방식으로 빠르게 처리
+   * SVG feMorphology를 사용한 테두리 스트로크 방식 확장
+   * 이미지를 먼저 Canvas로 인라인화한 후 SVG 필터 적용
    * @param imageSrc 원본 이미지 경로
-   * @param expandPx 확장할 픽셀 수
-   * @returns 확장된 이미지의 data URL
+   * @param expandPx 확장할 픽셀 수 (테두리 두께)
+   * @returns SVG 필터가 적용된 data URL
    */
   private createDilatedMask(imageSrc: string, expandPx: number): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -971,62 +971,36 @@ export class Dom2DLayer {
       img.crossOrigin = 'anonymous';
 
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) {
+        // 1단계: 이미지를 Canvas로 로드해서 인라인 data URL로 변환
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        if (!tempCtx) {
           reject(new Error('Canvas context not available'));
           return;
         }
 
-        canvas.width = img.width;
-        canvas.height = img.height;
+        tempCanvas.width = img.width;
+        tempCanvas.height = img.height;
+        tempCtx.drawImage(img, 0, 0);
+        const inlineImageData = tempCanvas.toDataURL('image/png');
 
-        // 원본 이미지 그리기
-        ctx.drawImage(img, 0, 0);
-        const original = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        // 2단계: 인라인 이미지를 사용한 SVG 필터 적용
+        const svg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="${img.width}" height="${img.height}" viewBox="0 0 ${img.width} ${img.height}">
+            <defs>
+              <filter id="expand" x="-50%" y="-50%" width="200%" height="200%">
+                <!-- feMorphology dilate로 테두리 따라 확장 -->
+                <feMorphology operator="dilate" radius="${expandPx}" in="SourceAlpha"/>
+              </filter>
+            </defs>
+            <image href="${inlineImageData}" x="0" y="0" width="${img.width}" height="${img.height}"
+                   filter="url(#expand)" preserveAspectRatio="xMidYMid meet"/>
+          </svg>
+        `;
 
-        // dilate 연산: 각 방향으로 반복 적용
-        const directions = [
-          [0, -1], [1, -1], [1, 0], [1, 1],
-          [0, 1], [-1, 1], [-1, 0], [-1, -1]
-        ];
-
-        // expandPx만큼 반복
-        for (let r = 0; r < expandPx; r++) {
-          const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const result = new ImageData(canvas.width, canvas.height);
-
-          // 각 픽셀에 대해
-          for (let y = 0; y < canvas.height; y++) {
-            for (let x = 0; x < canvas.width; x++) {
-              const idx = (y * canvas.width + x) * 4;
-
-              // 현재 픽셀의 알파값
-              let maxAlpha = current.data[idx + 3];
-
-              // 8방향 확인
-              for (const [dx, dy] of directions) {
-                const nx = x + dx;
-                const ny = y + dy;
-
-                if (nx >= 0 && nx < canvas.width && ny >= 0 && ny < canvas.height) {
-                  const nidx = (ny * canvas.width + nx) * 4;
-                  maxAlpha = Math.max(maxAlpha, current.data[nidx + 3]);
-                }
-              }
-
-              // RGB는 유지, 알파만 확장
-              result.data[idx] = original.data[idx];
-              result.data[idx + 1] = original.data[idx + 1];
-              result.data[idx + 2] = original.data[idx + 2];
-              result.data[idx + 3] = maxAlpha;
-            }
-          }
-
-          ctx.putImageData(result, 0, 0);
-        }
-
-        resolve(canvas.toDataURL('image/png'));
+        // 3단계: SVG를 base64 data URL로 변환
+        const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+        resolve(svgDataUrl);
       };
 
       img.onerror = () => {
