@@ -684,15 +684,15 @@ export class Dom2DLayer {
       const stickerImageSrc = stickerImages[index % 2];
 
       // ghost-main과 ghost-flap에 마스크 적용
-      // ghost가 550px이고 마스크를 55%로 하면 구멍이 크게 뚫림
+      // ghost가 550px이고 마스크를 40%로 하면 구멍이 훨씬 더 크게 뚫림
       const maskStyle = `
         radial-gradient(circle, white 100%, white 100%),
         url('${stickerImageSrc}')
       `;
       ghostMain.style.maskImage = maskStyle;
       ghostMain.style.webkitMaskImage = maskStyle;
-      ghostMain.style.maskSize = 'cover, 55% 55%';
-      ghostMain.style.webkitMaskSize = 'cover, 55% 55%';
+      ghostMain.style.maskSize = 'cover, 40% 40%';
+      ghostMain.style.webkitMaskSize = 'cover, 40% 40%';
       ghostMain.style.maskPosition = 'center, center';
       ghostMain.style.webkitMaskPosition = 'center, center';
       ghostMain.style.maskRepeat = 'no-repeat, no-repeat';
@@ -702,8 +702,8 @@ export class Dom2DLayer {
 
       ghostFlap.style.maskImage = maskStyle;
       ghostFlap.style.webkitMaskImage = maskStyle;
-      ghostFlap.style.maskSize = 'cover, 55% 55%';
-      ghostFlap.style.webkitMaskSize = 'cover, 55% 55%';
+      ghostFlap.style.maskSize = 'cover, 40% 40%';
+      ghostFlap.style.webkitMaskSize = 'cover, 40% 40%';
       ghostFlap.style.maskPosition = 'center, center';
       ghostFlap.style.webkitMaskPosition = 'center, center';
       ghostFlap.style.maskRepeat = 'no-repeat, no-repeat';
