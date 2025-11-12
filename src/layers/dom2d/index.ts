@@ -687,8 +687,9 @@ export class Dom2DLayer {
       landingSpot.style.position = 'absolute';
       landingSpot.style.left = `${pos.x + cardWidth / 2 - 150}px`; // 카드 중심에 맞춤 (300px 원)
       landingSpot.style.top = `${pos.y + 250}px`; // 카드 중심 높이
-      landingSpot.style.zIndex = '1';
+      landingSpot.style.zIndex = '999'; // 테스트: 모든 것 위에 표시
       landingSpot.style.opacity = '1'; // 미리 보이게
+      landingSpot.style.background = 'red'; // 테스트: 명확한 빨간색
       this.grid.insertBefore(landingSpot, card); // 카드 앞에 추가
 
       // 카드 초기 위치 (위쪽에서 시작, 투명) - position absolute로 변경
