@@ -677,7 +677,7 @@ export class Dom2DLayer {
       ghostFlap.appendChild(ghostFlapBackground);
 
       // 조립 (구멍 없이 전체 이미지로 표시)
-      // 착지 지점에 큰 원 생성 (300px) - card 내부에 배치 (CSS로 중앙 정렬)
+      // 착지 지점에 큰 원 생성 (300px) - card 내부에 배치, 미리 착지된 상태
       const landingSpot = document.createElement('div');
       landingSpot.className = 'landing-spot';
       card.appendChild(landingSpot); // card 첫 번째 자식 (z-index: 1)
@@ -694,6 +694,11 @@ export class Dom2DLayer {
       card.style.opacity = '0';
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
+      // landing-spot 초기 상태: card의 transform을 상쇄하여 미리 착지된 상태
+      landingSpot.style.transform = `translate(-50%, -50%) translate(0, 1000px)`;
+      landingSpot.style.transition = 'transform 1s ease-out';
+      landingSpot.style.opacity = '1'; // 미리 보이게
+
       // ghost 초기 상태 (투명)
       ghostContainer.style.opacity = '0';
       ghostContainer.style.transition = 'opacity 1s ease-out';
@@ -703,6 +708,9 @@ export class Dom2DLayer {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
         card.style.opacity = '1';
         ghostContainer.style.opacity = '1';
+
+        // landing-spot은 card와 함께 최종 위치로 (counter-transform 제거)
+        landingSpot.style.transform = `translate(-50%, -50%) translate(0, 0)`;
 
         // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐
         setTimeout(() => {
