@@ -115,6 +115,7 @@ body.iso-mode .bg-tile {
 
 /* ==================== Grid (참조: world) ==================== */
 .surface-grid {
+  position: relative; /* absolute 자식 요소의 기준점 */
   display: grid;
   grid-template-columns: repeat(4, 1fr); /* 4컬럼 */
   gap: var(--surface-gap);

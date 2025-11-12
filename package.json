@@ -1,6 +1,6 @@
 {
   "name": "personal-project",
-  "version": "1.7.13",
+  "version": "1.7.14",
   "description": "간단한 개인 프로젝트 저장소입니다.",
   "type": "module",
   "scripts": {
