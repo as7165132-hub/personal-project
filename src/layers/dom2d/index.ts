@@ -650,8 +650,6 @@ export class Dom2DLayer {
     const requiredHeight = maxY + 1500; // 카드 높이 + landing-spot + 여유 공간
     this.grid.style.height = `${Math.max(this.grid.scrollHeight, requiredHeight)}px`;
 
-    console.log(`📏 Grid height adjusted: ${this.grid.scrollHeight}px → ${requiredHeight}px`);
-
     // 착지 애니메이션 전에 먼저 스티커로 변환
     cardPositions.forEach((pos, idx) => {
       this.convertCardToSticker(pos.card, idx);
@@ -696,25 +694,10 @@ export class Dom2DLayer {
       const spotTop = pos.y + 250;
       landingSpot.style.left = `${spotLeft}px`;
       landingSpot.style.top = `${spotTop}px`;
-      landingSpot.style.zIndex = '999';
-      landingSpot.style.opacity = '1';
-      landingSpot.style.background = 'red';
-      landingSpot.style.border = '5px solid yellow';
+      landingSpot.style.zIndex = '1'; // 가장 하단 레이어
       landingSpot.setAttribute('data-spot-index', `${index}`);
 
-      console.log(`🔴 Landing Spot ${index}:`, {
-        position: { left: spotLeft, top: spotTop },
-        cardPosition: { x: pos.x, y: pos.y },
-        cardWidth,
-        containerWidth,
-        gridHeight: this.grid.scrollHeight,
-        gridOffsetWidth: this.grid.offsetWidth
-      });
-
       this.grid.insertBefore(landingSpot, card);
-
-      // 추가된 확인
-      console.log(`✅ Spot ${index} added, parent:`, landingSpot.parentElement?.tagName, 'Total spots:', this.grid.querySelectorAll('.landing-spot').length);
 
       // 카드 초기 위치 (위쪽에서 시작, 투명) - position absolute로 변경
       card.style.position = 'absolute';
