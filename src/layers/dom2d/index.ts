@@ -554,7 +554,7 @@ export class Dom2DLayer {
   private applyRandomLayout(): void {
     this.grid.style.position = 'relative';
     this.grid.style.display = 'block';
-    this.grid.style.height = `${this.grid.scrollHeight}px`; // 기존 높이 유지
+    // grid 높이는 나중에 최대 Y 값에 맞춰 설정됨
 
     // 모든 카드에 랜덤 위치 적용
     const allCards = this.grid.querySelectorAll('.surface-card') as NodeListOf<HTMLElement>;
@@ -644,6 +644,13 @@ export class Dom2DLayer {
 
     // Y 위치 기준으로 정렬 (하단부터 = Y가 큰 것부터)
     cardPositions.sort((a, b) => b.y - a.y);
+
+    // Grid 높이를 최대 Y 위치 + 여유 공간으로 설정
+    const maxY = cardPositions.length > 0 ? cardPositions[0].y : 0; // 정렬 후 첫 번째가 최대
+    const requiredHeight = maxY + 1500; // 카드 높이 + landing-spot + 여유 공간
+    this.grid.style.height = `${Math.max(this.grid.scrollHeight, requiredHeight)}px`;
+
+    console.log(`📏 Grid height adjusted: ${this.grid.scrollHeight}px → ${requiredHeight}px`);
 
     // 착지 애니메이션 전에 먼저 스티커로 변환
     cardPositions.forEach((pos, idx) => {
