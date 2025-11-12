@@ -704,7 +704,6 @@ export class Dom2DLayer {
 
       ghostFlap.appendChild(ghostFlapBackground);
 
-<<<<<<< HEAD
       // 스티커 이미지로 마스크 생성 (구멍 뚫기 - 미리 캐시된 dilate 마스크 사용)
       const stickerImageSrc = stickerImages[index % 2];
       const dilatedMask = this.dilatedMaskCache.get(stickerImageSrc);
