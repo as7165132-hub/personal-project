@@ -147,9 +147,12 @@ body.iso-mode .bg-tile {
   transform: translateY(-4px);
 }
 
-/* 착지 지점 표시 원 - 빨간색 원 (바닥 레이어, 미리 배치) */
+/* 착지 지점 표시 원 - 빨간색 원 (card 내부, 중앙 배치) */
 .landing-spot {
   position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: 300px;
   height: 300px;
   border-radius: 50%;
