@@ -696,8 +696,8 @@ export class Dom2DLayer {
 
       // landing-spot 초기 상태: card의 transform을 상쇄하여 미리 착지된 상태
       landingSpot.style.transform = `translate(-50%, -50%) translate(0, 1000px)`;
-      landingSpot.style.transition = 'transform 1s ease-out';
       landingSpot.style.opacity = '1'; // 미리 보이게
+      // transition 없음 - 고정된 위치 유지
 
       // ghost 초기 상태 (투명)
       ghostContainer.style.opacity = '0';
