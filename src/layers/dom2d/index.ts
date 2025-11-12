@@ -561,7 +561,7 @@ export class Dom2DLayer {
   private async applyRandomLayout(): Promise<void> {
     this.grid.style.position = 'relative';
     this.grid.style.display = 'block';
-    this.grid.style.height = `${this.grid.scrollHeight}px`; // 기존 높이 유지
+    // grid 높이는 나중에 최대 Y 값에 맞춰 설정됨
 
     // 스티커 이미지 2개를 미리 dilate 처리 (캐시)
     const stickerImages = [
@@ -641,13 +641,13 @@ export class Dom2DLayer {
 
       const baseX = randomColumn * columnWidth + (columnWidth / 2) - (cardWidth / 2);
 
-      // 칼럼 내에서 약간의 랜덤 오프셋
-      const randomX = baseX + (Math.random() * 100 - 50); // ±50px 랜덤
+      // 칼럼 내에서 약간의 랜덤 오프셋 (좌우로 더 넓게)
+      const randomX = baseX + (Math.random() * 300 - 150); // ±150px 랜덤 (넓게)
       const randomY = currentY + (Math.random() * 150 - 75); // ±75px 랜덤
 
       // 랜덤 회전 및 크기
       const randomRotation = Math.random() * 120 - 60; // -60도 ~ 60도
-      const randomScale = Math.random() * 0.7 + 0.8; // 0.8 ~ 1.5
+      const randomScale = Math.random() * 0.8 + 1.0; // 1.0 ~ 1.8
 
       const finalX = Math.max(0, Math.min(containerWidth - cardWidth, randomX));
       const finalY = randomY;
@@ -666,6 +666,11 @@ export class Dom2DLayer {
 
     // Y 위치 기준으로 정렬 (하단부터 = Y가 큰 것부터)
     cardPositions.sort((a, b) => b.y - a.y);
+
+    // Grid 높이를 최대 Y 위치 + 여유 공간으로 설정
+    const maxY = cardPositions.length > 0 ? cardPositions[0].y : 0; // 정렬 후 첫 번째가 최대
+    const requiredHeight = maxY + 1500; // 카드 높이 + landing-spot + 여유 공간
+    this.grid.style.height = `${Math.max(this.grid.scrollHeight, requiredHeight)}px`;
 
     // 착지 애니메이션 전에 먼저 스티커로 변환
     for (let idx = 0; idx < cardPositions.length; idx++) {
@@ -699,6 +704,7 @@ export class Dom2DLayer {
 
       ghostFlap.appendChild(ghostFlapBackground);
 
+<<<<<<< HEAD
       // 스티커 이미지로 마스크 생성 (구멍 뚫기 - 미리 캐시된 dilate 마스크 사용)
       const stickerImageSrc = stickerImages[index % 2];
       const dilatedMask = this.dilatedMaskCache.get(stickerImageSrc);
@@ -778,20 +784,27 @@ export class Dom2DLayer {
       // 조립
       ghostContainer.appendChild(ghostMain);
       ghostContainer.appendChild(ghostFlap);
-      card.insertBefore(ghostContainer, card.firstChild); // 스티커 컨테이너 앞에 삽입
+      card.appendChild(ghostContainer);
 
-      // 착지 지점에 큰 원 생성 (300px) - 카드보다 먼저 DOM에 추가
+      // 착지 지점에 큰 원 생성 (300px) - grid에 직접 배치, 미리 착지된 상태
       const landingSpot = document.createElement('div');
       landingSpot.className = 'landing-spot';
-      landingSpot.style.left = `${pos.x + cardWidth / 2 - 150}px`; // 중앙 정렬 (300px 원)
-      landingSpot.style.top = `${pos.y + 250}px`; // 카드 중앙 지점
-      this.grid.insertBefore(landingSpot, card); // 카드 앞에 추가하여 카드 아래에 렌더링
+      landingSpot.style.position = 'absolute';
+      const spotLeft = pos.x + cardWidth / 2 - 150;
+      const spotTop = pos.y + 250;
+      landingSpot.style.left = `${spotLeft}px`;
+      landingSpot.style.top = `${spotTop}px`;
+      landingSpot.style.zIndex = '1'; // 가장 하단 레이어
+      landingSpot.setAttribute('data-spot-index', `${index}`);
 
-      // 카드 초기 위치 (위쪽에서 시작, 투명)
+      this.grid.insertBefore(landingSpot, card);
+
+      // 카드 초기 위치 (위쪽에서 시작, 투명) - position absolute로 변경
+      card.style.position = 'absolute';
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
-      card.style.zIndex = '1'; // 착지 지점 원 위에 표시
-      card.style.transform = `translate(0, -1000px) scale(${pos.scale})`;
+      card.style.zIndex = '2'; // 착지 지점 원 위에 표시
+      card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
       card.style.opacity = '0';
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
@@ -801,28 +814,30 @@ export class Dom2DLayer {
 
       // 1단계: 스티커와 ghost 같이 하단부터 순차적으로 바닥에 내려앉기 (불투명해짐)
       setTimeout(() => {
-        card.style.transform = `translate(0, 0) scale(${pos.scale})`;
+        card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
         card.style.opacity = '1';
         ghostContainer.style.opacity = '1';
+        // landing-spot은 이미 최종 위치에 고정되어 있음
 
-        // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐 (임시 비활성화 - 확인용)
-        // setTimeout(() => {
-        //   // 스티커와 동일한 벗겨지기 애니메이션
-        //   ghostContainer.classList.add('peeling-off');
-        //
-        //   setTimeout(() => {
-        //     // 벗겨진 후 투명하게
-        //     ghostContainer.style.transition = 'opacity 0.4s ease-out';
-        //     ghostContainer.style.opacity = '0';
-        //
-        //     // 완전히 제거
-        //     setTimeout(() => {
-        //       if (ghostContainer && ghostContainer.parentNode) {
-        //         ghostContainer.remove();
-        //       }
-        //     }, 400);
-        //   }, 600); // clipPath 애니메이션 완료 후
-        // }, 1000); // 착지 1초 후
+        // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐
+        setTimeout(() => {
+          // 스티커와 동일한 벗겨지기 애니메이션
+          ghostContainer.classList.add('peeling-off');
+
+          setTimeout(() => {
+            // 벗겨진 후 투명하게
+            ghostContainer.style.transition = 'opacity 0.4s ease-out';
+            ghostContainer.style.opacity = '0';
+            ghostContainer.style.display = 'none'; // 즉시 숨겨서 빨간색 원이 보이도록
+
+            // 완전히 제거
+            setTimeout(() => {
+              if (ghostContainer && ghostContainer.parentNode) {
+                ghostContainer.remove();
+              }
+            }, 400);
+          }, 600); // clipPath 애니메이션 완료 후
+        }, 1000); // 착지 1초 후
       }, index * 50); // 50ms 간격으로 순차 시작
     }
 
