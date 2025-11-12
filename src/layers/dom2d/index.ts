@@ -677,27 +677,28 @@ export class Dom2DLayer {
       ghostFlap.appendChild(ghostFlapBackground);
 
       // 조립 (구멍 없이 전체 이미지로 표시)
-      // 착지 지점에 큰 원 생성 (300px) - card 내부에 배치, 미리 착지된 상태
-      const landingSpot = document.createElement('div');
-      landingSpot.className = 'landing-spot';
-      card.appendChild(landingSpot); // card 첫 번째 자식 (z-index: 1)
-
       ghostContainer.appendChild(ghostMain);
       ghostContainer.appendChild(ghostFlap);
-      card.appendChild(ghostContainer); // card 두 번째 자식 (z-index: 3)
+      card.appendChild(ghostContainer);
 
-      // 카드 초기 위치 (위쪽에서 시작, 투명)
+      // 착지 지점에 큰 원 생성 (300px) - grid에 직접 배치, 미리 착지된 상태
+      const landingSpot = document.createElement('div');
+      landingSpot.className = 'landing-spot';
+      landingSpot.style.position = 'absolute';
+      landingSpot.style.left = `${pos.x + cardWidth / 2 - 150}px`; // 카드 중심에 맞춤 (300px 원)
+      landingSpot.style.top = `${pos.y + 250}px`; // 카드 중심 높이
+      landingSpot.style.zIndex = '1';
+      landingSpot.style.opacity = '1'; // 미리 보이게
+      this.grid.insertBefore(landingSpot, card); // 카드 앞에 추가
+
+      // 카드 초기 위치 (위쪽에서 시작, 투명) - position absolute로 변경
+      card.style.position = 'absolute';
       card.style.left = `${pos.x}px`;
       card.style.top = `${pos.y}px`;
       card.style.zIndex = '2'; // 착지 지점 원 위에 표시
       card.style.transform = `translate(0, -1000px) rotate(${pos.rotation}deg) scale(${pos.scale})`;
       card.style.opacity = '0';
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
-
-      // landing-spot 초기 상태: card의 transform을 상쇄하여 미리 착지된 상태
-      landingSpot.style.transform = `translate(-50%, -50%) translate(0, 1000px)`;
-      landingSpot.style.opacity = '1'; // 미리 보이게
-      // transition 없음 - 고정된 위치 유지
 
       // ghost 초기 상태 (투명)
       ghostContainer.style.opacity = '0';
@@ -708,9 +709,7 @@ export class Dom2DLayer {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
         card.style.opacity = '1';
         ghostContainer.style.opacity = '1';
-
-        // landing-spot은 card와 함께 최종 위치로 (counter-transform 제거)
-        landingSpot.style.transform = `translate(-50%, -50%) translate(0, 0)`;
+        // landing-spot은 이미 최종 위치에 고정되어 있음
 
         // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐
         setTimeout(() => {
