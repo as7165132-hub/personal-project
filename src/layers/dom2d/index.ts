@@ -694,9 +694,13 @@ export class Dom2DLayer {
       card.style.opacity = '0';
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
-      // 빨간색 원 초기 위치 (카드의 이동을 상쇄하여 바닥에 고정)
-      landingSpot.style.transform = 'translate(0, 1000px)';
-      landingSpot.style.transition = 'transform 1s ease-out';
+      // 빨간색 원은 카드의 모든 transform을 상쇄하여 바닥에 고정
+      // 카드의 scale과 rotation의 역변환을 적용 (translate는 1000px로 상쇄)
+      const inverseScale = 1 / pos.scale;
+      landingSpot.style.transform = `scale(${inverseScale}) rotate(-${pos.rotation}deg) translate(0, ${1000 * pos.scale}px)`;
+      landingSpot.style.transformOrigin = 'center center';
+      // 빨간색 원은 애니메이션 없이 처음부터 최종 위치에 고정
+      landingSpot.style.transition = 'none';
 
       // ghost 초기 상태 (투명)
       ghostContainer.style.opacity = '0';
@@ -708,8 +712,8 @@ export class Dom2DLayer {
         card.style.opacity = '1';
         ghostContainer.style.opacity = '1';
 
-        // 빨간색 원도 카드와 함께 움직이지만, counter-transform으로 위치 유지
-        landingSpot.style.transform = 'translate(0, 0)';
+        // 빨간색 원: 카드가 착지하면 모든 transform 상쇄 제거 (이미 최종 위치에 있으므로)
+        landingSpot.style.transform = `scale(${inverseScale}) rotate(-${pos.rotation}deg)`;
 
         // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐
         setTimeout(() => {

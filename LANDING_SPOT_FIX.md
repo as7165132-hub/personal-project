@@ -37,34 +37,45 @@ card.style.transform = `translate(0, 0) rotate(...) scale(...)`;
 
 ## 해결 방법
 
-### Counter-Transform 기법
+### 완전한 Counter-Transform 기법
 
-빨간색 원에 **카드의 이동을 상쇄하는 역변환**을 적용:
+빨간색 원에 **카드의 모든 transform(translate, rotate, scale)을 상쇄하는 역변환**을 적용:
 
 ```
-카드의 translate(0, -1000px) → landing-spot에 translate(0, 1000px) 적용
-카드의 translate(0, 0)        → landing-spot에 translate(0, 0) 적용
+카드: translate(0, -1000px) rotate(R) scale(S)
+↓ 역변환
+Landing spot: scale(1/S) rotate(-R) translate(0, 1000*S px)
 ```
+
+**중요**:
+- Transform 순서가 중요함 (CSS transform은 오른쪽에서 왼쪽으로 적용)
+- translate만 상쇄하면 rotation과 scale의 영향으로 여전히 움직임
+- 모든 transform을 역순으로 상쇄해야 완전히 고정됨
 
 이렇게 하면:
-- 카드와 landing-spot의 transform이 서로 상쇄되어 **landing-spot은 시각적으로 최종 위치에 고정**
+- 카드와 landing-spot의 transform이 서로 완전히 상쇄되어 **landing-spot은 시각적으로 최종 위치에 고정**
 - ghost와 sticker는 카드와 함께 내려옴
+- **빨간색 원은 애니메이션 없이(transition: none) 처음부터 최종 위치에 고정**
 
 ### 코드 변경 사항
 
-#### 1. 초기 상태 설정 (line 697-699)
+#### 1. 초기 상태 설정 (line 697-703)
 
 ```typescript
-// 빨간색 원 초기 위치 (카드의 이동을 상쇄하여 바닥에 고정)
-landingSpot.style.transform = 'translate(0, 1000px)';
-landingSpot.style.transition = 'transform 1s ease-out';
+// 빨간색 원은 카드의 모든 transform을 상쇄하여 바닥에 고정
+// 카드의 scale과 rotation의 역변환을 적용 (translate는 1000px로 상쇄)
+const inverseScale = 1 / pos.scale;
+landingSpot.style.transform = `scale(${inverseScale}) rotate(-${pos.rotation}deg) translate(0, ${1000 * pos.scale}px)`;
+landingSpot.style.transformOrigin = 'center center';
+// 빨간색 원은 애니메이션 없이 처음부터 최종 위치에 고정
+landingSpot.style.transition = 'none';
 ```
 
-#### 2. 착지 시 업데이트 (line 711-712)
+#### 2. 착지 시 업데이트 (line 715-716)
 
 ```typescript
-// 빨간색 원도 카드와 함께 움직이지만, counter-transform으로 위치 유지
-landingSpot.style.transform = 'translate(0, 0)';
+// 빨간색 원: 카드가 착지하면 모든 transform 상쇄 제거 (이미 최종 위치에 있으므로)
+landingSpot.style.transform = `scale(${inverseScale}) rotate(-${pos.rotation}deg)`;
 ```
 
 #### 3. 애니메이션 완료 후 정리 (line 744-747)
@@ -78,27 +89,40 @@ if (landingSpot) {
 
 ## 동작 원리
 
-### 시각적 계산
+### Transform 상쇄 계산
 
-카드의 실제 위치 = `top: posY` + `translate(0, cardY)`
-Landing spot의 실제 위치 = `top: posY` + `translate(0, cardY)` + `translate(0, spotY)`
+CSS Transform은 **오른쪽에서 왼쪽으로** 적용되므로:
 
-**초기 상태:**
-- Card: `top: 100px` + `translate(0, -1000px)` = **-900px** (화면 위)
-- Landing spot: `-900px` + `translate(0, 1000px)` = **100px** (최종 위치에 고정)
+**카드의 transform:**
+```
+translate(0, -1000px) rotate(30deg) scale(1.5)
+→ 1. scale(1.5) 적용
+→ 2. rotate(30deg) 적용
+→ 3. translate(0, -1000px) 적용
+```
 
-**착지 후:**
-- Card: `top: 100px` + `translate(0, 0)` = **100px**
-- Landing spot: `100px` + `translate(0, 0)` = **100px** (위치 유지)
+**빨간색 원의 counter-transform (완전한 역변환):**
+```
+scale(0.667) rotate(-30deg) translate(0, 1500px)
+→ 1. translate(0, 1500px) 적용 (1000 * 1.5, scale 고려)
+→ 2. rotate(-30deg) 적용 (카드 회전 상쇄)
+→ 3. scale(0.667) 적용 (1/1.5, 카드 크기 상쇄)
+```
+
+**결과:** 모든 transform이 상쇄되어 빨간색 원은 원래 위치에 고정
 
 ### 애니메이션 타임라인
 
 ```
-시간    카드 translateY    Landing Spot translateY    Landing Spot 최종 위치
-t=0     -1000px           1000px                     0px (고정)
-t=0.5s  -500px            500px                      0px (고정)
-t=1.0s  0px               0px                        0px (고정)
+시간    카드 transform                           Landing Spot 상태
+t=0     translate(0,-1000) rotate(R) scale(S)   애니메이션 없음, 최종 위치에 고정
+                                                 (counter-transform으로 상쇄)
+t=0.5s  translate(0,-500) rotate(R) scale(S)    최종 위치 유지
+t=1.0s  translate(0,0) rotate(R) scale(S)       최종 위치 유지
+                                                 (rotate, scale만 상쇄 유지)
 ```
+
+**핵심:** 빨간색 원은 `transition: none`으로 설정되어 **애니메이션 없이 처음부터 최종 위치에 고정**됨
 
 ## 결과
 
@@ -121,5 +145,16 @@ t=1.0s  0px               0px                        0px (고정)
 ---
 
 **수정 파일:** `src/layers/dom2d/index.ts`
-**수정 라인:** 697-699, 711-712, 744-747
-**키워드:** counter-transform, CSS transform, 착지 애니메이션, ISO 모드
+**수정 라인:** 697-703 (초기 설정), 715-716 (착지 후), 737-740 (정리)
+**키워드:** counter-transform, CSS transform, rotate, scale, 착지 애니메이션, ISO 모드
+
+## 버전 히스토리
+
+### v2 (최종) - 완전한 Counter-Transform
+- translate, rotate, scale 모두 상쇄
+- `transition: none`으로 빨간색 원 애니메이션 제거
+- 처음부터 최종 위치에 고정
+
+### v1 (초기) - Translate만 상쇄
+- translate만 상쇄했으나 rotate와 scale의 영향으로 여전히 움직임
+- 문제 해결 불완전
