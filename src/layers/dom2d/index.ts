@@ -694,6 +694,10 @@ export class Dom2DLayer {
       card.style.opacity = '0';
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
+      // 빨간색 원 초기 위치 (카드의 이동을 상쇄하여 바닥에 고정)
+      landingSpot.style.transform = 'translate(0, 1000px)';
+      landingSpot.style.transition = 'transform 1s ease-out';
+
       // ghost 초기 상태 (투명)
       ghostContainer.style.opacity = '0';
       ghostContainer.style.transition = 'opacity 1s ease-out';
@@ -703,6 +707,9 @@ export class Dom2DLayer {
         card.style.transform = `translate(0, 0) rotate(${pos.rotation}deg) scale(${pos.scale})`;
         card.style.opacity = '1';
         ghostContainer.style.opacity = '1';
+
+        // 빨간색 원도 카드와 함께 움직이지만, counter-transform으로 위치 유지
+        landingSpot.style.transform = 'translate(0, 0)';
 
         // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐
         setTimeout(() => {
@@ -733,6 +740,10 @@ export class Dom2DLayer {
         const ghostContainer = pos.card.querySelector('.ghost-container') as HTMLElement;
         if (ghostContainer) {
           ghostContainer.style.transition = '';
+        }
+        const landingSpot = pos.card.querySelector('.landing-spot') as HTMLElement;
+        if (landingSpot) {
+          landingSpot.style.transition = '';
         }
       });
     }, cardPositions.length * 50 + 2200);
