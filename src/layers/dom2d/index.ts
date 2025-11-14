@@ -694,13 +694,18 @@ export class Dom2DLayer {
       card.style.opacity = '0';
       card.style.transition = 'transform 1s ease-out, opacity 1s ease-out';
 
-      // 빨간색 원은 카드의 모든 transform을 상쇄하여 바닥에 고정
-      // 카드의 scale과 rotation의 역변환을 적용 (translate는 1000px로 상쇄)
+      // 빨간색 원 완전 고정 (중앙 정렬 + 모든 transform 상쇄)
+      // landing-spot 크기: 300px → 중앙 정렬: -150px
+      // Transform 순서 (오른쪽에서 왼쪽 실행):
+      // 1. rotate(-R) - 회전 상쇄하여 좌표계를 원래대로
+      // 2. translate(0, 1000px) - 원래 좌표계에서 이동 상쇄
+      // 3. scale(1/S) - 크기 상쇄
+      // 4. translate(-150px, -150px) - 중앙 정렬
       const inverseScale = 1 / pos.scale;
-      landingSpot.style.transform = `scale(${inverseScale}) rotate(-${pos.rotation}deg) translate(0, ${1000 * pos.scale}px)`;
+      const centerOffset = -150; // -50% of 300px
+      landingSpot.style.transform = `translate(${centerOffset}px, ${centerOffset}px) scale(${inverseScale}) translate(0, 1000px) rotate(-${pos.rotation}deg)`;
       landingSpot.style.transformOrigin = 'center center';
-      // 빨간색 원은 애니메이션 없이 처음부터 최종 위치에 고정
-      landingSpot.style.transition = 'none';
+      landingSpot.style.transition = 'none'; // 애니메이션 없음
 
       // ghost 초기 상태 (투명)
       ghostContainer.style.opacity = '0';
@@ -712,8 +717,8 @@ export class Dom2DLayer {
         card.style.opacity = '1';
         ghostContainer.style.opacity = '1';
 
-        // 빨간색 원: 카드가 착지하면 모든 transform 상쇄 제거 (이미 최종 위치에 있으므로)
-        landingSpot.style.transform = `scale(${inverseScale}) rotate(-${pos.rotation}deg)`;
+        // 빨간색 원: 카드 착지 후에도 rotate/scale 상쇄 유지 (translate만 제거)
+        landingSpot.style.transform = `translate(${centerOffset}px, ${centerOffset}px) scale(${inverseScale}) rotate(-${pos.rotation}deg)`;
 
         // 2단계: 착지 후 ghost가 구석에서 벗겨지며 사라짐
         setTimeout(() => {
